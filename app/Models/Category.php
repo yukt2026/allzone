@@ -38,7 +38,8 @@ class Category extends Model
 
     public function getImageUrlAttribute(): ?string
     {
-        return image_url($this->image);
+        $url = image_url($this->image);
+        return $url ?: asset('storage/categories/refrigerators-freezers.svg');
     }
 
     public function parent(): BelongsTo

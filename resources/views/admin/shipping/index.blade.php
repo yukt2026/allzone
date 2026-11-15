@@ -194,6 +194,51 @@
                     >
                 </div>
             </div>
+
+            <div class="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl text-[11px] text-slate-500 flex flex-wrap items-center justify-between gap-2">
+                <div>
+                    <span>Shiprocket Webhook Endpoint: <strong class="font-mono text-slate-800 dark:text-slate-200">{{ url('/api/v1/shiprocket/webhook') }}</strong></span>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <button 
+                        type="button" 
+                        onclick="testShiprocketConnection()" 
+                        class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold shadow-sm transition flex items-center space-x-1"
+                    >
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                        <span>Test Shiprocket Connection</span>
+                    </button>
+                    <span id="shiprocket-test-result" class="text-xs font-medium"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Default Logistics Provider Card -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm space-y-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h3 class="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider text-[11px]">Primary Dispatch Logistics Engine</h3>
+                    <p class="text-xs text-slate-500 mt-0.5">Select which logistics platform handles order package consignment creation and AWB assignment by default.</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <label class="relative flex items-start p-4 rounded-xl border {{ ($settings['shipping_active_provider'] ?? 'onestall_cargo') === 'onestall_cargo' ? 'border-indigo-500 bg-indigo-50/30 dark:bg-indigo-950/20' : 'border-slate-200 dark:border-slate-800' }} cursor-pointer hover:border-indigo-300">
+                    <input type="radio" name="shipping_active_provider" value="onestall_cargo" {{ ($settings['shipping_active_provider'] ?? 'onestall_cargo') === 'onestall_cargo' ? 'checked' : '' }} class="mt-1 text-indigo-600 focus:ring-indigo-500">
+                    <div class="ml-3">
+                        <span class="block text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">ALLZONE Cargo (Internal Fleet & Direct Courier)</span>
+                        <span class="block text-xs text-slate-500 mt-0.5">Direct integration via local carrier hubs and internal fleet logistics.</span>
+                    </div>
+                </label>
+
+                <label class="relative flex items-start p-4 rounded-xl border {{ ($settings['shipping_active_provider'] ?? '') === 'shiprocket' ? 'border-indigo-500 bg-indigo-50/30 dark:bg-indigo-950/20' : 'border-slate-200 dark:border-slate-800' }} cursor-pointer hover:border-indigo-300">
+                    <input type="radio" name="shipping_active_provider" value="shiprocket" {{ ($settings['shipping_active_provider'] ?? '') === 'shiprocket' ? 'checked' : '' }} class="mt-1 text-indigo-600 focus:ring-indigo-500">
+                    <div class="ml-3">
+                        <span class="block text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">Shiprocket Multi-Carrier Network</span>
+                        <span class="block text-xs text-slate-500 mt-0.5">Automated multi-carrier routing (Delhivery, Blue Dart, DTDC, Shadowfax).</span>
+                    </div>
+                </label>
+            </div>
         </div>
 
         <!-- Courier Priority Chain Card -->
@@ -478,5 +523,36 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 });
+
+function testShiprocketConnection() {
+    const resultSpan = document.getElementById('shiprocket-test-result');
+    if (!resultSpan) return;
+
+    resultSpan.className = 'text-xs font-medium text-slate-500';
+    resultSpan.textContent = 'Testing connection...';
+
+    fetch('{{ route('admin.shipping.test_shiprocket') }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}',
+        },
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.status === 'success') {
+            resultSpan.className = 'text-xs font-semibold text-emerald-600 dark:text-emerald-400';
+            resultSpan.textContent = '✓ ' + data.message;
+        } else {
+            resultSpan.className = 'text-xs font-semibold text-rose-600 dark:text-rose-400';
+            resultSpan.textContent = '✗ ' + (data.message || 'Connection failed.');
+        }
+    })
+    .catch(err => {
+        resultSpan.className = 'text-xs font-semibold text-rose-600 dark:text-rose-400';
+        resultSpan.textContent = '✗ Error: ' + err.message;
+    });
+}
 </script>
 @endsection

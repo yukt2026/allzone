@@ -70,14 +70,27 @@
         </div>
 
         <!-- Filter Sidebar -->
+        @php
+            $hasActiveFilters = !empty($filters['price_min']) || !empty($filters['price_max']) || !empty($filters['category']) || !empty($filters['in_stock']) || !empty($filters['delivery_type']);
+        @endphp
         <aside :class="mobileFilterOpen ? 'fixed inset-0 z-50 bg-white p-6 overflow-y-auto' : 'hidden lg:block'"
                class="bg-white rounded-3xl border border-slate-200/80 p-5 space-y-6 shadow-sm">
 
             <div class="flex items-center justify-between pb-3 border-b border-slate-100">
-                <h3 class="text-xs font-black uppercase tracking-wider text-slate-900">Filters</h3>
-                <button type="button" @click="mobileFilterOpen = false" class="lg:hidden p-1 text-slate-400">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                </button>
+                <h3 class="text-xs font-black uppercase tracking-wider text-slate-900 flex items-center space-x-1.5">
+                    <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/></svg>
+                    <span>Filters</span>
+                </h3>
+                <div class="flex items-center space-x-2">
+                    @if($hasActiveFilters)
+                        <a href="{{ url()->current() }}" class="text-[11px] font-bold text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 px-2 py-0.5 rounded-md border border-rose-200 transition">
+                            Reset All
+                        </a>
+                    @endif
+                    <button type="button" @click="mobileFilterOpen = false" class="lg:hidden p-1 text-slate-400 hover:text-slate-600">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
             </div>
 
             <form method="GET" action="{{ url()->current() }}" class="space-y-6 text-xs">
@@ -87,11 +100,11 @@
                 <div class="space-y-2">
                     <h4 class="font-bold text-slate-900 text-xs">Delivery Speed</h4>
                     <label class="flex items-center space-x-2.5 cursor-pointer">
-                        <input type="radio" name="delivery_type" value="" {{ empty($filters['delivery_type']) ? 'checked' : '' }} onchange="this.form.submit()" class="text-indigo-600 focus:ring-0">
+                        <input type="radio" name="delivery_type" value="" {{ empty($filters['delivery_type']) ? 'checked' : '' }} onchange="this.form.submit()" class="text-blue-600 focus:ring-0">
                         <span class="text-slate-600">All Delivery Speeds</span>
                     </label>
                     <label class="flex items-center space-x-2.5 cursor-pointer">
-                        <input type="radio" name="delivery_type" value="quick" {{ $filters['delivery_type'] === 'quick' ? 'checked' : '' }} onchange="this.form.submit()" class="text-indigo-600 focus:ring-0">
+                        <input type="radio" name="delivery_type" value="quick" {{ $filters['delivery_type'] === 'quick' ? 'checked' : '' }} onchange="this.form.submit()" class="text-blue-600 focus:ring-0">
                         <span class="font-extrabold text-amber-600 flex items-center">
                             <span>⚡ 15-30 Min Quick</span>
                         </span>
@@ -102,7 +115,7 @@
                 <div class="pt-3 border-t border-slate-100">
                     <label class="flex items-center justify-between cursor-pointer">
                         <span class="font-bold text-slate-900">In Stock Only</span>
-                        <input type="checkbox" name="in_stock" value="1" {{ !empty($filters['in_stock']) ? 'checked' : '' }} onchange="this.form.submit()" class="rounded text-indigo-600 focus:ring-indigo-500 h-4 w-4">
+                        <input type="checkbox" name="in_stock" value="1" {{ !empty($filters['in_stock']) ? 'checked' : '' }} onchange="this.form.submit()" class="rounded text-blue-600 focus:ring-blue-500 h-4 w-4">
                     </label>
                 </div>
 
@@ -113,7 +126,7 @@
                         <input type="number" name="price_min" value="{{ $filters['price_min'] ?? '' }}" placeholder="Min" class="w-full text-xs p-2 rounded-xl border border-slate-200">
                         <span class="text-slate-400">-</span>
                         <input type="number" name="price_max" value="{{ $filters['price_max'] ?? '' }}" placeholder="Max" class="w-full text-xs p-2 rounded-xl border border-slate-200">
-                        <button type="submit" class="px-3 py-2 bg-slate-900 text-white rounded-xl font-bold">Go</button>
+                        <button type="submit" class="px-3 py-2 bg-slate-900 text-white rounded-xl font-bold hover:bg-slate-800 transition">Go</button>
                     </div>
                 </div>
 
@@ -128,7 +141,7 @@
                                         <input type="radio" name="category" value="{{ $c->slug }}"
                                                {{ ($filters['category'] ?? '') === $c->slug ? 'checked' : '' }}
                                                onchange="this.form.submit()"
-                                               class="text-indigo-600 focus:ring-0 h-3.5 w-3.5">
+                                               class="text-blue-600 focus:ring-0 h-3.5 w-3.5">
                                         <span class="truncate max-w-[140px]">{{ $c->name }}</span>
                                     </div>
                                     <span class="text-[10px] text-slate-400">{{ $c->products_count }}</span>
@@ -138,18 +151,64 @@
                     </div>
                 @endif
 
-                <button type="submit" class="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-sm transition">
-                    Apply Filters
-                </button>
+                <div class="flex items-center gap-2 pt-2">
+                    <button type="submit" class="flex-1 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-sm transition">
+                        Apply Filters
+                    </button>
+                    @if($hasActiveFilters)
+                        <a href="{{ url()->current() }}"
+                           class="py-2.5 px-3 rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-700 font-bold text-xs transition text-center">
+                            Reset
+                        </a>
+                    @endif
+                </div>
             </form>
         </aside>
 
         <!-- Product Grid -->
         <main class="lg:col-span-3 space-y-5">
-            <div class="hidden sm:flex items-center justify-between pb-3 border-b border-slate-200/80">
-                <span class="text-xs font-bold text-slate-700">{{ $products->total() }} Products from {{ $brand->name }}</span>
+            <!-- Active Filters Bar & Sorter -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200/80">
+                <div class="flex flex-wrap items-center gap-1.5 flex-1">
+                    <span class="text-xs font-bold text-slate-700 mr-2">{{ $products->total() }} Products from {{ $brand->name }}</span>
 
-                <div class="flex items-center space-x-2">
+                    @if(!empty($filters['category']))
+                        <span class="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                            <span>Category: {{ $filters['category'] }}</span>
+                            <a href="{{ request()->fullUrlWithQuery(['category' => null]) }}" class="text-blue-500 hover:text-blue-900 ml-1 font-black">&times;</a>
+                        </span>
+                    @endif
+
+                    @if(!empty($filters['delivery_type']))
+                        <span class="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                            <span>⚡ {{ ucfirst($filters['delivery_type']) }}</span>
+                            <a href="{{ request()->fullUrlWithQuery(['delivery_type' => null]) }}" class="text-amber-500 hover:text-amber-900 ml-1 font-black">&times;</a>
+                        </span>
+                    @endif
+
+                    @if(!empty($filters['in_stock']))
+                        <span class="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            <span>✓ In Stock</span>
+                            <a href="{{ request()->fullUrlWithQuery(['in_stock' => null]) }}" class="text-emerald-500 hover:text-emerald-900 ml-1 font-black">&times;</a>
+                        </span>
+                    @endif
+
+                    @if(!empty($filters['price_min']) || !empty($filters['price_max']))
+                        <span class="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-700 border border-slate-200">
+                            <span>₹{{ $filters['price_min'] ?? 0 }} - ₹{{ $filters['price_max'] ?? 'Max' }}</span>
+                            <a href="{{ request()->fullUrlWithQuery(['price_min' => null, 'price_max' => null]) }}" class="text-slate-400 hover:text-slate-800 ml-1 font-black">&times;</a>
+                        </span>
+                    @endif
+
+                    @if($hasActiveFilters)
+                        <a href="{{ url()->current() }}" class="inline-flex items-center gap-1 text-xs font-bold text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 px-2.5 py-1 rounded-full border border-rose-200 transition ml-1">
+                            <span>↺</span>
+                            <span>Reset All Filters</span>
+                        </a>
+                    @endif
+                </div>
+
+                <div class="flex items-center space-x-2 flex-shrink-0">
                     <span class="text-xs font-medium text-slate-500">Sort:</span>
                     <form method="GET" action="{{ url()->current() }}">
                         @foreach(request()->except(['sort', 'page']) as $k => $v)
@@ -161,7 +220,7 @@
                                 <input type="hidden" name="{{ $k }}" value="{{ $v }}">
                             @endif
                         @endforeach
-                        <select name="sort" onchange="this.form.submit()" class="text-xs font-bold text-slate-800 bg-white border border-slate-200 rounded-xl py-1.5 pl-3 pr-8 focus:ring-indigo-500 cursor-pointer">
+                        <select name="sort" onchange="this.form.submit()" class="text-xs font-bold text-slate-800 bg-white border border-slate-200 rounded-xl py-1.5 pl-3 pr-8 focus:ring-blue-500 cursor-pointer shadow-2xs">
                             <option value="relevance" {{ $sort === 'relevance' ? 'selected' : '' }}>Relevance & Nearby</option>
                             <option value="price_asc" {{ $sort === 'price_asc' ? 'selected' : '' }}>Price: Low to High</option>
                             <option value="price_desc" {{ $sort === 'price_desc' ? 'selected' : '' }}>Price: High to Low</option>

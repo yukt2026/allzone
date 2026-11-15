@@ -92,17 +92,22 @@
 
             <div class="flex items-center justify-between pb-3 border-b border-slate-100">
                 <h3 class="text-xs font-black uppercase tracking-wider text-slate-900 flex items-center space-x-1.5">
-                    <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/></svg>
+                    <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/></svg>
                     <span>Filters</span>
+                    @if(count($appliedChips) > 0)
+                        <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-800">
+                            {{ count($appliedChips) }}
+                        </span>
+                    @endif
                 </h3>
 
                 <div class="flex items-center space-x-2">
                     @if(count($appliedChips) > 0)
-                        <a href="{{ request()->url() }}?q={{ urlencode($query) }}&tab={{ $tab }}" class="text-[11px] font-bold text-rose-500 hover:underline">
-                            Clear All
+                        <a href="{{ request()->url() }}?q={{ urlencode($query) }}&tab={{ $tab }}" class="text-[11px] font-bold text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 px-2 py-0.5 rounded-md border border-rose-200 transition">
+                            Reset All
                         </a>
                     @endif
-                    <button type="button" @click="mobileFilterOpen = false" class="lg:hidden p-1 text-slate-400">
+                    <button type="button" @click="mobileFilterOpen = false" class="lg:hidden p-1 text-slate-400 hover:text-slate-600">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                     </button>
                 </div>
@@ -117,21 +122,21 @@
                 <div class="space-y-2">
                     <h4 class="font-bold text-slate-900 text-xs">Delivery Speed</h4>
                     <label class="flex items-center space-x-2.5 cursor-pointer">
-                        <input type="radio" name="delivery_type" value="" {{ empty($filters['delivery_type']) ? 'checked' : '' }} onchange="this.form.submit()" class="text-indigo-600 focus:ring-0">
+                        <input type="radio" name="delivery_type" value="" {{ empty($filters['delivery_type']) ? 'checked' : '' }} onchange="this.form.submit()" class="text-blue-600 focus:ring-0">
                         <span class="text-slate-600">All Delivery Speeds</span>
                     </label>
                     <label class="flex items-center space-x-2.5 cursor-pointer">
-                        <input type="radio" name="delivery_type" value="quick" {{ $filters['delivery_type'] === 'quick' ? 'checked' : '' }} onchange="this.form.submit()" class="text-indigo-600 focus:ring-0">
+                        <input type="radio" name="delivery_type" value="quick" {{ $filters['delivery_type'] === 'quick' ? 'checked' : '' }} onchange="this.form.submit()" class="text-blue-600 focus:ring-0">
                         <span class="font-extrabold text-amber-600 flex items-center">
                             <span>⚡ 15-30 Min Quick</span>
                         </span>
                     </label>
                     <label class="flex items-center space-x-2.5 cursor-pointer">
-                        <input type="radio" name="delivery_type" value="pickup" {{ $filters['delivery_type'] === 'pickup' ? 'checked' : '' }} onchange="this.form.submit()" class="text-indigo-600 focus:ring-0">
+                        <input type="radio" name="delivery_type" value="pickup" {{ $filters['delivery_type'] === 'pickup' ? 'checked' : '' }} onchange="this.form.submit()" class="text-blue-600 focus:ring-0">
                         <span class="text-slate-700">🛍️ Store Pickup</span>
                     </label>
                     <label class="flex items-center space-x-2.5 cursor-pointer">
-                        <input type="radio" name="delivery_type" value="standard" {{ $filters['delivery_type'] === 'standard' ? 'checked' : '' }} onchange="this.form.submit()" class="text-indigo-600 focus:ring-0">
+                        <input type="radio" name="delivery_type" value="standard" {{ $filters['delivery_type'] === 'standard' ? 'checked' : '' }} onchange="this.form.submit()" class="text-blue-600 focus:ring-0">
                         <span class="text-slate-700">📦 Standard Shipping</span>
                     </label>
                 </div>
@@ -140,7 +145,7 @@
                 <div class="pt-3 border-t border-slate-100">
                     <label class="flex items-center justify-between cursor-pointer">
                         <span class="font-bold text-slate-900">In Stock Only</span>
-                        <input type="checkbox" name="in_stock" value="1" {{ !empty($filters['in_stock']) ? 'checked' : '' }} onchange="this.form.submit()" class="rounded text-indigo-600 focus:ring-indigo-500 h-4 w-4">
+                        <input type="checkbox" name="in_stock" value="1" {{ !empty($filters['in_stock']) ? 'checked' : '' }} onchange="this.form.submit()" class="rounded text-blue-600 focus:ring-blue-500 h-4 w-4">
                     </label>
                 </div>
 
@@ -148,9 +153,9 @@
                 <div class="pt-3 border-t border-slate-100 space-y-2">
                     <h4 class="font-bold text-slate-900 text-xs">Price Range (₹)</h4>
                     <div class="flex items-center space-x-2">
-                        <input type="number" name="price_min" value="{{ $filters['price_min'] ?? '' }}" placeholder="Min" class="w-full text-xs p-2 rounded-xl border border-slate-200 focus:ring-indigo-500">
+                        <input type="number" name="price_min" value="{{ $filters['price_min'] ?? '' }}" placeholder="Min" class="w-full text-xs p-2 rounded-xl border border-slate-200 focus:ring-blue-500">
                         <span class="text-slate-400">-</span>
-                        <input type="number" name="price_max" value="{{ $filters['price_max'] ?? '' }}" placeholder="Max" class="w-full text-xs p-2 rounded-xl border border-slate-200 focus:ring-indigo-500">
+                        <input type="number" name="price_max" value="{{ $filters['price_max'] ?? '' }}" placeholder="Max" class="w-full text-xs p-2 rounded-xl border border-slate-200 focus:ring-blue-500">
                         <button type="submit" class="px-3 py-2 bg-slate-900 text-white rounded-xl font-bold hover:bg-slate-800 transition">Go</button>
                     </div>
                 </div>
@@ -166,7 +171,7 @@
                                         <input type="checkbox" name="brands[]" value="{{ $b->slug }}"
                                                {{ in_array($b->slug, (array) ($filters['brands'] ?? []), true) ? 'checked' : '' }}
                                                onchange="this.form.submit()"
-                                               class="rounded text-indigo-600 focus:ring-indigo-500 h-3.5 w-3.5">
+                                               class="rounded text-blue-600 focus:ring-blue-500 h-3.5 w-3.5">
                                         <span class="truncate max-w-[140px]">{{ $b->name }}</span>
                                     </div>
                                     <span class="text-[10px] text-slate-400">{{ $b->products_count }}</span>
@@ -187,7 +192,7 @@
                                         <input type="radio" name="category" value="{{ $c->slug }}"
                                                {{ ($filters['category'] ?? '') === $c->slug ? 'checked' : '' }}
                                                onchange="this.form.submit()"
-                                               class="text-indigo-600 focus:ring-0 h-3.5 w-3.5">
+                                               class="text-blue-600 focus:ring-0 h-3.5 w-3.5">
                                         <span class="truncate max-w-[140px]">{{ $c->name }}</span>
                                     </div>
                                     <span class="text-[10px] text-slate-400">{{ $c->products_count }}</span>
@@ -197,9 +202,17 @@
                     </div>
                 @endif
 
-                <button type="submit" class="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-sm transition">
-                    Apply Filters
-                </button>
+                <div class="flex items-center gap-2 pt-2">
+                    <button type="submit" class="flex-1 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-sm transition">
+                        Apply Filters
+                    </button>
+                    @if(count($appliedChips) > 0)
+                        <a href="{{ request()->url() }}?q={{ urlencode($query) }}&tab={{ $tab }}"
+                           class="py-2.5 px-3 rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-700 font-bold text-xs transition text-center">
+                            Reset
+                        </a>
+                    @endif
+                </div>
             </form>
         </aside>
 
@@ -211,17 +224,18 @@
                 <!-- Applied Filter Chips -->
                 <div class="flex flex-wrap items-center gap-1.5 flex-1">
                     @forelse($appliedChips as $chip)
-                        <span class="inline-flex items-center space-x-1 px-3 py-1 rounded-full text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-200 shadow-2xs">
+                        <span class="inline-flex items-center space-x-1 px-3 py-1 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200 shadow-2xs">
                             <span>{{ $chip['label'] }}</span>
-                            <a href="{{ $chip['remove_url'] }}" class="text-indigo-400 hover:text-indigo-900 ml-1 font-black">&times;</a>
+                            <a href="{{ $chip['remove_url'] }}" class="text-blue-500 hover:text-blue-900 ml-1 font-black" title="Remove filter">&times;</a>
                         </span>
                     @empty
                         <span class="text-xs text-slate-400 font-medium">All active filters applied</span>
                     @endforelse
 
                     @if(count($appliedChips) > 0)
-                        <a href="{{ request()->url() }}?q={{ urlencode($query) }}&tab={{ $tab }}" class="text-xs font-bold text-rose-500 hover:underline ml-2">
-                            Reset All
+                        <a href="{{ request()->url() }}?q={{ urlencode($query) }}&tab={{ $tab }}" class="inline-flex items-center gap-1 text-xs font-bold text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 px-2.5 py-1 rounded-full border border-rose-200 transition ml-1">
+                            <span>↺</span>
+                            <span>Reset All Filters</span>
                         </a>
                     @endif
                 </div>

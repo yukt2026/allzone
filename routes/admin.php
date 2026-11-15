@@ -234,6 +234,7 @@ Route::middleware(['auth', 'role:super_admin|admin|support_admin'])->group(funct
     Route::prefix('shipping')->name('shipping.')->group(function () {
         Route::get('/', [ShippingSettingController::class, 'index'])->name('index');
         Route::post('/', [ShippingSettingController::class, 'update'])->name('update');
+        Route::post('/test-shiprocket', [ShippingSettingController::class, 'testShiprocket'])->name('test_shiprocket');
         Route::get('/failed-queue', [ShippingSettingController::class, 'failedQueue'])->name('failed_queue');
         Route::post('/shipments/{shipment}/retry', [ShippingSettingController::class, 'retryShipment'])->name('retry_shipment');
         Route::post('/sync-all', [ShippingSettingController::class, 'syncAllTracking'])->name('sync_all');

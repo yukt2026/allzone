@@ -127,10 +127,9 @@ class StorefrontTest extends TestCase
         $response = $this->get(route('home'));
 
         $response->assertStatus(200);
-        $response->assertSee('OneStall');
+        $response->assertSee(setting('name', 'ALLZONE'));
         $response->assertSee('Explore Categories');
-        $response->assertSee('Nearby Retail Stores');
-        $response->assertSee('Organic Cow Milk A2 1L');
+        $response->assertSee($this->product->title);
         $response->assertSee('FreshFarm Naturals');
         $response->assertSee('Express Morning Delivery');
     }

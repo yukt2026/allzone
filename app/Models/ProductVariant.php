@@ -93,4 +93,18 @@ class ProductVariant extends Model
     {
         return $query->where('is_default', true);
     }
+
+    public function isInStock(): bool
+    {
+        return $this->stock > 0;
+    }
+
+    public function getStockAttribute(): int
+    {
+        if ($this->relationLoaded('inventories')) {
+            return (int) $this->inventories->sum(fn ($i) => max(0, (int) $i->quantity_on_hand - (int) $i->quantity_reserved));
+        }
+
+        return (int) $this->inventories()->sum(\Illuminate\Support\Facades\DB::raw('quantity_on_hand - quantity_reserved'));
+    }
 }

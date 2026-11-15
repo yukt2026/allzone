@@ -32,6 +32,7 @@ class ShippingSettingController extends Controller
     {
         $settings = [
             'courier_priorities' => Setting::get('shipping_courier_priorities', ['onestall_cargo', 'delhivery', 'bluedart', 'shadowfax']),
+            'shipping_active_provider' => Setting::get('shipping_active_provider', 'onestall_cargo'),
             'default_weight_kg' => (float) Setting::get('shipping_default_weight_kg', 0.5),
             'cod_max_limit' => (float) Setting::get('shipping_cod_max_limit', 5000.00),
             'free_shipping_threshold' => (float) Setting::get('shipping_free_threshold', 999.00),
@@ -124,6 +125,7 @@ class ShippingSettingController extends Controller
     public function update(Request $request): RedirectResponse
     {
         $validated = $request->validate([
+            'shipping_active_provider' => ['nullable', 'string', 'in:onestall_cargo,shiprocket'],
             'default_weight_kg' => ['required', 'numeric', 'min:0.01'],
             'cod_max_limit' => ['required', 'numeric', 'min:0'],
             'free_shipping_threshold' => ['required', 'numeric', 'min:0'],
@@ -143,6 +145,10 @@ class ShippingSettingController extends Controller
             'shiprocket_enabled' => ['nullable', 'boolean'],
             'shiprocket_fake' => ['nullable', 'boolean'],
         ]);
+
+        if (!empty($validated['shipping_active_provider'])) {
+            Setting::set('shipping_active_provider', $validated['shipping_active_provider'], 'shipping');
+        }
 
         Setting::set('shipping_default_weight_kg', $validated['default_weight_kg'], 'shipping');
         Setting::set('shipping_cod_max_limit', $validated['cod_max_limit'], 'shipping');
@@ -198,5 +204,40 @@ class ShippingSettingController extends Controller
         }
 
         return back()->with('success', 'Shipping and ' . setting('name', 'ALLZONE') . ' Cargo logistics configuration updated successfully.');
+    }
+
+    /**
+     * Test Shiprocket API connectivity and authentication.
+     */
+    public function testShiprocket(Request $request, \App\Services\Cargo\ShiprocketClient $client): \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
+    {
+        try {
+            $token = $client->authenticate();
+            $mode = $client->isFakeMode() ? 'Sandbox / Simulation' : 'Live Production';
+
+            // Check sample serviceability
+            $rates = $client->checkServiceability('560038', '560001', 0.5, false);
+            $couriers = $rates['data']['available_courier_companies'] ?? [];
+            $courierCount = count($couriers);
+
+            $msg = "Shiprocket connection successful! Mode: {$mode}. Available couriers found: {$courierCount}. Auth token active.";
+
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'status' => 'success',
+                    'message' => $msg,
+                    'mode' => $mode,
+                    'couriers' => $couriers,
+                ]);
+            }
+
+            return back()->with('success', $msg);
+        } catch (\Throwable $e) {
+            $err = "Shiprocket connection test failed: " . $e->getMessage();
+            if ($request->wantsJson()) {
+                return response()->json(['status' => 'error', 'message' => $err], 422);
+            }
+            return back()->with('error', $err);
+        }
     }
 }

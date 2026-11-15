@@ -48,8 +48,8 @@
                 });
                 rzp.open();
             } else {
-                // If offline or blocked by browser extension, submit fallback
-                document.getElementById('rzp-callback-form').submit();
+                alert('Razorpay payment gateway failed to load. Please check your internet connection or disable ad-blockers and refresh the page.');
+                this.loading = false;
             }
         }
      }">
@@ -129,8 +129,8 @@
     <form id="rzp-callback-form" action="{{ route('payment.callback') }}" method="POST" class="hidden">
         @csrf
         <input type="hidden" name="razorpay_order_id" id="rzp-order-id" value="{{ $paymentData['gateway_order_id'] }}">
-        <input type="hidden" name="razorpay_payment_id" id="rzp-payment-id" value="pay_sim_{{ uniqid() }}">
-        <input type="hidden" name="razorpay_signature" id="rzp-signature" value="{{ hash_hmac('sha256', $paymentData['gateway_order_id'] . '|pay_sim_default', config('services.razorpay.key_secret', 'rzp_test_allzone_secret')) }}">
+        <input type="hidden" name="razorpay_payment_id" id="rzp-payment-id" value="">
+        <input type="hidden" name="razorpay_signature" id="rzp-signature" value="">
     </form>
 
     <!-- Hidden form for Razorpay Failure -->

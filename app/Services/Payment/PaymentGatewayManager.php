@@ -17,7 +17,6 @@ class PaymentGatewayManager
     public function __construct()
     {
         $this->drivers['razorpay'] = new RazorpayGateway();
-        $this->drivers['cashfree'] = new CashfreeGateway();
     }
 
     /**

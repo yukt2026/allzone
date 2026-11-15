@@ -52,19 +52,19 @@
         megaMenuOpen: false
       }">
 
-    <!-- Top Announcement & Quick Delivery Ticker -->
-    <div class="bg-slate-950 text-slate-200 px-3 sm:px-4 py-1.5 sm:py-2 text-xs font-semibold shadow-inner">
+    <!-- Top Announcement Bar -->
+    <div class="bg-slate-950 text-slate-200 px-3 sm:px-4 py-1.5 sm:py-2 text-xs font-semibold shadow-inner border-b border-slate-800">
         <div class="max-w-7xl mx-auto w-full flex items-center justify-between">
             <div class="flex items-center space-x-2 min-w-0">
-                <span class="inline-block w-2 h-2 rounded-full bg-amber-400 animate-pulse flex-shrink-0"></span>
+                <span class="inline-block w-2 h-2 rounded-full bg-blue-500 animate-pulse flex-shrink-0"></span>
                 <span class="truncate text-[11px] sm:text-xs">
-                    <span class="sm:hidden">⚡ <strong>Quick Commerce:</strong> 10-30m Delivery ({{ (int) setting('default_delivery_radius_km', 8) }} km)</span>
-                    <span class="hidden sm:inline">⚡ <strong>Quick Commerce Live:</strong> 10-30 Min Delivery within {{ setting('default_delivery_radius_km', 8) }} km radius</span>
+                    <span class="sm:hidden">⚡ <strong>ALLZONE:</strong> Genuine Electronics &amp; Appliances by SK Refrigeration</span>
+                    <span class="hidden sm:inline">⚡ <strong>ALLZONE Electronics:</strong> 100% Genuine Products • Brand Warranty • Express Doorstep Dispatch • Certified Installation</span>
                 </span>
             </div>
             <div class="hidden sm:flex items-center space-x-6 text-xs font-medium text-slate-300">
-                <span>Free delivery on orders over <strong class="text-amber-400">{{ format_currency(setting('free_delivery_threshold', 499)) }}</strong></span>
-                <a href="{{ route('seller.dashboard') }}" class="hover:text-amber-300 transition">Sell on {{ setting('name', 'ALLZONE') }}</a>
+                <span>Free delivery on orders over <strong class="text-blue-400">{{ format_currency(setting('free_delivery_threshold', 499)) }}</strong></span>
+                <a href="{{ route('seller.dashboard') }}" class="hover:text-blue-400 transition">Sell on {{ setting('name', 'ALLZONE') }}</a>
             </div>
         </div>
     </div>
@@ -102,14 +102,14 @@
                     </button>
 
                     <a href="{{ route('home') }}" class="flex items-center space-x-1.5 sm:space-x-2.5 group min-w-0">
-                        <div class="w-8 h-8 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-gradient-to-tr from-blue-700 via-indigo-600 to-amber-400 flex items-center justify-center text-white font-extrabold text-xs sm:text-lg shadow-md group-hover:scale-105 transition-transform flex-shrink-0 tracking-tighter">
+                        <div class="w-8 h-8 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-blue-600 flex items-center justify-center text-white font-extrabold text-xs sm:text-lg shadow-md group-hover:scale-105 transition-transform flex-shrink-0 tracking-tighter">
                             AZ
                         </div>
                         <div class="min-w-0">
-                            <span class="text-base sm:text-2xl font-black tracking-tight text-slate-900 group-hover:text-indigo-600 transition truncate block leading-none">
+                            <span class="text-base sm:text-2xl font-black tracking-tight text-slate-900 group-hover:text-blue-600 transition truncate block leading-none">
                                 {{ setting('name', 'ALLZONE') }}
                             </span>
-                            <span class="hidden sm:block text-[9px] font-bold text-slate-400 tracking-wider uppercase mt-0.5">By {{ setting('company_name', 'SK Refrigeration') }}</span>
+                            <span class="hidden sm:block text-[9px] font-bold text-slate-400 tracking-wider uppercase mt-0.5">Electronics &amp; Appliances • By {{ setting('company_name', 'SK Refrigeration') }}</span>
                         </div>
                     </a>
 
@@ -136,10 +136,10 @@
 
                 <!-- Big Omnisearch Bar with Tabs -->
                 <form action="{{ route('search') }}" method="GET" class="flex-1 max-w-2xl relative hidden sm:block" @click.outside="searchFocused = false">
-                    <div class="relative flex items-center bg-slate-100 rounded-2xl border-2 border-transparent focus-within:border-indigo-600 focus-within:bg-white focus-within:shadow-lg transition-all duration-200">
+                    <div class="relative flex items-center bg-slate-100 rounded-2xl border-2 border-transparent focus-within:border-blue-600 focus-within:bg-white focus-within:shadow-lg transition-all duration-200">
                         <!-- Search Type Switcher Pill -->
                         <div class="pl-2">
-                            <select name="tab" x-model="searchType" @change="fetchSuggestions()" class="bg-transparent text-xs font-bold text-slate-600 border-none rounded-lg focus:ring-0 py-1.5 pl-2 pr-6 cursor-pointer hover:text-indigo-600">
+                            <select name="tab" x-model="searchType" @change="fetchSuggestions()" class="bg-transparent text-xs font-bold text-slate-600 border-none rounded-lg focus:ring-0 py-1.5 pl-2 pr-6 cursor-pointer hover:text-blue-600">
                                 <option value="products">Products</option>
                                 <option value="stores">Stores</option>
                                 <option value="brands">Brands</option>
@@ -153,7 +153,7 @@
                                x-model="query"
                                @focus="searchFocused = true"
                                @input.debounce.300ms="fetchSuggestions()"
-                               placeholder="Search fresh groceries, local electronics, stores, brands..."
+                               placeholder="Search smartphones, laptops, refrigerators, TVs, ACs, audio, brands..."
                                class="w-full bg-transparent border-0 focus:ring-0 text-sm py-2.5 px-3 text-slate-800 placeholder-slate-400" />
 
                         <!-- Clear Button -->
@@ -163,7 +163,7 @@
 
                         <!-- Search Submit Button -->
                         <div class="pr-1.5">
-                            <button type="submit" class="w-10 h-10 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white flex items-center justify-center transition shadow-sm">
+                            <button type="submit" class="w-10 h-10 rounded-xl bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center transition shadow-sm cursor-pointer">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                                 </svg>
@@ -371,7 +371,7 @@
             <!-- Mobile Omnisearch Row with Suggestions (sm:hidden) -->
             <div class="pb-2.5 sm:hidden relative" @click.outside="searchFocused = false">
                 <form action="{{ route('search') }}" method="GET" class="relative">
-                    <div class="flex items-center bg-slate-100 rounded-xl border border-slate-200 focus-within:border-indigo-600 focus-within:bg-white focus-within:shadow-md transition">
+                    <div class="flex items-center bg-slate-100 rounded-xl border border-slate-200 focus-within:border-blue-600 focus-within:bg-white focus-within:shadow-md transition">
                         <div class="pl-2.5 text-slate-400">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                         </div>
@@ -380,13 +380,13 @@
                                x-model="query"
                                @focus="searchFocused = true"
                                @input.debounce.300ms="fetchSuggestions()"
-                               placeholder="Search fresh groceries, stores, brands..."
+                               placeholder="Search smartphones, laptops, appliances, brands..."
                                class="w-full bg-transparent border-0 focus:ring-0 text-xs py-2 px-2 text-slate-800 placeholder-slate-400" />
                         <button x-show="query.length > 0" @click="query = ''; suggestions = { products: [], stores: [], brands: [] }" type="button" class="text-slate-400 hover:text-slate-600 pr-2">
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                         </button>
                         <div class="pr-1">
-                            <button type="submit" class="px-2.5 py-1 rounded-lg bg-indigo-600 text-white font-bold text-xs shadow-xs">
+                            <button type="submit" class="px-2.5 py-1 rounded-lg bg-blue-600 text-white font-bold text-xs shadow-xs">
                                 Search
                             </button>
                         </div>
@@ -421,7 +421,7 @@
                         <button type="button"
                                 @mouseenter="megaMenuOpen = true"
                                 @click="megaMenuOpen = !megaMenuOpen"
-                                class="inline-flex items-center space-x-1.5 font-extrabold text-indigo-600 hover:text-indigo-800 pr-4 border-r border-slate-200 py-2">
+                                class="inline-flex items-center space-x-1.5 font-extrabold text-blue-600 hover:text-blue-800 pr-4 border-r border-slate-200 py-2">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 6h16M4 12h16M4 18h16" />
                             </svg>
@@ -439,17 +439,17 @@
                             @if($categoriesList->isNotEmpty())
                                 @foreach($categoriesList->take(6) as $cat)
                                     <div class="space-y-2">
-                                        <a href="{{ route('category.show', $cat->slug) }}" class="font-bold text-slate-900 hover:text-indigo-600 flex items-center space-x-1.5 text-xs">
+                                        <a href="{{ route('category.show', $cat->slug) }}" class="font-bold text-slate-900 hover:text-blue-600 flex items-center space-x-1.5 text-xs">
                                             <span>{{ $cat->name }}</span>
                                             @if($cat->is_quick_eligible)
-                                                <span class="text-[9px] font-extrabold text-amber-500">⚡</span>
+                                                <span class="text-[9px] font-extrabold text-blue-500">⚡</span>
                                             @endif
                                         </a>
                                         @if($cat->children && $cat->children->isNotEmpty())
                                             <ul class="space-y-1.5 pl-2 text-slate-500 text-[11px]">
                                                 @foreach($cat->children->take(4) as $sub)
                                                     <li>
-                                                        <a href="{{ route('category.show', $sub->slug) }}" class="hover:text-indigo-600 hover:underline">
+                                                        <a href="{{ route('category.show', $sub->slug) }}" class="hover:text-blue-600 hover:underline">
                                                             {{ $sub->name }}
                                                         </a>
                                                     </li>
@@ -464,16 +464,18 @@
 
                     <!-- Quick Category Pills -->
                     <div class="flex items-center space-x-5 overflow-x-auto no-scrollbar font-semibold text-slate-600">
-                        <a href="{{ route('quick.index') }}" class="text-amber-600 hover:text-amber-700 flex items-center space-x-1 flex-shrink-0">
-                            <span>⚡ Quick Commerce (10-30m)</span>
+                        <a href="{{ route('category.show', 'refrigerators-freezers') }}" class="text-blue-600 hover:text-blue-800 flex items-center space-x-1 flex-shrink-0 font-bold">
+                            <span>❄️ Cooling by SK Refrigeration</span>
                         </a>
-                        <a href="{{ route('stores.index') }}" class="hover:text-indigo-600 flex-shrink-0">Nearby Stores</a>
+                        <a href="{{ route('category.show', 'mobiles-smartphones') }}" class="hover:text-blue-600 flex-shrink-0">Smartphones</a>
+                        <a href="{{ route('category.show', 'televisions') }}" class="hover:text-blue-600 flex-shrink-0">Smart TVs</a>
+                        <a href="{{ route('category.show', 'laptops-computers') }}" class="hover:text-blue-600 flex-shrink-0">Laptops</a>
+                        <a href="{{ route('category.show', 'audio-headphones') }}" class="hover:text-blue-600 flex-shrink-0">Audio</a>
                         <a href="{{ route('search', ['sort' => 'discount_desc']) }}" class="hover:text-rose-600 flex-shrink-0">Top Deals</a>
-                        <a href="{{ route('search', ['sort' => 'rating_desc']) }}" class="hover:text-indigo-600 flex-shrink-0">Best Sellers</a>
-                        <a href="{{ route('search', ['tab' => 'brands']) }}" class="hover:text-indigo-600 flex-shrink-0">Brands</a>
+                        <a href="{{ route('search', ['tab' => 'brands']) }}" class="hover:text-blue-600 flex-shrink-0">Brands</a>
                         @if($categoriesList->isNotEmpty())
                             @foreach($categoriesList->take(5) as $topNavCat)
-                                <a href="{{ route('category.show', $topNavCat->slug) }}" class="hover:text-indigo-600 flex-shrink-0 whitespace-nowrap">
+                                <a href="{{ route('category.show', $topNavCat->slug) }}" class="hover:text-blue-600 flex-shrink-0 whitespace-nowrap">
                                     {{ $topNavCat->name }}
                                 </a>
                             @endforeach
@@ -1106,7 +1108,7 @@
                 <!-- Brand Info -->
                 <div class="md:col-span-2 space-y-4">
                     <div class="flex items-center space-x-2 text-white font-black text-xl">
-                        <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-700 via-indigo-600 to-amber-400 flex items-center justify-center text-white text-base font-extrabold tracking-tighter">
+                        <div class="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center text-white text-base font-extrabold tracking-tighter">
                             AZ
                         </div>
                         <div class="leading-none">
@@ -1115,13 +1117,13 @@
                         </div>
                     </div>
                     <p class="text-xs text-slate-400 leading-relaxed max-w-sm">
-                        Smart Multi-Vendor E-Commerce Marketplace operated by SK Refrigeration. Unifying national marketplace selections, 10-30 minute quick commerce delivery from local partner stores, and reliable logistics.
+                        Smart Multi-Vendor Electronics &amp; Appliances Marketplace operated by SK Refrigeration. Unifying top brand electronics, cooling solutions, certified installations, and reliable doorstep delivery.
                     </p>
                     <div class="pt-2">
                         <span class="text-[11px] font-bold uppercase tracking-wider text-slate-300 block mb-2">Subscribe to ALLZONE Weekly Deals</span>
                         <div class="flex max-w-xs">
-                            <input type="email" placeholder="Enter your email" class="w-full bg-slate-800 border-0 rounded-l-xl text-xs text-white placeholder-slate-500 focus:ring-1 focus:ring-indigo-500 py-2 px-3" />
-                            <button type="button" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-3 text-xs rounded-r-xl transition">Join</button>
+                            <input type="email" placeholder="Enter your email" class="w-full bg-slate-800 border-0 rounded-l-xl text-xs text-white placeholder-slate-500 focus:ring-1 focus:ring-blue-500 py-2 px-3" />
+                            <button type="button" class="bg-blue-600 hover:bg-blue-500 text-white font-bold px-3 text-xs rounded-r-xl transition">Join</button>
                         </div>
                     </div>
                 </div>

@@ -138,7 +138,7 @@ class Product extends Model
             }
         }
 
-        return "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 300' width='300' height='300'><rect width='300' height='300' rx='28' fill='%23f8fafc'/><circle cx='150' cy='135' r='52' fill='%23eef2f6'/><path d='M132 118 h36 l6 38 h-48 z' fill='%236366f1' fill-opacity='0.15' stroke='%236366f1' stroke-width='3' stroke-linejoin='round'/><path d='M141 118 v-7 a9 9 0 0 1 18 0 v7' fill='none' stroke='%236366f1' stroke-width='3' stroke-linecap='round'/><circle cx='150' cy='137' r='3' fill='%236366f1'/><text x='150' y='232' font-family='sans-serif' font-size='12' font-weight='800' fill='%2394a3b8' letter-spacing='2' text-anchor='middle'>ALLZONE</text></svg>";
+        return "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 300' width='300' height='300'><rect width='300' height='300' rx='24' fill='%23f8fafc'/><circle cx='150' cy='140' r='56' fill='%232563eb' fill-opacity='0.1'/><rect x='125' y='115' width='50' height='50' rx='8' fill='%230f172a' stroke='%232563eb' stroke-width='3'/><circle cx='150' cy='140' r='8' fill='%2306b6d4'/><path d='M115 130 h10 M115 150 h10 M175 130 h10 M175 150 h10 M140 105 v10 M160 105 v10 M140 165 v10 M160 165 v10' stroke='%232563eb' stroke-width='2.5' stroke-linecap='round'/><text x='150' y='232' font-family='sans-serif' font-size='12' font-weight='900' fill='%232563eb' letter-spacing='1.5' text-anchor='middle'>ALLZONE ELECTRONICS</text></svg>";
     }
 
     public function getEffectivePriceAttribute(): float

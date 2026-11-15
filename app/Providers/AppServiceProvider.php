@@ -29,9 +29,14 @@ class AppServiceProvider extends ServiceProvider
             return new \App\Services\Search\DatabaseSearchService();
         });
 
-        // Bind Logistics Provider
+        // Bind Logistics Providers and Manager (ALLZONE Cargo + Shiprocket Aggregator)
+        $this->app->singleton(\App\Services\Cargo\ShiprocketClient::class);
+        $this->app->singleton(\App\Services\Cargo\ShiprocketLogisticsProvider::class);
+        $this->app->singleton(\App\Services\Cargo\OneStallCargoProvider::class);
+        $this->app->singleton(\App\Services\Cargo\LogisticsManager::class);
+
         $this->app->singleton(\App\Services\Cargo\Contracts\LogisticsProvider::class, function ($app) {
-            return $app->make(\App\Services\Cargo\OneStallCargoProvider::class);
+            return $app->make(\App\Services\Cargo\LogisticsManager::class);
         });
 
         // Bind Notification Gateways (Pluggable SMS, WhatsApp, Push)
