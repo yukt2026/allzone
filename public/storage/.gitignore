@@ -2,3 +2,13 @@
 !.gitignore
 !banners/
 !banners/*
+!categories/
+!categories/*
+!products/
+!products/*
+!brands/
+!brands/*
+!stores/
+!stores/*
+!riders/
+!riders/*
