@@ -5,7 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ $title ?? 'ALLZONE Delivery Partner' }} - {{ setting('name', 'ALLZONE') }}</title>
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @if(file_exists(public_path('build/manifest.json')))
+        @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @else
+        <script src="https://cdn.tailwindcss.com"></script>
+        <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    @endif
 </head>
 <body class="bg-slate-100 text-slate-900 min-h-full font-sans antialiased flex flex-col selection:bg-orange-500 selection:text-white pb-20">
 

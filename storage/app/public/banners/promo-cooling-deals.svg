@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 240" width="1200" height="240">
+    <rect width="1200" height="240" rx="24" fill="#0C4A6E"/>
+    <g opacity="0.25">
+        <circle cx="1080" cy="120" r="140" fill="none" stroke="#FFFFFF" stroke-width="2"/>
+    </g>
+    <text x="50" y="85" font-family="'Plus Jakarta Sans', sans-serif" font-size="13" font-weight="900" fill="#38BDF8" letter-spacing="1.5">❄️ SK REFRIGERATION SUPER COOLING DAYS</text>
+    <text x="50" y="135" font-family="'Plus Jakarta Sans', sans-serif" font-size="32" font-weight="900" fill="#FFFFFF">Up to ₹15,000 Exchange Bonus on Refrigerators &amp; ACs</text>
+    <text x="50" y="175" font-family="'Plus Jakarta Sans', sans-serif" font-size="15" font-weight="500" fill="#BAE6FD">Authorized brand warranties, free doorstep delivery &amp; certified installation across all orders.</text>
+    <rect x="980" y="85" width="170" height="50" rx="25" fill="#2563EB"/>
+    <text x="1065" y="116" font-family="'Plus Jakarta Sans', sans-serif" font-size="15" font-weight="900" fill="#FFFFFF" text-anchor="middle">SHOP NOW →</text>
+</svg>

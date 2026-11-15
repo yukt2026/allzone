@@ -49,7 +49,7 @@
                                          alt="{{ $banner->title }}" 
                                          class="w-full h-full object-cover object-center transition-transform duration-700 group-hover:scale-[1.01]"
                                          loading="{{ $index === 0 ? 'eager' : 'lazy' }}"
-                                         onerror="this.onerror=null; this.src='{{ asset('storage/banners/hero-electronics-sale.svg') }}';">
+                                         onerror="this.onerror=null; this.src='{{ asset('storage/banners/hero-electronics-sale.jpg') }}';">
                                 </a>
                             @else
                                 <div class="w-full h-full flex items-center p-6 sm:p-12 bg-gradient-to-r from-slate-950 via-blue-950 to-slate-900">
@@ -184,38 +184,71 @@
         </div>
     </section>
 
-    <!-- 3. Available Platform Coupons Showcase Bar -->
+    <!-- 3. Available Platform Coupons Showcase Bar (Modern Perforated Ticket Carousel) -->
     @if(isset($availableCoupons) && $availableCoupons->isNotEmpty())
         <section id="available-coupons" class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8" x-data="{ copiedCode: null }">
-            <div class="p-3.5 sm:p-4 rounded-2xl bg-blue-50/70 border border-blue-100 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 shadow-2xs">
-                <div class="flex items-center space-x-2.5">
-                    <span class="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center font-bold text-sm shadow-xs shrink-0">
-                        🎟️
-                    </span>
-                    <div>
-                        <div class="flex items-center space-x-2">
-                            <span class="text-xs font-black text-slate-900 uppercase tracking-wider">Storewide Electronics Vouchers</span>
-                            <span class="px-1.5 py-0.2 rounded text-[9px] font-bold bg-blue-100 text-blue-800">Verified Active</span>
+            <div class="p-3 sm:p-3.5 rounded-2xl bg-gradient-to-r from-blue-50/90 via-indigo-50/40 to-slate-50 border border-blue-100 shadow-2xs space-y-2.5">
+                <!-- Header -->
+                <div class="flex items-center justify-between gap-2">
+                    <div class="flex items-center space-x-2 min-w-0">
+                        <span class="w-6 h-6 rounded-lg bg-blue-600 text-white flex items-center justify-center text-xs shadow-2xs shrink-0">
+                            🎟️
+                        </span>
+                        <div class="flex items-center space-x-2 truncate">
+                            <h3 class="text-xs sm:text-sm font-black text-slate-900 tracking-tight uppercase truncate">Storewide Vouchers</h3>
+                            <span class="hidden sm:inline-block text-[11px] text-slate-500 font-medium truncate">• Use at checkout for instant savings</span>
                         </div>
-                        <p class="text-[11px] text-slate-500">Apply these exclusive vouchers at checkout for instant order deductions</p>
+                    </div>
+                    <div class="flex items-center space-x-1.5 shrink-0">
+                        <span class="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                            <span class="whitespace-nowrap">Verified Active</span>
+                        </span>
                     </div>
                 </div>
 
-                <div class="flex items-center gap-2 overflow-x-auto w-full md:w-auto no-scrollbar pb-1 md:pb-0">
+                <!-- Ticket Strip -->
+                <div class="flex items-center gap-2.5 overflow-x-auto w-full no-scrollbar pb-0.5">
                     @foreach($availableCoupons as $coup)
-                        <div class="p-2 sm:px-3 sm:py-1.5 rounded-xl bg-white border border-blue-200 shadow-2xs flex items-center space-x-2 shrink-0">
-                            <div>
-                                <span class="font-mono font-black text-xs text-blue-600 tracking-wider">{{ $coup->code }}</span>
-                                <span class="text-[11px] font-bold text-slate-800 ml-1">({{ $coup->formatted_discount }} OFF)</span>
+                        <div class="relative flex items-stretch bg-white rounded-xl border border-slate-200/90 shadow-2xs hover:shadow-xs transition overflow-hidden shrink-0 w-[240px] sm:w-[260px]">
+                            <!-- Left: Discount highlight badge -->
+                            <div class="bg-gradient-to-br from-blue-600 to-indigo-700 text-white px-3 py-2 flex flex-col items-center justify-center min-w-[70px] shrink-0 text-center">
+                                <span class="text-xs font-black tracking-tight leading-none">{{ $coup->formatted_discount }}</span>
+                                <span class="text-[8px] uppercase tracking-wider font-extrabold text-blue-100 mt-0.5">OFF</span>
                             </div>
-                            <button 
-                                type="button" 
-                                @click="navigator.clipboard.writeText('{{ $coup->code }}'); copiedCode = '{{ $coup->code }}'; setTimeout(() => copiedCode = null, 2000)"
-                                class="px-2 py-0.5 text-[10px] font-bold rounded-md transition cursor-pointer"
-                                :class="copiedCode === '{{ $coup->code }}' ? 'bg-emerald-600 text-white' : 'bg-blue-50 hover:bg-blue-100 text-blue-700'"
-                            >
-                                <span x-text="copiedCode === '{{ $coup->code }}' ? 'Copied!' : 'Copy'"></span>
-                            </button>
+
+                            <!-- Ticket perforated divider with top/bottom semi-circle notches -->
+                            <div class="relative flex flex-col justify-between py-0.5 -mx-1 z-10 shrink-0">
+                                <div class="w-2.5 h-2.5 rounded-full bg-slate-100 -mt-2 border-b border-slate-200"></div>
+                                <div class="h-full border-r border-dashed border-slate-200 mx-auto my-0.5"></div>
+                                <div class="w-2.5 h-2.5 rounded-full bg-slate-100 -mb-2 border-t border-slate-200"></div>
+                            </div>
+
+                            <!-- Right: Code, min order & Copy button -->
+                            <div class="p-2 pl-2.5 flex-1 flex flex-col justify-center min-w-0">
+                                <div class="flex items-center justify-between gap-1">
+                                    <span class="font-mono font-black text-xs text-slate-900 tracking-wider bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200 truncate select-all">
+                                        {{ $coup->code }}
+                                    </span>
+                                    <button 
+                                        type="button" 
+                                        @click="navigator.clipboard.writeText('{{ $coup->code }}'); copiedCode = '{{ $coup->code }}'; setTimeout(() => copiedCode = null, 2000)"
+                                        class="px-2 py-0.5 text-[10px] font-bold rounded-md transition cursor-pointer shrink-0 flex items-center space-x-0.5"
+                                        :class="copiedCode === '{{ $coup->code }}' ? 'bg-emerald-600 text-white shadow-2xs' : 'bg-blue-50 hover:bg-blue-100 text-blue-700'"
+                                    >
+                                        <span x-show="copiedCode !== '{{ $coup->code }}'" class="text-[9px]">📋</span>
+                                        <span x-show="copiedCode === '{{ $coup->code }}'" class="text-[9px]">✓</span>
+                                        <span x-text="copiedCode === '{{ $coup->code }}' ? 'Copied' : 'Copy'"></span>
+                                    </button>
+                                </div>
+                                <p class="text-[9px] text-slate-500 font-medium mt-1 truncate">
+                                    @if($coup->min_order > 0)
+                                        Min. order ₹{{ number_format((float) $coup->min_order) }}
+                                    @else
+                                        No min. order required
+                                    @endif
+                                </p>
+                            </div>
                         </div>
                     @endforeach
                 </div>

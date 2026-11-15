@@ -5,9 +5,11 @@
 /.vscode
 /.zed
 /node_modules
-/public/build
+# /public/build is tracked so production deployment has manifest.json and compiled assets
+# /public/build
 /public/hot
-/public/storage
+/public/storage/*
+!/public/storage/banners/
 /storage/*.key
 /storage/pail
 /vendor
