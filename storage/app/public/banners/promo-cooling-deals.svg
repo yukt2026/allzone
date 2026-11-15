@@ -1,11 +1,35 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 240" width="1200" height="240">
-    <rect width="1200" height="240" rx="24" fill="#0C4A6E"/>
-    <g opacity="0.25">
-        <circle cx="1080" cy="120" r="140" fill="none" stroke="#FFFFFF" stroke-width="2"/>
+    <defs>
+        <linearGradient id="coolBg" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#082F49"/>
+            <stop offset="50%" stop-color="#0C4A6E"/>
+            <stop offset="100%" stop-color="#0369A1"/>
+        </linearGradient>
+        <linearGradient id="btnCool" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#2563EB"/>
+            <stop offset="100%" stop-color="#3B82F6"/>
+        </linearGradient>
+    </defs>
+    <rect width="1200" height="240" rx="24" fill="url(#coolBg)"/>
+    
+    <!-- Decorative Rings around CTA -->
+    <g opacity="0.18">
+        <circle cx="1050" cy="120" r="150" fill="none" stroke="#38BDF8" stroke-width="2"/>
+        <circle cx="1050" cy="120" r="110" fill="none" stroke="#FFFFFF" stroke-width="1.5" stroke-dasharray="6 6"/>
     </g>
-    <text x="50" y="85" font-family="'Plus Jakarta Sans', sans-serif" font-size="13" font-weight="900" fill="#38BDF8" letter-spacing="1.5">❄️ SK REFRIGERATION SUPER COOLING DAYS</text>
-    <text x="50" y="135" font-family="'Plus Jakarta Sans', sans-serif" font-size="32" font-weight="900" fill="#FFFFFF">Up to ₹15,000 Exchange Bonus on Refrigerators &amp; ACs</text>
-    <text x="50" y="175" font-family="'Plus Jakarta Sans', sans-serif" font-size="15" font-weight="500" fill="#BAE6FD">Authorized brand warranties, free doorstep delivery &amp; certified installation across all orders.</text>
-    <rect x="980" y="85" width="170" height="50" rx="25" fill="#2563EB"/>
-    <text x="1065" y="116" font-family="'Plus Jakarta Sans', sans-serif" font-size="15" font-weight="900" fill="#FFFFFF" text-anchor="middle">SHOP NOW →</text>
+
+    <!-- Tag Badge -->
+    <rect x="60" y="38" width="330" height="28" rx="14" fill="#0284C7" fill-opacity="0.3" stroke="#38BDF8" stroke-width="1.2"/>
+    <text x="75" y="57" font-family="'Plus Jakarta Sans', system-ui, -apple-system, sans-serif" font-size="12" font-weight="800" fill="#38BDF8" letter-spacing="1.5">❄️ SK REFRIGERATION SUPER COOLING DAYS</text>
+
+    <!-- Main Title (2 Clean Lines with zero overlap) -->
+    <text x="60" y="108" font-family="'Plus Jakarta Sans', system-ui, -apple-system, sans-serif" font-size="28" font-weight="900" fill="#FFFFFF" letter-spacing="-0.3">Up to ₹15,000 Exchange Bonus</text>
+    <text x="60" y="146" font-family="'Plus Jakarta Sans', system-ui, -apple-system, sans-serif" font-size="28" font-weight="900" fill="#7DD3FC" letter-spacing="-0.3">on Refrigerators &amp; Air Conditioners</text>
+
+    <!-- Subtitle -->
+    <text x="60" y="186" font-family="'Plus Jakarta Sans', system-ui, -apple-system, sans-serif" font-size="14" font-weight="500" fill="#BAE6FD">Authorized brand warranties &bull; Free doorstep delivery &bull; Certified technician installation</text>
+
+    <!-- CTA Button -->
+    <rect x="960" y="95" width="180" height="50" rx="25" fill="url(#btnCool)"/>
+    <text x="1050" y="126" font-family="'Plus Jakarta Sans', system-ui, -apple-system, sans-serif" font-size="14" font-weight="800" fill="#FFFFFF" text-anchor="middle" letter-spacing="0.5">SHOP NOW →</text>
 </svg>

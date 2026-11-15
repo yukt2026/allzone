@@ -1,11 +1,35 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 240" width="1200" height="240">
-    <rect width="1200" height="240" rx="24" fill="#0F172A"/>
-    <g opacity="0.25">
-        <circle cx="1080" cy="120" r="140" fill="none" stroke="#38BDF8" stroke-width="2"/>
+    <defs>
+        <linearGradient id="audioBg" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#020617"/>
+            <stop offset="50%" stop-color="#0F172A"/>
+            <stop offset="100%" stop-color="#1E1B4B"/>
+        </linearGradient>
+        <linearGradient id="btnAudio" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#2563EB"/>
+            <stop offset="100%" stop-color="#4F46E5"/>
+        </linearGradient>
+    </defs>
+    <rect width="1200" height="240" rx="24" fill="url(#audioBg)"/>
+    
+    <!-- Decorative Rings around CTA -->
+    <g opacity="0.18">
+        <circle cx="1050" cy="120" r="150" fill="none" stroke="#818CF8" stroke-width="2"/>
+        <circle cx="1050" cy="120" r="110" fill="none" stroke="#FFFFFF" stroke-width="1.5" stroke-dasharray="6 6"/>
     </g>
-    <text x="50" y="85" font-family="'Plus Jakarta Sans', sans-serif" font-size="13" font-weight="900" fill="#38BDF8" letter-spacing="1.5">🎧 MEGA AUDIO &amp; WEARABLES FEST</text>
-    <text x="50" y="135" font-family="'Plus Jakarta Sans', sans-serif" font-size="32" font-weight="900" fill="#FFFFFF">True Wireless Earbuds &amp; Noise Cancelling Starting ₹999</text>
-    <text x="50" y="175" font-family="'Plus Jakarta Sans', sans-serif" font-size="15" font-weight="500" fill="#CBD5E1">Discover best-in-class audio gear from Boat, Noise, OnePlus and Sony with instant dispatch.</text>
-    <rect x="980" y="85" width="170" height="50" rx="25" fill="#2563EB"/>
-    <text x="1065" y="116" font-family="'Plus Jakarta Sans', sans-serif" font-size="15" font-weight="900" fill="#FFFFFF" text-anchor="middle">EXPLORE →</text>
+
+    <!-- Tag Badge -->
+    <rect x="60" y="38" width="300" height="28" rx="14" fill="#312E81" fill-opacity="0.4" stroke="#818CF8" stroke-width="1.2"/>
+    <text x="75" y="57" font-family="'Plus Jakarta Sans', system-ui, -apple-system, sans-serif" font-size="12" font-weight="800" fill="#A5B4FC" letter-spacing="1.5">🎧 MEGA AUDIO &amp; WEARABLES FEST</text>
+
+    <!-- Main Title (2 Clean Lines with zero overlap) -->
+    <text x="60" y="108" font-family="'Plus Jakarta Sans', system-ui, -apple-system, sans-serif" font-size="28" font-weight="900" fill="#FFFFFF" letter-spacing="-0.3">True Wireless Earbuds &amp; Audio</text>
+    <text x="60" y="146" font-family="'Plus Jakarta Sans', system-ui, -apple-system, sans-serif" font-size="28" font-weight="900" fill="#C7D2FE" letter-spacing="-0.3">Noise Cancelling Starting at ₹999</text>
+
+    <!-- Subtitle -->
+    <text x="60" y="186" font-family="'Plus Jakarta Sans', system-ui, -apple-system, sans-serif" font-size="14" font-weight="500" fill="#94A3B8">Top brands: boAt, Noise, OnePlus, Sony &bull; Instant dispatch &bull; Official brand warranty</text>
+
+    <!-- CTA Button -->
+    <rect x="960" y="95" width="180" height="50" rx="25" fill="url(#btnAudio)"/>
+    <text x="1050" y="126" font-family="'Plus Jakarta Sans', system-ui, -apple-system, sans-serif" font-size="14" font-weight="800" fill="#FFFFFF" text-anchor="middle" letter-spacing="0.5">EXPLORE →</text>
 </svg>
