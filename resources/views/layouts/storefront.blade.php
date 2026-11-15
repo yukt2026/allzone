@@ -828,15 +828,17 @@
                 </div>
 
                 <!-- Quick Navigation Strip -->
-                <div class="p-3 bg-slate-50 border-b border-slate-200 grid grid-cols-3 gap-2 text-center text-xs flex-shrink-0">
+                <div class="p-3 bg-slate-50 border-b border-slate-200 grid grid-cols-2 gap-2 text-center text-xs flex-shrink-0">
                     <a href="{{ route('home') }}" @click="mobileCategoryOpen = false" class="p-2 rounded-xl bg-white border border-slate-200/80 hover:border-indigo-300 hover:bg-indigo-50/40 text-slate-700 transition flex flex-col items-center">
                         <span class="text-base mb-0.5">🏠</span>
                         <span class="text-[10px] font-bold text-slate-800">Home</span>
                     </a>
+                    {{--
                     <a href="{{ route('quick.index') }}" @click="mobileCategoryOpen = false" class="p-2 rounded-xl bg-white border border-slate-200/80 hover:border-amber-300 hover:bg-amber-50/40 text-slate-700 transition flex flex-col items-center">
                         <span class="text-base mb-0.5">⚡</span>
                         <span class="text-[10px] font-bold text-slate-800">Quick 15m</span>
                     </a>
+                    --}}
                     <a href="{{ route('stores.index') }}" @click="mobileCategoryOpen = false" class="p-2 rounded-xl bg-white border border-slate-200/80 hover:border-emerald-300 hover:bg-emerald-50/40 text-slate-700 transition flex flex-col items-center">
                         <span class="text-base mb-0.5">🏪</span>
                         <span class="text-[10px] font-bold text-slate-800">Stores</span>
@@ -1138,7 +1140,7 @@
                 <div>
                     <h5 class="text-xs font-bold uppercase tracking-wider text-white mb-4">Platform Modes</h5>
                     <ul class="space-y-2 text-xs">
-                        <li><a href="{{ route('quick.index') }}" class="hover:text-white transition">⚡ Quick Commerce (10-30m)</a></li>
+                        {{-- <li><a href="{{ route('quick.index') }}" class="hover:text-white transition">⚡ Quick Commerce (10-30m)</a></li> --}}
                         <li><a href="{{ route('stores.index') }}" class="hover:text-white transition">🏪 Physical Stores Directory</a></li>
                         <li><a href="{{ route('search', ['sort' => 'discount_desc']) }}" class="hover:text-white transition">🔥 Marketplace Deals</a></li>
                         <li><a href="{{ route('search', ['tab' => 'brands']) }}" class="hover:text-white transition">✓ Verified Brand Stores</a></li>
