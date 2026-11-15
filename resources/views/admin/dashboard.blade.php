@@ -149,7 +149,7 @@
                     </div>
                 </div>
             </div>
-            <div class="mt-3 pt-2 text-[11px] text-slate-400 dark:text-slate-500">Stores selling actively on OneStall</div>
+            <div class="mt-3 pt-2 text-[11px] text-slate-400 dark:text-slate-500">Stores selling actively on {{ setting('name', 'ALLZONE') }}</div>
         </div>
     </div>
 

@@ -425,7 +425,7 @@ Alpine.store('location', {
     errorMessage: '',
 
     init() {
-        const cached = localStorage.getItem('onestall_location');
+        const cached = localStorage.getItem('allzone_location') || localStorage.getItem('onestall_location');
         if (cached) {
             try {
                 const parsed = JSON.parse(cached);
@@ -447,7 +447,7 @@ Alpine.store('location', {
             if (data) {
                 if (data.current) {
                     this.current = data.current;
-                    localStorage.setItem('onestall_location', JSON.stringify(data.current));
+                    localStorage.setItem('allzone_location', JSON.stringify(data.current));
                 }
                 if (data.popular) this.popular = data.popular;
                 if (data.saved) this.saved = data.saved;
@@ -474,7 +474,7 @@ Alpine.store('location', {
     async setLocation(loc) {
         try {
             this.current = { ...this.current, ...loc };
-            localStorage.setItem('onestall_location', JSON.stringify(this.current));
+            localStorage.setItem('allzone_location', JSON.stringify(this.current));
 
             const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
             const res = await fetch(apiUrl('/api/storefront/location/set'), {
@@ -490,7 +490,7 @@ Alpine.store('location', {
             const data = await res.json();
             if (data && data.location) {
                 this.current = data.location;
-                localStorage.setItem('onestall_location', JSON.stringify(data.location));
+                localStorage.setItem('allzone_location', JSON.stringify(data.location));
             }
             this.modalOpen = false;
             window.location.reload();
@@ -531,7 +531,7 @@ Alpine.store('location', {
                     const data = await res.json();
                     if (data && data.location) {
                         this.current = data.location;
-                        localStorage.setItem('onestall_location', JSON.stringify(data.location));
+                        localStorage.setItem('allzone_location', JSON.stringify(data.location));
                         this.detecting = false;
                         this.modalOpen = false;
                         window.location.reload();

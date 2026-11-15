@@ -41,7 +41,7 @@ class OrderStatusUpdatedNotification extends Notification implements ShouldQueue
         }
 
         $mail->action('Track Your Order', route('orders.show', $this->order->order_number))
-            ->line('Thank you for shopping with ' . setting('name', 'OneStall') . '!');
+            ->line('Thank you for shopping with ' . setting('name', 'ALLZONE') . '!');
 
         return $mail;
     }

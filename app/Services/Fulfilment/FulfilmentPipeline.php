@@ -252,7 +252,7 @@ class FulfilmentPipeline
 
             if (!isset($groupsMap[$groupKey])) {
                 $seller = Seller::find($match->sellerId);
-                $sellerName = $seller?->business_name ?? 'OneStall Merchant';
+                $sellerName = $seller?->business_name ?? (setting('name', 'ALLZONE') . ' Merchant');
 
                 $badge = ($match->fulfilmentType === FulfilmentType::QUICK)
                     ? '⚡ 15-30m Quick Delivery'

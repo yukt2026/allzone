@@ -1,4 +1,4 @@
-@extends('layouts.rider', ['title' => 'Rider Wallet & Earnings - OneStall'])
+@extends('layouts.rider', ['title' => 'Rider Wallet & Earnings - ALLZONE'])
 
 @section('content')
 <div class="space-y-4">

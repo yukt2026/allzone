@@ -2,7 +2,7 @@
 
 @section('hideBottomNav', 'true')
 
-@section('title', 'Shopping Cart - OneStall.in')
+@section('title', 'Shopping Cart - ' . setting('name', 'ALLZONE'))
 
 @section('content')
 <div class="min-h-screen bg-slate-50 py-4 sm:py-8 pb-28 sm:pb-12"

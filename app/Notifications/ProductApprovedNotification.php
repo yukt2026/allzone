@@ -29,9 +29,9 @@ class ProductApprovedNotification extends Notification implements ShouldQueue
             ->subject("Product Approved: '{$this->product->title}' is Now Live")
             ->greeting("Hello {$this->product->seller->business_name},")
             ->line("Great news! Your product listing **'{$this->product->title}'** has been reviewed and approved by our catalogue moderation team.")
-            ->line('It is now active and discoverable by consumers across the OneStall marketplace.')
+            ->line('It is now active and discoverable by consumers across the ' . setting('name', 'ALLZONE') . ' marketplace.')
             ->action('View Product in Catalogue', route('seller.dashboard'))
-            ->line('Thank you for maintaining high listing standards on OneStall.');
+            ->line('Thank you for maintaining high listing standards on ' . setting('name', 'ALLZONE') . '.');
     }
 
     public function toArray(object $notifiable): array

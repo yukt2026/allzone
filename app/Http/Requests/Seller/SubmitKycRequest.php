@@ -27,8 +27,10 @@ class SubmitKycRequest extends FormRequest
 
     public function messages(): array
     {
+        $brand = function_exists('setting') ? setting('name', 'ALLZONE') : 'ALLZONE';
+
         return [
-            'terms_accepted.accepted' => 'You must accept the OneStall Merchant Marketplace Terms of Service.',
+            'terms_accepted.accepted' => "You must accept the {$brand} Merchant Marketplace Terms of Service.",
             'declaration_accepted.accepted' => 'You must certify that all provided business details, documents, and bank details are genuine.',
         ];
     }

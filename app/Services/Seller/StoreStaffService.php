@@ -43,7 +43,7 @@ class StoreStaffService
 
             if (!$user) {
                 $tempPassword = Str::random(12);
-                $fallbackEmail = $email ?: ('staff_' . $phone . '@onestall.internal');
+                $fallbackEmail = $email ?: ('staff_' . $phone . '@allzone.internal');
 
                 $user = User::create([
                     'name' => $name,

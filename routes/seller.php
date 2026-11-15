@@ -184,6 +184,29 @@ Route::middleware(['auth', 'seller.status'])->group(function () {
         Route::get('/demand-forecast', [\App\Http\Controllers\Seller\SellerAiController::class, 'demandForecast'])->name('demand_forecast');
         Route::get('/action-logs', [\App\Http\Controllers\Seller\SellerAiController::class, 'actionLogs'])->name('action_logs');
     });
+
+    // Seller Profile & KYC Credentials
+    Route::get('/profile', [\App\Http\Controllers\Seller\ProfileController::class, 'show'])->name('profile');
+    Route::put('/profile', [\App\Http\Controllers\Seller\ProfileController::class, 'update'])->name('profile.update');
+
+    // Merchant Wallet & Withdrawal Requests
+    Route::get('/wallet', [\App\Http\Controllers\Seller\WalletController::class, 'index'])->name('wallet.index');
+    Route::post('/wallet/withdraw', [\App\Http\Controllers\Seller\WalletController::class, 'requestWithdrawal'])->name('wallet.withdraw');
+
+    // Vendor Support Desk
+    Route::prefix('support')->name('support.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Seller\SupportTicketController::class, 'index'])->name('index');
+        Route::get('/create', [\App\Http\Controllers\Seller\SupportTicketController::class, 'create'])->name('create');
+        Route::post('/', [\App\Http\Controllers\Seller\SupportTicketController::class, 'store'])->name('store');
+        Route::get('/{ticket}', [\App\Http\Controllers\Seller\SupportTicketController::class, 'show'])->name('show');
+        Route::post('/{ticket}/reply', [\App\Http\Controllers\Seller\SupportTicketController::class, 'reply'])->name('reply');
+    });
+
+    // In-App Notifications Center
+    Route::get('/notifications', [\App\Http\Controllers\NotificationController::class, 'index'])->name('notifications.index');
+
+    // Sales Reports Direct Route
+    Route::get('/reports', [\App\Http\Controllers\Seller\StoreOutletController::class, 'reports'])->name('reports.index');
 });
 
 // Signed route for private document downloads

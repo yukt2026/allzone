@@ -180,7 +180,7 @@ class CheckoutController extends Controller
 
         $validated = $request->validate([
             'address_id' => ['required', 'integer', 'exists:customer_addresses,id'],
-            'payment_method' => ['required', 'string', 'in:online,cod,upi,card,netbanking'],
+            'payment_method' => ['required', 'string', 'in:online,cod,upi,card,netbanking,wallet'],
             'idempotency_key' => ['required', 'string', 'max:64'],
             'notes' => ['nullable', 'string', 'max:500'],
         ]);
@@ -199,7 +199,7 @@ class CheckoutController extends Controller
                 notes: $validated['notes'] ?? null
             );
 
-            $targetUrl = strtolower($validated['payment_method']) === 'cod'
+            $targetUrl = in_array(strtolower($validated['payment_method']), ['cod', 'wallet'], true)
                 ? route('checkout.success', $order->order_number)
                 : route('payment.pay', $order->order_number);
 

@@ -398,31 +398,32 @@ class CartService
             }
 
             $hasInventory = $variant->inventories->isNotEmpty();
-            if ($hasInventory) {
-                $available = (int) $variant->inventories->sum(fn ($i) => max(0, $i->quantity_on_hand - $i->quantity_reserved));
-                if ($available <= 0) {
-                    $issues[] = [
-                        'item_id' => $item->id,
-                        'variant_id' => $variant->id,
-                        'product_title' => $variant->product?->title ?? 'Item',
-                        'variant_name' => $variant->name,
-                        'requested_quantity' => $item->quantity,
-                        'available_quantity' => 0,
-                        'status' => 'out_of_stock',
-                        'message' => "Item '{$variant->product?->title}' ({$variant->name}) is out of stock.",
-                    ];
-                } elseif ($available < $item->quantity) {
-                    $issues[] = [
-                        'item_id' => $item->id,
-                        'variant_id' => $variant->id,
-                        'product_title' => $variant->product?->title ?? 'Item',
-                        'variant_name' => $variant->name,
-                        'requested_quantity' => $item->quantity,
-                        'available_quantity' => $available,
-                        'status' => 'insufficient_stock',
-                        'message' => "Only {$available} unit(s) available for '{$variant->product?->title}' ({$variant->name}).",
-                    ];
-                }
+            $available = $hasInventory
+                ? (int) $variant->inventories->sum(fn ($i) => max(0, $i->quantity_on_hand - $i->quantity_reserved))
+                : 0;
+
+            if ($available <= 0) {
+                $issues[] = [
+                    'item_id' => $item->id,
+                    'variant_id' => $variant->id,
+                    'product_title' => $variant->product?->title ?? 'Item',
+                    'variant_name' => $variant->name,
+                    'requested_quantity' => $item->quantity,
+                    'available_quantity' => 0,
+                    'status' => 'out_of_stock',
+                    'message' => "Item '{$variant->product?->title}' ({$variant->name}) is out of stock.",
+                ];
+            } elseif ($available < $item->quantity) {
+                $issues[] = [
+                    'item_id' => $item->id,
+                    'variant_id' => $variant->id,
+                    'product_title' => $variant->product?->title ?? 'Item',
+                    'variant_name' => $variant->name,
+                    'requested_quantity' => $item->quantity,
+                    'available_quantity' => $available,
+                    'status' => 'insufficient_stock',
+                    'message' => "Only {$available} unit(s) available for '{$variant->product?->title}' ({$variant->name}).",
+                ];
             }
         }
 
@@ -465,9 +466,9 @@ class CartService
             $hasInventory = $variant && $variant->inventories->isNotEmpty();
             $availableStock = $hasInventory
                 ? (int) $variant->inventories->sum(fn ($i) => max(0, $i->quantity_on_hand - $i->quantity_reserved))
-                : 100;
-            $isOutOfStock = $hasInventory && $availableStock <= 0;
-            $isLowStock = $hasInventory && $availableStock < $item->quantity;
+                : 0;
+            $isOutOfStock = $availableStock <= 0;
+            $isLowStock = !$isOutOfStock && ($availableStock < $item->quantity);
 
             if ($item->is_saved_for_later) {
                 // Image resolution
@@ -487,7 +488,7 @@ class CartService
                     'formatted_mrp' => format_currency($mrp),
                     'quantity' => $item->quantity,
                     'is_out_of_stock' => $isOutOfStock,
-                    'seller_name' => $seller?->business_name ?? 'OneStall Partner',
+                    'seller_name' => $seller?->business_name ?? (setting('name', 'ALLZONE') . ' Partner'),
                 ];
                 continue;
             }
@@ -643,7 +644,7 @@ class CartService
         foreach ($bySeller as $sellerId => $items) {
             $sellerId = (int) $sellerId;
             $first = $items->first();
-            $sellerName = $first['seller_name'] ?? 'OneStall Seller';
+            $sellerName = $first['seller_name'] ?? (setting('name', 'ALLZONE') . ' Seller');
 
             // Check if all products in group are quick capable
             $allQuick = $items->every(fn ($item) => !empty($item['is_quick_capable']));

@@ -120,7 +120,7 @@ class HealthCheckController extends Controller
             'status' => $status,
             'timestamp' => now()->toIso8601String(),
             'app_env' => config('app.env'),
-            'app_version' => config('onestall.version', '1.0.0'),
+            'app_version' => config('allzone.version', config('onestall.version', '1.0.0')),
             'php_version' => PHP_VERSION,
             'laravel_version' => app()->version(),
             'memory' => [

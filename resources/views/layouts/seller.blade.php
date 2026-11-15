@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>{{ $title ?? 'Seller Studio' }} - {{ config('onestall.name', 'OneStall') }}</title>
+    <title>{{ $title ?? 'Seller Studio' }} - {{ setting('name', 'ALLZONE') }}</title>
 
     <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
     <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('favicon.png') }}">
@@ -148,13 +148,13 @@
         <!-- Brand Header -->
         <div class="h-16 flex items-center justify-between px-6 border-b border-slate-800">
             <a href="{{ route('seller.dashboard') }}" class="flex items-center space-x-3">
-                <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-500 flex items-center justify-center text-white font-black text-lg shadow-lg shadow-emerald-600/30">
-                    1S
+                <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-700 via-indigo-600 to-amber-400 flex items-center justify-center text-white font-black text-sm shadow-lg shadow-indigo-600/30 tracking-tighter">
+                    AZ
                 </div>
                 <div>
-                    <span class="text-base font-bold text-white tracking-tight">Seller Studio</span>
+                    <span class="text-base font-bold text-white tracking-tight">ALLZONE Studio</span>
                     <span class="text-[10px] uppercase font-bold tracking-widest text-emerald-400 block -mt-1 truncate max-w-[140px]">
-                        {{ $seller?->business_name ?? 'OneStall Merchant' }}
+                        {{ $seller?->business_name ?? 'ALLZONE Merchant' }}
                     </span>
                 </div>
             </a>
@@ -287,7 +287,7 @@
                 </form>
             </div>
             <div class="text-slate-500 font-mono text-[10px] truncate">
-                {{ auth()->user()->email ?? 'seller@onestall.in' }}
+                {{ auth()->user()->email ?? 'seller@allzone.in' }}
             </div>
         </div>
     </aside>

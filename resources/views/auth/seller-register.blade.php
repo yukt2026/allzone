@@ -5,7 +5,7 @@
     <!-- Header -->
     <div>
         <div class="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-full bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300 text-xs font-semibold mb-2">
-            <span>🏪 OneStall Merchant Program</span>
+            <span>🏪 {{ setting('name', 'ALLZONE') }} Merchant Program</span>
         </div>
         <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
             Register as a Seller

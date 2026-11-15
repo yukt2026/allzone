@@ -356,7 +356,7 @@
 
         <form id="addNoteForm" method="POST" action="{{ route('admin.orders.add_note', $order) }}" class="space-y-4">
             @csrf
-            <p class="text-xs text-slate-500">Internal notes are visible exclusively to OneStall admins and support staff.</p>
+            <p class="text-xs text-slate-500">Internal notes are visible exclusively to {{ setting('name', 'ALLZONE') }} admins and support staff.</p>
 
             <div>
                 <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Note Details</label>

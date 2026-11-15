@@ -67,7 +67,7 @@ class ReportController extends Controller
             fprintf($handle, chr(0xEF).chr(0xBB).chr(0xBF));
 
             if ($type === 'orders') {
-                fputcsv($handle, ['OneStall Orders & Channels Report']);
+                fputcsv($handle, [setting('name', 'ALLZONE') . ' Orders & Channels Report']);
                 fputcsv($handle, ['Reporting Period', $startDate->format('Y-m-d') . ' to ' . $endDate->format('Y-m-d')]);
                 fputcsv($handle, []);
                 fputcsv($handle, ['--- BY LIFECYCLE STATUS ---']);
@@ -89,7 +89,7 @@ class ReportController extends Controller
                     fputcsv($handle, [ucfirst((string) $row->fulfilment_type), $row->count, number_format((float) $row->total, 2, '.', '')]);
                 }
             } elseif ($type === 'sellers') {
-                fputcsv($handle, ['OneStall Seller Performance Leaderboard']);
+                fputcsv($handle, [setting('name', 'ALLZONE') . ' Seller Performance Leaderboard']);
                 fputcsv($handle, ['Reporting Period', $startDate->format('Y-m-d') . ' to ' . $endDate->format('Y-m-d')]);
                 fputcsv($handle, []);
                 fputcsv($handle, ['Seller ID', 'Business Name', 'Orders Fulfilled', 'Gross GMV (INR)', 'Platform Commission (INR)', 'Net Seller Earnings (INR)']);
@@ -105,7 +105,7 @@ class ReportController extends Controller
                     ]);
                 }
             } elseif ($type === 'categories') {
-                fputcsv($handle, ['OneStall Category Turnover & Demand Report']);
+                fputcsv($handle, [setting('name', 'ALLZONE') . ' Category Turnover & Demand Report']);
                 fputcsv($handle, ['Reporting Period', $startDate->format('Y-m-d') . ' to ' . $endDate->format('Y-m-d')]);
                 fputcsv($handle, []);
                 fputcsv($handle, ['Category ID', 'Category Name', 'Units Dispatched', 'Gross Revenue (INR)']);
@@ -119,7 +119,7 @@ class ReportController extends Controller
                     ]);
                 }
             } elseif ($type === 'tax') {
-                fputcsv($handle, ['OneStall GST & Tax Accounting Reconciliation']);
+                fputcsv($handle, [setting('name', 'ALLZONE') . ' GST & Tax Accounting Reconciliation']);
                 fputcsv($handle, ['Reporting Period', $startDate->format('Y-m-d') . ' to ' . $endDate->format('Y-m-d')]);
                 fputcsv($handle, []);
                 fputcsv($handle, ['Tax Metric', 'Amount (INR)']);
@@ -129,7 +129,7 @@ class ReportController extends Controller
                 fputcsv($handle, ['Platform Commission GST (18%)', number_format((float) $report['commissionTax'], 2, '.', '')]);
                 fputcsv($handle, ['Total Tax Liability / Collected', number_format((float) $report['totalTaxCollected'], 2, '.', '')]);
             } elseif ($type === 'commission') {
-                fputcsv($handle, ['OneStall Platform Commission & Disbursements Ledger']);
+                fputcsv($handle, [setting('name', 'ALLZONE') . ' Platform Commission & Disbursements Ledger']);
                 fputcsv($handle, ['Reporting Period', $startDate->format('Y-m-d') . ' to ' . $endDate->format('Y-m-d')]);
                 fputcsv($handle, []);
                 fputcsv($handle, ['Entry ID', 'Created At', 'Order #', 'Merchant Name', 'Base Order GMV (INR)', 'Commission Rate', 'Commission Pre-Tax (INR)', 'GST on Commission (INR)', 'Seller Net Payable (INR)']);
@@ -148,7 +148,7 @@ class ReportController extends Controller
                     ]);
                 }
             } else {
-                fputcsv($handle, ['OneStall Daily Sales Performance Aggregates']);
+                fputcsv($handle, [setting('name', 'ALLZONE') . ' Daily Sales Performance Aggregates']);
                 fputcsv($handle, ['Reporting Period', $startDate->format('Y-m-d') . ' to ' . $endDate->format('Y-m-d')]);
                 fputcsv($handle, []);
                 fputcsv($handle, ['Date', 'Orders Count', 'Gross Revenue (INR)', 'Delivery Fees (INR)', 'Net Cart Subtotal (INR)']);

@@ -100,8 +100,16 @@ class PlaceOrderAction
             $tax = (float) $summary['estimated_tax'];
             $total = max(0.0, round($subtotal - $discount + $deliveryFee, 2));
 
-            // Validate COD payment method
-            $normalizedPaymentMethod = strtolower($paymentMethod) === 'cod' ? PaymentMethod::COD : PaymentMethod::UPI;
+            // Validate payment method
+            $methodLower = strtolower($paymentMethod);
+            if ($methodLower === 'cod') {
+                $normalizedPaymentMethod = PaymentMethod::COD;
+            } elseif ($methodLower === 'wallet') {
+                $normalizedPaymentMethod = PaymentMethod::WALLET;
+            } else {
+                $normalizedPaymentMethod = PaymentMethod::UPI;
+            }
+
             if ($normalizedPaymentMethod === PaymentMethod::COD) {
                 $maxCod = (float) setting('max_cod_amount', 5000.00);
                 if ($total > $maxCod) {
@@ -112,12 +120,26 @@ class PlaceOrderAction
                         throw new InvalidArgumentException("Cash on Delivery is not allowed for item '{$item->variant?->product?->title}'.");
                     }
                 }
+            } elseif ($normalizedPaymentMethod === PaymentMethod::WALLET) {
+                $user = $customer->user;
+                $userBalance = (float) ($user?->wallet_balance ?? 0.00);
+                if ($userBalance < $total) {
+                    throw new InvalidArgumentException("Insufficient wallet balance (" . format_currency($userBalance) . " available, " . format_currency($total) . " required). Please select another payment method.");
+                }
             }
 
             // 4. Generate Order Number
-            $prefix = config('onestall.order_number_prefix', 'OS-');
+            $prefix = config('allzone.order_number_prefix', config('onestall.order_number_prefix', 'AZ-'));
             $datePart = date('Ymd');
             $orderNumber = sprintf('%s%s-%s', $prefix, $datePart, strtoupper(Str::random(6)));
+
+            $isPaidUpfront = ($normalizedPaymentMethod === PaymentMethod::WALLET);
+            $initialPaymentStatus = match ($normalizedPaymentMethod) {
+                PaymentMethod::COD => PaymentStatus::COD_PENDING,
+                PaymentMethod::WALLET => PaymentStatus::PAID,
+                default => PaymentStatus::PENDING,
+            };
+            $initialOrderStatus = $isPaidUpfront ? OrderStatus::PROCESSING : OrderStatus::PLACED;
 
             // 5. Create Parent Order
             $order = Order::create([
@@ -130,20 +152,39 @@ class PlaceOrderAction
                 'tax' => $tax,
                 'total' => $total,
                 'payment_method' => $normalizedPaymentMethod,
-                'payment_status' => $normalizedPaymentMethod === PaymentMethod::COD ? PaymentStatus::COD_PENDING : PaymentStatus::PENDING,
-                'status' => OrderStatus::PLACED,
+                'payment_status' => $initialPaymentStatus,
+                'status' => $initialOrderStatus,
                 'notes' => $notes,
                 'idempotency_key' => $idempotencyKey,
             ]);
 
+            // Deduct from wallet if wallet payment
+            if ($normalizedPaymentMethod === PaymentMethod::WALLET) {
+                $user = $customer->user;
+                $newBal = round((float) $user->wallet_balance - $total, 2);
+                $user->wallet_balance = $newBal;
+                $user->save();
+
+                \App\Models\WalletTransaction::create([
+                    'user_id' => $user->id,
+                    'type' => 'debit',
+                    'amount' => $total,
+                    'balance_after' => $newBal,
+                    'reference_type' => Order::class,
+                    'reference_id' => $order->id,
+                    'description' => "Payment for Order #{$order->order_number} from Digital Wallet",
+                ]);
+            }
+
             // Initial Payment Record
             \App\Models\Payment::create([
                 'order_id' => $order->id,
-                'gateway' => $normalizedPaymentMethod === PaymentMethod::COD ? 'cod' : (string) setting('payment_gateway_default', config('onestall.payment_gateway', 'razorpay')),
+                'gateway' => $normalizedPaymentMethod === PaymentMethod::COD ? 'cod' : ($normalizedPaymentMethod === PaymentMethod::WALLET ? 'wallet' : (string) setting('payment_gateway_default', config('allzone.payment_gateway', config('onestall.payment_gateway', 'razorpay')))),
                 'method' => $normalizedPaymentMethod,
                 'amount' => $total,
                 'currency' => 'INR',
-                'status' => $normalizedPaymentMethod === PaymentMethod::COD ? PaymentStatus::COD_PENDING : PaymentStatus::PENDING,
+                'status' => $initialPaymentStatus,
+                'verified_at' => $isPaidUpfront ? now() : null,
             ]);
 
             // 6. Create Fulfilment Orders (Order Splitting)
@@ -158,7 +199,7 @@ class PlaceOrderAction
                     'inventory_location_id' => $group->inventoryLocationId,
                     'fulfilment_type' => $group->fulfilmentType,
                     'delivery_otp' => $group->fulfilmentType === FulfilmentType::QUICK ? sprintf('%06d', mt_rand(100000, 999999)) : null,
-                    'status' => OrderStatus::PLACED,
+                    'status' => $initialOrderStatus,
                     'subtotal' => $group->subtotal,
                     'commission_amount' => 0.00,
                     'seller_payable' => $group->subtotal,

@@ -38,7 +38,7 @@ class HomeController extends Controller
         $recommendedProducts = $this->storefrontService->getRecommendedProducts(12);
 
         return view('storefront.home', [
-            'appName' => setting('name', 'OneStall'),
+            'appName' => setting('name', 'ALLZONE'),
             'location' => $location,
             'heroBanners' => $heroBanners,
             'promoBanners' => $promoBanners,

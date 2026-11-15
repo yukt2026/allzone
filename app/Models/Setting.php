@@ -26,8 +26,8 @@ class Setting extends Model
         'is_public' => 'boolean',
     ];
 
-    public const CACHE_PREFIX = 'onestall_setting_';
-    public const ALL_CACHE_KEY = 'onestall_settings_all';
+    public const CACHE_PREFIX = 'allzone_setting_';
+    public const ALL_CACHE_KEY = 'allzone_settings_all';
 
     protected static ?array $runtimeCache = null;
 
@@ -109,8 +109,8 @@ class Setting extends Model
             return static::$runtimeCache[$aliases[$key]];
         }
 
-        // Check fallback in config/onestall.php or return provided default
-        return config("onestall.{$key}", $default);
+        // Check fallback in config/allzone.php or config/onestall.php or return provided default
+        return config("allzone.{$key}", config("onestall.{$key}", $default));
     }
 
     /**

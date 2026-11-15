@@ -1,6 +1,6 @@
 @extends('layouts.storefront')
 
-@section('title', 'Payment Failed - OneStall.in')
+@section('title', 'Payment Failed - ' . setting('name', 'ALLZONE'))
 
 @section('content')
 <div class="min-h-screen bg-slate-50 py-10 sm:py-16">

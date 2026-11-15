@@ -2,7 +2,7 @@
 
 @section('hideBottomNav', 'true')
 
-@section('title', 'Secure Checkout - OneStall.in')
+@section('title', 'Secure Checkout - ' . setting('name', 'ALLZONE'))
 
 @section('content')
 <div class="min-h-screen bg-slate-50 py-6 sm:py-10"
@@ -363,6 +363,39 @@
                                 </div>
 
                                 <span class="text-xl">💵</span>
+                            </label>
+
+                            @php
+                                $walletBal = (float) (auth()->user()?->wallet_balance ?? 0.00);
+                                $walletEligible = $walletBal >= $summary['total_payable'];
+                            @endphp
+                            <!-- Option 3: Digital Wallet -->
+                            <label class="rounded-2xl border-2 p-4 transition flex items-center justify-between {{ $walletEligible ? 'cursor-pointer hover:border-slate-300' : 'opacity-60 cursor-not-allowed bg-slate-50' }}"
+                                   :class="paymentMethod === 'wallet' ? 'border-emerald-600 bg-emerald-50/30 ring-2 ring-emerald-500/20' : 'border-slate-200'">
+                                <div class="flex items-center space-x-3">
+                                    <input type="radio" name="_payment_selector" value="wallet"
+                                           @change="paymentMethod = 'wallet'"
+                                           :checked="paymentMethod === 'wallet'"
+                                           {{ !$walletEligible ? 'disabled' : '' }}
+                                           class="w-4 h-4 text-emerald-600 focus:ring-emerald-500">
+                                    <div>
+                                        <div class="text-xs sm:text-sm font-extrabold text-slate-900 flex items-center space-x-2">
+                                            <span>ALLZONE Digital Wallet</span>
+                                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold {{ $walletEligible ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-700' }}">
+                                                Balance: {{ format_currency($walletBal) }}
+                                            </span>
+                                        </div>
+                                        <div class="text-[11px] text-slate-500 mt-0.5">
+                                            @if ($walletEligible)
+                                                Instant 1-click checkout from your store credit balance
+                                            @else
+                                                <span class="text-amber-600 font-semibold">Insufficient wallet balance for this order</span>
+                                            @endif
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <span class="text-xl">👛</span>
                             </label>
                         </div>
                     </div>

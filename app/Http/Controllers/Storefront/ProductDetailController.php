@@ -112,8 +112,8 @@ class ProductDetailController extends Controller
         // Format Variants for Alpine.js Reactive Switcher
         $variantsData = $product->variants->map(function ($v) {
             $stock = $v->relationLoaded('inventories')
-                ? $v->inventories->sum(fn ($i) => max(0, $i->quantity_on_hand - $i->quantity_reserved))
-                : 100;
+                ? (int) $v->inventories->sum(fn ($i) => max(0, $i->quantity_on_hand - $i->quantity_reserved))
+                : (int) $v->inventories()->get()->sum(fn ($i) => max(0, $i->quantity_on_hand - $i->quantity_reserved));
             $img = $v->relationLoaded('media') && $v->media->first()?->path
                 ? asset('storage/' . $v->media->first()->path)
                 : null;
@@ -143,16 +143,10 @@ class ProductDetailController extends Controller
 
         $inStock = false;
         if ($defaultVar) {
-            if ($defaultVar->relationLoaded('inventories')) {
-                $inStock = $defaultVar->inventories->sum('quantity_on_hand') > 0;
-            } elseif ($product->relationLoaded('variants')) {
-                $matchingVariant = $product->variants->firstWhere('id', $defaultVar->id);
-                $inStock = $matchingVariant && $matchingVariant->relationLoaded('inventories')
-                    ? $matchingVariant->inventories->sum('quantity_on_hand') > 0
-                    : true;
-            } else {
-                $inStock = true;
-            }
+            $invList = $defaultVar->relationLoaded('inventories')
+                ? $defaultVar->inventories
+                : ($product->variants->firstWhere('id', $defaultVar->id)?->inventories ?? collect());
+            $inStock = $invList->sum(fn ($i) => max(0, $i->quantity_on_hand - $i->quantity_reserved)) > 0;
         }
 
         $schema = [
@@ -161,10 +155,10 @@ class ProductDetailController extends Controller
             'name' => $product->title,
             'image' => $product->primaryImageUrl() ?? '',
             'description' => strip_tags($product->short_desc ?? $product->description ?? ''),
-            'sku' => $defaultVar?->sku ?? '1S-' . $product->id,
+            'sku' => $defaultVar?->sku ?? ('AZ-' . $product->id),
             'brand' => [
                 '@type' => 'Brand',
-                'name' => $product->brand?->name ?? 'OneStall',
+                'name' => $product->brand?->name ?? setting('name', 'ALLZONE'),
             ],
             'offers' => [
                 '@type' => 'Offer',
@@ -177,7 +171,7 @@ class ProductDetailController extends Controller
                     : 'https://schema.org/OutOfStock',
                 'seller' => [
                     '@type' => 'Organization',
-                    'name' => $product->seller?->business_name ?? 'OneStall Seller',
+                    'name' => $product->seller?->business_name ?? (setting('name', 'ALLZONE') . ' Seller'),
                 ],
             ],
             'aggregateRating' => [
@@ -256,7 +250,7 @@ class ProductDetailController extends Controller
             'is_quick_commerce' => false,
             'estimated_delivery' => '📦 Delivery in 2 - 3 business days',
             'delivery_fee' => $baseDeliveryFee,
-            'fulfilled_by' => 'OneStall Pan-India Logistics',
+            'fulfilled_by' => setting('name', 'ALLZONE') . ' Pan-India Logistics',
             'cod_available' => (bool) $product->is_cod_allowed,
             'message' => 'Standard pan-India shipping available to pincode ' . $pincode,
         ]);

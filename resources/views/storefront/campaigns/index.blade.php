@@ -14,7 +14,7 @@
     <div class="p-6 sm:p-10 rounded-3xl bg-gradient-to-r from-amber-600 via-rose-600 to-indigo-900 text-white shadow-xl relative overflow-hidden">
         <div class="max-w-3xl space-y-3 relative z-10">
             <span class="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-white/20 text-white backdrop-blur-md">
-                <span>🎉 ONESTALL FESTIVAL DISCOVERIES</span>
+                <span>🎉 {{ strtoupper(setting('name', 'ALLZONE')) }} FESTIVAL DISCOVERIES</span>
             </span>
             <h1 class="text-2xl sm:text-4xl font-black text-white tracking-tight">Active Festival & Mega Sale Campaigns</h1>
             <p class="text-xs sm:text-sm text-amber-100 max-w-xl">

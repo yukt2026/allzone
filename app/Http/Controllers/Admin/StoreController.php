@@ -330,7 +330,7 @@ class StoreController extends Controller
                         $s->slug,
                         $s->seller_id,
                         $s->seller?->business_name ?? 'N/A',
-                        $s->is_onestall_owned ? 'OneStall Owned' : 'Merchant Store',
+                        $s->is_onestall_owned ? (setting('name', 'ALLZONE') . ' Direct Hub') : 'Merchant Store',
                         $s->status->value,
                         $s->accepts_quick_commerce ? 'Yes' : 'No',
                         $s->accepts_pickup ? 'Yes' : 'No',

@@ -16,7 +16,7 @@ enum StoreType: string
         return match ($this) {
             self::SELLER_DIGITAL_STORE => 'Seller Digital Storefront',
             self::PHYSICAL_STORE_CONNECT => 'Physical Store Connect (Local)',
-            self::ONESTALL_OWNED_STORE => 'OneStall Direct Store',
+            self::ONESTALL_OWNED_STORE => 'ALLZONE Direct Store',
             self::DARK_STORE_QUICK => 'Dark Store Quick Commerce',
         };
     }

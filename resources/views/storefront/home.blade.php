@@ -59,7 +59,7 @@
                             <!-- Frosted Glass Content Card (Ensures readability on light or dark images) -->
                             <div class="max-w-xl space-y-2 sm:space-y-4 relative z-10 bg-slate-950/50 backdrop-blur-md p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-white/10 shadow-2xl">
                                 <span class="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-[9px] sm:text-xs font-black uppercase tracking-wider bg-amber-400 text-slate-950 shadow-sm">
-                                    <span>⚡ ONESTALL SPECIAL</span>
+                                    <span>⚡ {{ setting('name', 'ALLZONE') }} SPECIAL</span>
                                 </span>
                                 <h2 class="text-base sm:text-3xl font-black text-white tracking-tight leading-tight line-clamp-2 drop-shadow-md">
                                     {{ $banner->title }}
@@ -357,7 +357,7 @@
                                 </div>
                             </div>
                             <p class="text-[11px] sm:text-xs text-slate-500 line-clamp-1 mb-1.5">
-                                {{ $store->description ?: 'Authorized neighbourhood store on OneStall Network' }}
+                                {{ $store->description ?: 'Authorized neighbourhood store on ' . setting('name', 'ALLZONE') . ' Network' }}
                             </p>
                             <div class="flex items-center space-x-1.5 text-[9px] sm:text-[10px] font-bold text-slate-600">
                                 @if($store->accepts_quick_commerce)
@@ -442,7 +442,7 @@
                             <img src="{{ $promo->image_url }}"
                                  alt="{{ $promo->title }}"
                                  loading="lazy"
-                                 onerror="this.onerror=null; this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 1200 240\' width=\'1200\' height=\'240\'><rect width=\'1200\' height=\'240\' fill=\'%231e1b4b\'/><text x=\'60\' y=\'130\' font-family=\'sans-serif\' font-size=\'32\' font-weight=\'bold\' fill=\'%23ffffff\'>⚡ ONESTALL MEGA PROMO DEALS</text></svg>';"
+                                 onerror="this.onerror=null; this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 1200 240\' width=\'1200\' height=\'240\'><rect width=\'1200\' height=\'240\' fill=\'%231e1b4b\'/><text x=\'60\' y=\'130\' font-family=\'sans-serif\' font-size=\'32\' font-weight=\'bold\' fill=\'%23ffffff\'>⚡ ALLZONE MEGA PROMO DEALS</text></svg>';"
                                  class="w-full h-auto max-h-48 object-cover group-hover:scale-101 transition duration-300">
                         </a>
                     </div>
@@ -455,8 +455,8 @@
     <section id="bestsellers" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex items-center justify-between mb-4">
             <div>
-                <span class="text-[10px] font-extrabold uppercase tracking-wider text-amber-600">Top Rated & Trending</span>
-                <h2 class="text-lg sm:text-2xl font-black text-slate-900 tracking-tight">Best Sellers on OneStall</h2>
+                <span class="text-[10px] font-extrabold uppercase tracking-wider text-amber-600">Top Rated &amp; Trending</span>
+                <h2 class="text-lg sm:text-2xl font-black text-slate-900 tracking-tight">Best Sellers on {{ setting('name', 'ALLZONE') }}</h2>
             </div>
             <a href="{{ route('search', ['sort' => 'rating_desc']) }}" class="text-xs font-bold text-indigo-600 hover:text-indigo-800">
                 Explore All &rarr;
@@ -511,16 +511,16 @@
         </div>
     </section>
 
-    <!-- 10. OneStall Stores (Flagship / Curated Stores) -->
-    <section id="onestall-stores" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <!-- 10. ALLZONE Stores (Flagship / Curated Stores) -->
+    <section id="allzone-stores" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="p-6 rounded-3xl bg-slate-900 text-white shadow-xl mb-6 flex flex-col md:flex-row items-center justify-between gap-4">
             <div class="flex items-center space-x-4">
-                <div class="w-12 h-12 rounded-2xl bg-indigo-600 text-white flex items-center justify-center font-black text-xl shadow-md">
-                    1S
+                <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-blue-700 via-indigo-600 to-amber-400 text-white flex items-center justify-center font-extrabold text-base shadow-md tracking-tighter">
+                    AZ
                 </div>
                 <div>
-                    <span class="text-[10px] font-bold uppercase tracking-wider text-amber-400">Curated & Managed by OneStall</span>
-                    <h2 class="text-xl sm:text-2xl font-black text-white">OneStall Direct Flagship Hubs</h2>
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-amber-400">Curated &amp; Managed by {{ setting('name', 'ALLZONE') }}</span>
+                    <h2 class="text-xl sm:text-2xl font-black text-white">{{ setting('name', 'ALLZONE') }} Direct Flagship Hubs</h2>
                 </div>
             </div>
             <p class="text-xs text-slate-300 max-w-md">

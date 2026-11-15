@@ -65,7 +65,7 @@
                     </div>
                     <div class="flex-1 min-w-0">
                         <div class="text-[10px] uppercase font-bold text-indigo-600 tracking-wider">
-                            {{ $item->fulfilmentOrder?->seller?->business_name ?? 'OneStall Direct' }}
+                            {{ $item->fulfilmentOrder?->seller?->business_name ?? (setting('name', 'ALLZONE') . ' Direct') }}
                         </div>
                         <h2 class="text-sm font-black text-slate-900 truncate mt-0.5">{{ $item->title }}</h2>
                         <div class="text-xs text-slate-500 mt-0.5">
@@ -168,7 +168,7 @@
                             <input type="radio" name="refund_mode" value="wallet" x-model="refundMode" class="mt-0.5 text-indigo-600 focus:ring-indigo-500">
                             <div>
                                 <div class="text-xs font-black text-slate-900 flex items-center space-x-1.5">
-                                    <span>OneStall Wallet Credit</span>
+                                    <span>{{ setting('name', 'ALLZONE') }} Wallet Credit</span>
                                     <span class="px-1.5 py-0.5 text-[9px] font-bold bg-emerald-100 text-emerald-800 rounded">Instant</span>
                                 </div>
                                 <div class="text-[10px] text-slate-500 mt-0.5">Instant credit usable immediately on any future purchases without checkout friction.</div>

@@ -131,7 +131,7 @@ class RiderController extends Controller
         ]);
 
         $cleanPhone = preg_replace('/[^0-9]/', '', $validated['phone']);
-        $email = $validated['email'] ?? ('rider_' . ($cleanPhone ?: uniqid()) . '@onestall.internal');
+        $email = $validated['email'] ?? ('rider_' . ($cleanPhone ?: uniqid()) . '@allzone.internal');
 
         $user = User::create([
             'name' => $validated['name'],
@@ -652,7 +652,7 @@ class RiderController extends Controller
                 ['phone' => $rider->phone],
                 [
                     'name' => $rider->name,
-                    'email' => 'rider_' . $rider->id . '@onestall.internal',
+                    'email' => 'rider_' . $rider->id . '@allzone.internal',
                     'password' => Hash::make($validated['current_password']),
                     'status' => 'active',
                 ]

@@ -1,6 +1,6 @@
 @extends('layouts.storefront')
 
-@section('title', 'Order #' . $order->order_number . ' - ' . setting('name', 'OneStall.in'))
+@section('title', 'Order #' . $order->order_number . ' - ' . setting('name', 'ALLZONE'))
 
 @section('content')
 <div class="min-h-screen bg-slate-50 py-8 sm:py-12" x-data="{ cancelModal: false, returnModal: false, activeFo: null }">
@@ -214,7 +214,7 @@
                                     @endif
                                 </div>
                                 <div class="text-xs text-slate-500 font-medium mt-0.5">
-                                    Dispatched by <strong>{{ $fo->store?->name ?? $fo->seller?->business_name ?? 'OneStall Warehouse' }}</strong>
+                                    Dispatched by <strong>{{ $fo->store?->name ?? $fo->seller?->business_name ?? (setting('name', 'ALLZONE') . ' Warehouse') }}</strong>
                                 </div>
                             </div>
                         </div>
@@ -372,7 +372,7 @@
             </div>
 
             <a 
-                href="mailto:support@onestall.in?subject=Help with Order #{{ $order->order_number }}"
+                href="mailto:{{ setting('support_email', 'support@allzone.in') }}?subject=Help with Order #{{ $order->order_number }}"
                 class="px-5 py-2.5 rounded-xl bg-white text-indigo-600 hover:bg-indigo-50 border border-indigo-200 text-xs font-bold shadow-xs transition whitespace-nowrap text-center"
             >
                 Contact Support &rarr;

@@ -1,6 +1,6 @@
 @extends('layouts.storefront')
 
-@section('title', 'Live Order Tracking - ' . $order->order_number . ' | OneStall')
+@section('title', 'Live Order Tracking - ' . $order->order_number . ' | ' . setting('name', 'ALLZONE'))
 
 @section('content')
 <div class="bg-slate-50 min-h-screen py-8" x-data="{
@@ -64,7 +64,7 @@
                             <span x-show="status === 'cancelled'">Order Cancelled</span>
                         </h1>
                         <p class="text-orange-100 text-xs sm:text-sm mt-1">
-                            Dispatched from <strong class="text-white">{{ $fulfilmentOrder?->store?->name ?? 'OneStall Dark Store' }}</strong>
+                            Dispatched from <strong class="text-white">{{ $fulfilmentOrder?->store?->name ?? (setting('name', 'ALLZONE') . ' Dark Store') }}</strong>
                         </p>
                     </div>
 
@@ -220,7 +220,7 @@
                             <h5 class="font-bold text-slate-900 text-sm" x-text="rider ? rider.name : 'Rider Assigning Soon...'">
                                 {{ $fulfilmentOrder?->deliveryAssignment?->deliveryPartner?->name ?? 'Rider Assigning...' }}
                             </h5>
-                            <p class="text-xs text-slate-500 mt-0.5" x-text="rider ? (rider.vehicle + ' • ' + rider.vehicle_number) : 'OneStall Fleet'">
+                            <p class="text-xs text-slate-500 mt-0.5" x-text="rider ? (rider.vehicle + ' • ' + rider.vehicle_number) : '{{ setting('name', 'ALLZONE') }} Fleet'">
                                 {{ $fulfilmentOrder?->deliveryAssignment?->deliveryPartner?->vehicle ?? 'Motorcycle' }}
                             </p>
                             <div class="flex items-center gap-3 mt-2">

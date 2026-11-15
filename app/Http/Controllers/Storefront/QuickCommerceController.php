@@ -130,7 +130,7 @@ class QuickCommerceController extends Controller
             'delivery_otp' => $quickFulfilment->delivery_otp,
             'estimated_delivery_at' => $quickFulfilment->estimated_delivery_at?->toIso8601String(),
             'store' => [
-                'name' => $store?->name ?? 'OneStall Store Hub',
+                'name' => $store?->name ?? (setting('name', 'ALLZONE') . ' Store Hub'),
                 'lat' => $storeLoc?->lat ? (float) $storeLoc->lat : 12.9716,
                 'lng' => $storeLoc?->lng ? (float) $storeLoc->lng : 77.5946,
                 'address' => $storeLoc?->address ?? '',

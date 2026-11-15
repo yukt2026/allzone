@@ -51,7 +51,7 @@ class SettingSeeder extends Seeder
             ],
             [
                 'key' => 'order_number_prefix',
-                'value' => 'OS-',
+                'value' => 'AZ-',
                 'type' => 'string',
                 'group' => 'orders',
                 'label' => 'Order Code Prefix',
@@ -60,11 +60,11 @@ class SettingSeeder extends Seeder
             ],
             [
                 'key' => 'cargo_tracking_prefix',
-                'value' => 'OSC-',
+                'value' => 'AZL-',
                 'type' => 'string',
                 'group' => 'cargo',
                 'label' => 'Cargo Waybill Prefix',
-                'description' => 'Tracking number prefix for OneStall Cargo logistics consignments',
+                'description' => 'Tracking number prefix for ALLZONE Cargo logistics consignments',
                 'is_public' => true,
             ],
             [
@@ -72,7 +72,7 @@ class SettingSeeder extends Seeder
                 'value' => json_encode([
                     'PHYSICAL_STORE_CONNECT',
                     'SELLER_WAREHOUSE',
-                    'ONESTALL_FULFILMENT_HUB',
+                    'ALLZONE_FULFILMENT_HUB',
                     'CARGO_HUB',
                 ]),
                 'type' => 'json',
@@ -101,7 +101,7 @@ class SettingSeeder extends Seeder
             ],
             [
                 'key' => 'name',
-                'value' => 'OneStall',
+                'value' => 'ALLZONE',
                 'type' => 'string',
                 'group' => 'general',
                 'label' => 'Platform Name',
@@ -110,7 +110,7 @@ class SettingSeeder extends Seeder
             ],
             [
                 'key' => 'company_name',
-                'value' => 'OneStall Technologies Pvt. Ltd.',
+                'value' => 'SK Refrigeration',
                 'type' => 'string',
                 'group' => 'general',
                 'label' => 'Company Legal Name',
@@ -119,7 +119,7 @@ class SettingSeeder extends Seeder
             ],
             [
                 'key' => 'support_phone',
-                'value' => '1800-ONESTALL',
+                'value' => '1800-ALLZONE',
                 'type' => 'string',
                 'group' => 'general',
                 'label' => 'Customer Care Hotline',
@@ -128,7 +128,7 @@ class SettingSeeder extends Seeder
             ],
             [
                 'key' => 'support_email',
-                'value' => 'support@onestall.in',
+                'value' => 'support@allzone.in',
                 'type' => 'string',
                 'group' => 'general',
                 'label' => 'Support Email Address',

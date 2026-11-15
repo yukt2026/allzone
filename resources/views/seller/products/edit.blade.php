@@ -671,8 +671,8 @@
                 </div>
 
                 <div class="p-3.5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/60 space-y-1 font-sans">
-                    <div class="text-[11px] text-emerald-700 dark:text-emerald-400 font-mono">https://onestall.in &rsaquo; product &rsaquo; {{ $product->slug }}</div>
-                    <div class="text-sm font-semibold text-indigo-700 dark:text-indigo-400 hover:underline cursor-pointer" x-text="metaTitle || title || 'Product Title on OneStall'"></div>
+                    <div class="text-[11px] text-emerald-700 dark:text-emerald-400 font-mono">https://allzone.in &rsaquo; product &rsaquo; {{ $product->slug }}</div>
+                    <div class="text-sm font-semibold text-indigo-700 dark:text-indigo-400 hover:underline cursor-pointer" x-text="metaTitle || title || 'Product Title on ALLZONE'"></div>
                     <div class="text-xs text-slate-600 dark:text-slate-400 line-clamp-2" x-text="metaDesc || 'Product description snippet will appear here in search engine results.'"></div>
                 </div>
             </div>

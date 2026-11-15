@@ -289,7 +289,7 @@ class NotificationService
             } elseif ($log->channel === 'mail') {
                 try {
                     \Illuminate\Support\Facades\Mail::raw($log->content ?? '', function ($m) use ($log) {
-                        $m->to($log->recipient)->subject($log->subject ?? ('Notification from ' . (function_exists('setting') ? setting('name', 'OneStall') : 'OneStall')));
+                        $m->to($log->recipient)->subject($log->subject ?? ('Notification from ' . (function_exists('setting') ? setting('name', 'ALLZONE') : 'ALLZONE')));
                     });
                     $success = true;
                 } catch (\Throwable $e) {

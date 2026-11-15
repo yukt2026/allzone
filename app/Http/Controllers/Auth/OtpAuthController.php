@@ -74,7 +74,7 @@ class OtpAuthController extends Controller
             $user = DB::transaction(function () use ($phone) {
                 $user = User::create([
                     'name' => 'Customer ' . substr($phone, -4),
-                    'email' => 'user_' . Str::random(8) . '@onestall.local',
+                    'email' => 'user_' . Str::random(8) . '@allzone.local',
                     'phone' => $phone,
                     'password' => Hash::make(Str::random(32)),
                     'status' => UserStatus::ACTIVE,

@@ -86,7 +86,7 @@
             <div class="text-xs space-y-2.5 text-slate-600 dark:text-slate-300">
                 <div class="flex justify-between py-1 border-b border-slate-100 dark:border-slate-800">
                     <span class="text-slate-400">Store Type:</span>
-                    <strong>{{ $store->is_onestall_owned ? 'OneStall Direct Hub' : 'Third-Party Merchant' }}</strong>
+                    <strong>{{ $store->is_onestall_owned ? (setting('name', 'ALLZONE') . ' Direct Hub') : 'Third-Party Merchant' }}</strong>
                 </div>
                 <div class="flex justify-between py-1 border-b border-slate-100 dark:border-slate-800">
                     <span class="text-slate-400">Quick Commerce:</span>

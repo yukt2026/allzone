@@ -47,7 +47,7 @@ class AppServiceProvider extends ServiceProvider
             return new \App\Services\Notification\Drivers\MockPushDriver();
         });
 
-        // Bind OneStall Marketplace AI Engine Services
+        // Bind ALLZONE Marketplace AI Engine Services
         $this->app->singleton(\App\Services\AI\AiManager::class);
 
         $this->app->singleton(
@@ -138,7 +138,7 @@ class AppServiceProvider extends ServiceProvider
         });
 
         // Horizon authorization gate (when enabled via config)
-        if (config('onestall.enable_horizon', false) && class_exists(\Laravel\Horizon\Horizon::class)) {
+        if ((config('allzone.enable_horizon') ?? config('onestall.enable_horizon', false)) && class_exists(\Laravel\Horizon\Horizon::class)) {
             Gate::define('viewHorizon', function ($user = null) {
                 return (bool) optional($user)->hasRole('super-admin');
             });

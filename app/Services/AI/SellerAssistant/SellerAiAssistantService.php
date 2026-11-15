@@ -30,13 +30,15 @@ class SellerAiAssistantService implements SellerAiAssistantInterface
         $start = microtime(true);
         $cleanTitle = trim($title);
 
+        $brandName = setting('name', 'ALLZONE');
+
         if (!$this->aiManager->isFeatureEnabled('seller_assistant')) {
             return [
                 'title' => $cleanTitle,
                 'description' => "<p>{$cleanTitle}</p>",
                 'key_highlights' => $keyFeatures,
                 'meta_title' => $cleanTitle,
-                'meta_description' => "Buy {$cleanTitle} at best prices on OneStall.",
+                'meta_description' => "Buy {$cleanTitle} at best prices on {$brandName}.",
                 'tags' => [strtolower($category)],
             ];
         }
@@ -49,7 +51,7 @@ class SellerAiAssistantService implements SellerAiAssistantInterface
         $highlights = !empty($keyFeatures) ? $keyFeatures : [
             "Premium quality {$category} crafted for maximum durability and reliability.",
             "Certified authentic and sourced directly by {$seller->business_name}.",
-            "Safe, eco-friendly packaging and rapid fulfillment via OneStall logistics.",
+            "Safe, eco-friendly packaging and rapid fulfillment via {$brandName} logistics.",
             "100% genuine product backed by easy returns and customer warranty.",
         ];
 
@@ -70,7 +72,7 @@ class SellerAiAssistantService implements SellerAiAssistantInterface
 HTML;
 
         // Meta Tags
-        $metaTitle = "Buy {$enhancedTitle} Online | Best Price on OneStall";
+        $metaTitle = "Buy {$enhancedTitle} Online | Best Price on {$brandName}";
         $metaDesc = "Shop authentic {$enhancedTitle} from {$seller->business_name}. Enjoy fast shipping, verified quality, and secure payments across India.";
 
         // Tags

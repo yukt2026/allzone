@@ -45,7 +45,7 @@
         <table width="100%" class="header">
             <tr>
                 <td>
-                    <div style="font-size: 16px; font-weight: 900; letter-spacing: -0.5px;">ONESTALL CARGO</div>
+                    <div style="font-size: 16px; font-weight: 900; letter-spacing: -0.5px;">{{ strtoupper(setting('name', 'ALLZONE')) }} LOGISTICS</div>
                     <div style="font-size: 9px; font-weight: bold;">SURFACE / HYPERLOCAL DISPATCH</div>
                 </td>
                 <td style="text-align: right;">
@@ -94,7 +94,7 @@
         <div style="padding-top: 6px; font-size: 9px;">
             <div style="font-weight: bold;">SHIPPER / RETURN TO:</div>
             <div>{{ $fo->store?->name ?? $fo->seller?->business_name }}</div>
-            <div>Bengaluru, KA - OneStall Logistics Network</div>
+            <div>{{ setting('company_name', 'SK Refrigeration') }} - {{ setting('name', 'ALLZONE') }} Logistics Network</div>
         </div>
     </div>
 

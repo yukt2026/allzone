@@ -1,4 +1,4 @@
-@extends('layouts.rider', ['title' => 'Task #' . ($fulfilmentOrder?->fulfilment_order_number ?? 'Order') . ' - OneStall Rider'])
+@extends('layouts.rider', ['title' => 'Task #' . ($fulfilmentOrder?->fulfilment_order_number ?? 'Order') . ' - ALLZONE Rider'])
 
 @section('content')
 @php

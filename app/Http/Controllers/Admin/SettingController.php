@@ -72,15 +72,16 @@ class SettingController extends Controller
     {
         $defaults = [
             // General
-            ['key' => 'name', 'value' => 'OneStall', 'group' => 'general', 'label' => 'Platform Store Name', 'type' => 'string'],
+            ['key' => 'name', 'value' => 'ALLZONE', 'group' => 'general', 'label' => 'Platform Store Name', 'type' => 'string'],
+            ['key' => 'company_name', 'value' => 'SK Refrigeration', 'group' => 'general', 'label' => 'Operating Company / Entity Name', 'type' => 'string'],
             ['key' => 'currency', 'value' => 'INR', 'group' => 'general', 'label' => 'Primary Currency Code', 'type' => 'string'],
             ['key' => 'currency_symbol', 'value' => '₹', 'group' => 'general', 'label' => 'Currency Symbol', 'type' => 'string'],
             ['key' => 'timezone', 'value' => 'Asia/Kolkata', 'group' => 'general', 'label' => 'System Timezone', 'type' => 'string'],
-            ['key' => 'support_email', 'value' => 'support@onestall.com', 'group' => 'general', 'label' => 'Customer Support Email', 'type' => 'string'],
-            ['key' => 'support_phone', 'value' => '1800-663-78255', 'group' => 'general', 'label' => 'Customer Support Phone / Hotline', 'type' => 'string'],
+            ['key' => 'support_email', 'value' => 'support@allzone.in', 'group' => 'general', 'label' => 'Customer Support Email', 'type' => 'string'],
+            ['key' => 'support_phone', 'value' => '1800-ALLZONE', 'group' => 'general', 'label' => 'Customer Support Phone / Hotline', 'type' => 'string'],
 
             // SEO
-            ['key' => 'meta_title', 'value' => 'OneStall - Unified Hyperlocal & Multi-Vendor Marketplace', 'group' => 'seo', 'label' => 'Default SEO Meta Title', 'type' => 'string'],
+            ['key' => 'meta_title', 'value' => 'ALLZONE - Multi-Vendor Marketplace | SK Refrigeration', 'group' => 'seo', 'label' => 'Default SEO Meta Title', 'type' => 'string'],
             ['key' => 'meta_description', 'value' => 'Shop groceries, electronics, and daily essentials with instant 10-30 min quick delivery or nationwide cargo shipping.', 'group' => 'seo', 'label' => 'Default Meta Description', 'type' => 'textarea'],
             ['key' => 'google_site_verification', 'value' => '', 'group' => 'seo', 'label' => 'Google Search Console Verification Code', 'type' => 'string'],
             ['key' => 'bing_site_verification', 'value' => '', 'group' => 'seo', 'label' => 'Bing Webmaster Verification Code', 'type' => 'string'],

@@ -56,7 +56,7 @@ class AdminSellerService
             ->latest('id')
             ->get();
 
-        $filename = "onestall_sellers_export_" . date('Y_m_d_His') . ".csv";
+        $filename = "allzone_sellers_export_" . date('Y_m_d_His') . ".csv";
 
         return new StreamedResponse(function () use ($sellers) {
             $handle = fopen('php://output', 'w');
@@ -211,7 +211,7 @@ class AdminSellerService
                     'seller_id' => $seller->id,
                     'name' => $seller->business_name,
                     'slug' => $slug,
-                    'description' => "Official digital storefront of {$seller->business_name} on OneStall.",
+                    'description' => "Official digital storefront of {$seller->business_name} on " . setting('name', 'ALLZONE') . ".",
                     'phone' => $seller->user->phone,
                     'email' => $seller->user->email,
                     'status' => StoreStatus::ACTIVE,

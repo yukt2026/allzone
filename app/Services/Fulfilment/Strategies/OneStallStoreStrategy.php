@@ -63,7 +63,7 @@ class OneStallStoreStrategy implements FulfilmentStrategyInterface
             sourceType: 'onestall_store',
             sellerId: (int) $sellerId,
             storeId: $location->store_id,
-            storeName: 'OneStall Hub (' . $location->name . ')',
+            storeName: setting('name', 'ALLZONE') . ' Hub (' . $location->name . ')',
             inventoryLocationId: $location->id,
             locationName: $location->name,
             inventoryId: $inventory->id,

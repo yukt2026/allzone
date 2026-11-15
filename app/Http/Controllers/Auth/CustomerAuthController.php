@@ -71,7 +71,7 @@ class CustomerAuthController extends Controller
 
         $redirectUrl = $this->redirectService->handleLoginSuccess($user, $request);
 
-        return redirect($redirectUrl)->with('success', 'Welcome to OneStall.in! Your account has been created.');
+        return redirect($redirectUrl)->with('success', 'Welcome to ' . setting('name', 'ALLZONE') . '! Your account has been created.');
     }
 
     public function logout(Request $request): RedirectResponse

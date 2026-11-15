@@ -41,9 +41,9 @@ class IdentityAndStoresSeeder extends Seeder
 
         // 2. Super Admin User
         $adminUser = User::firstOrCreate(
-            ['email' => 'admin@onestall.in'],
+            ['email' => 'admin@allzone.in'],
             [
-                'name' => 'OneStall Super Admin',
+                'name' => 'ALLZONE Super Admin',
                 'phone' => '9999900001',
                 'password' => Hash::make('password'),
                 'status' => UserStatus::ACTIVE,
@@ -54,7 +54,7 @@ class IdentityAndStoresSeeder extends Seeder
 
         // 3. Verified Seller Account
         $sellerUser = User::firstOrCreate(
-            ['email' => 'seller@onestall.in'],
+            ['email' => 'seller@allzone.in'],
             [
                 'name' => 'Apex Retail Merchant',
                 'phone' => '9999900002',
@@ -176,15 +176,15 @@ class IdentityAndStoresSeeder extends Seeder
             ]
         );
 
-        // 5. OneStall-Owned Direct Store
+        // 5. ALLZONE-Owned Direct Store
         Store::firstOrCreate(
-            ['slug' => 'onestall-direct-koramangala'],
+            ['slug' => 'allzone-direct-koramangala'],
             [
                 'seller_id' => $seller->id,
-                'name' => 'OneStall Direct - Koramangala Dark Hub',
-                'description' => 'OneStall platform operated micro-fulfilment dark store.',
+                'name' => 'ALLZONE Direct - Koramangala Dark Hub',
+                'description' => 'ALLZONE platform operated micro-fulfilment dark store.',
                 'phone' => '08025253344',
-                'email' => 'darkhub-koramangala@onestall.in',
+                'email' => 'darkhub-koramangala@allzone.in',
                 'status' => StoreStatus::ACTIVE,
                 'is_onestall_owned' => true,
                 'accepts_quick_commerce' => true,
@@ -196,7 +196,7 @@ class IdentityAndStoresSeeder extends Seeder
 
         // 6. Customer User with Addresses
         $customerUser = User::firstOrCreate(
-            ['email' => 'customer@onestall.in'],
+            ['email' => 'customer@allzone.in'],
             [
                 'name' => 'Aarav Mehta',
                 'phone' => '9999900003',

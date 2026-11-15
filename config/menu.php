@@ -4,7 +4,7 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | OneStall Data-Driven Navigation Menus
+    | ALLZONE Data-Driven Navigation Menus
     |--------------------------------------------------------------------------
     |
     | Used by layouts/dashboard.blade.php to dynamically render sidebar
@@ -395,10 +395,44 @@ return [
                     'badge' => null,
                 ],
                 [
+                    'title' => 'Wallet & Withdrawals',
+                    'route' => 'seller.wallet.index',
+                    'active' => 'seller.wallet*',
+                    'icon' => 'currency-rupee',
+                    'badge' => 'Payouts',
+                    'badge_color' => 'emerald',
+                ],
+                [
                     'title' => 'Payouts & Settlements',
                     'route' => 'seller.settlements.index',
                     'active' => 'seller.settlements*',
-                    'icon' => 'currency-rupee',
+                    'icon' => 'document-text',
+                    'badge' => null,
+                ],
+            ],
+        ],
+        [
+            'section' => 'Account & Support',
+            'items' => [
+                [
+                    'title' => 'Merchant Profile',
+                    'route' => 'seller.profile',
+                    'active' => 'seller.profile*',
+                    'icon' => 'shield-check',
+                    'badge' => null,
+                ],
+                [
+                    'title' => 'Support Desk',
+                    'route' => 'seller.support.index',
+                    'active' => 'seller.support*',
+                    'icon' => 'chat-bubble',
+                    'badge' => null,
+                ],
+                [
+                    'title' => 'Notifications',
+                    'route' => 'seller.notifications.index',
+                    'active' => 'seller.notifications*',
+                    'icon' => 'bell',
                     'badge' => null,
                 ],
             ],

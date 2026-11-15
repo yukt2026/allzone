@@ -1,6 +1,6 @@
 @extends('layouts.storefront')
 
-@section('title', 'Order Confirmed - OneStall.in')
+@section('title', 'Order Confirmed - ' . setting('name', 'ALLZONE'))
 
 @section('content')
 <div class="min-h-screen bg-slate-50 py-8 sm:py-12">
@@ -72,7 +72,7 @@
                                     Package: {{ $fo->fulfilment_order_number }}
                                 </div>
                                 <div class="text-[11px] text-slate-500">
-                                    Seller: <strong>{{ $fo->seller?->business_name ?? 'OneStall Seller' }}</strong>
+                                    Seller: <strong>{{ $fo->seller?->business_name ?? (setting('name', 'ALLZONE') . ' Seller') }}</strong>
                                     @if ($fo->store)
                                         • Store: {{ $fo->store->name }}
                                     @endif

@@ -86,6 +86,24 @@ Route::post('/p/{slug}/review', [ProductDetailController::class, 'submitReview']
 Route::post('/p/{slug}/question', [ProductDetailController::class, 'submitQuestion'])->name('product.question.submit');
 Route::get('/page/{slug}', [\App\Http\Controllers\Storefront\CmsPageController::class, 'show'])->name('pages.show');
 Route::get('/pages/{slug}', fn (string $slug) => redirect()->route('pages.show', $slug, 301));
+
+// Interactive Contact Us Desk
+Route::get('/contact', [\App\Http\Controllers\Storefront\ContactController::class, 'index'])->name('contact');
+Route::get('/contact-us', fn () => redirect()->route('contact', [], 301));
+Route::post('/contact-us', [\App\Http\Controllers\Storefront\ContactController::class, 'submit'])->name('contact.submit');
+
+// Top-Level Corporate & Legal Policy Vanity Aliases
+Route::get('/about-us', fn () => redirect()->route('pages.show', 'about-us', 301))->name('about');
+Route::get('/about', fn () => redirect()->route('pages.show', 'about-us', 301));
+Route::get('/privacy-policy', fn () => redirect()->route('pages.show', 'privacy-policy', 301))->name('privacy');
+Route::get('/privacy', fn () => redirect()->route('pages.show', 'privacy-policy', 301));
+Route::get('/terms-of-service', fn () => redirect()->route('pages.show', 'terms-of-service', 301))->name('terms');
+Route::get('/terms', fn () => redirect()->route('pages.show', 'terms-of-service', 301));
+Route::get('/terms-and-conditions', fn () => redirect()->route('pages.show', 'terms-of-service', 301));
+Route::get('/returns-and-cancellation', fn () => redirect()->route('pages.show', 'returns-and-cancellation', 301))->name('returns.policy');
+Route::get('/return-policy', fn () => redirect()->route('pages.show', 'returns-and-cancellation', 301));
+Route::get('/refund-policy', fn () => redirect()->route('pages.show', 'returns-and-cancellation', 301));
+Route::get('/shipping-policy', fn () => redirect()->route('pages.show', 'shipping-policy', 301))->name('shipping.policy');
 Route::get('/campaigns', [\App\Http\Controllers\Storefront\CampaignController::class, 'index'])->name('campaigns.index');
 Route::get('/campaign/{slug}', [\App\Http\Controllers\Storefront\CampaignController::class, 'show'])->name('campaign.show');
 
@@ -117,6 +135,16 @@ Route::middleware('auth')->group(function () {
     Route::post('/checkout/address', [CheckoutController::class, 'addAddress'])->name('checkout.address.add');
     Route::post('/checkout/place-order', [CheckoutController::class, 'placeOrder'])->name('checkout.place-order');
     Route::get('/checkout/success/{order_number}', [CheckoutController::class, 'success'])->name('checkout.success');
+
+    // Customer Profile & Address Management
+    Route::get('/customer/profile', [\App\Http\Controllers\Storefront\CustomerProfileController::class, 'index'])->name('customer.profile');
+    Route::get('/profile', fn () => redirect()->route('customer.profile', request()->query(), 301))->name('profile');
+    Route::put('/customer/profile', [\App\Http\Controllers\Storefront\CustomerProfileController::class, 'updateProfile'])->name('customer.profile.update');
+    Route::put('/customer/password', [\App\Http\Controllers\Storefront\CustomerProfileController::class, 'updatePassword'])->name('customer.password.update');
+    Route::post('/customer/addresses', [\App\Http\Controllers\Storefront\CustomerProfileController::class, 'storeAddress'])->name('customer.address.store');
+    Route::put('/customer/addresses/{address}', [\App\Http\Controllers\Storefront\CustomerProfileController::class, 'updateAddress'])->name('customer.address.update');
+    Route::post('/customer/addresses/{address}/set-default', [\App\Http\Controllers\Storefront\CustomerProfileController::class, 'setDefaultAddress'])->name('customer.address.set-default');
+    Route::delete('/customer/addresses/{address}', [\App\Http\Controllers\Storefront\CustomerProfileController::class, 'destroyAddress'])->name('customer.address.delete');
 
     // Customer Order Management & Returns (Blueprint Sections 21 & 26)
     Route::get('/orders', [CustomerOrderController::class, 'index'])->name('orders.index');

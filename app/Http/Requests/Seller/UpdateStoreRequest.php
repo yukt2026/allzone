@@ -13,7 +13,7 @@ class UpdateStoreRequest extends FormRequest
     public const RESERVED_SLUGS = [
         'admin', 'seller', 'api', 'login', 'register', 'logout',
         'dashboard', 'store', 'stores', 'cart', 'checkout', 'orders',
-        'support', 'terms', 'privacy', 'help', 'account', 'onestall',
+        'support', 'terms', 'privacy', 'help', 'account', 'allzone', 'onestall',
         'root', 'superadmin', 'webhook', 'cargo', 'tracking', 'search',
         'categories', 'products', 'brands', 'uikit', 'horizon', 'telescope',
     ];

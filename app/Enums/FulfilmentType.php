@@ -26,8 +26,8 @@ enum FulfilmentType: string
             self::QUICK_COMMERCE => 'Quick Commerce (10-30 Mins)',
             self::PHYSICAL_STORE_CONNECT => 'Physical Store Connect',
             self::SELLER_DIRECT => 'Seller Direct Dispatch',
-            self::ONESTALL_HUB => 'OneStall Fulfilment Hub',
-            self::CARGO_LOGISTICS => 'OneStall Cargo Logistics',
+            self::ONESTALL_HUB => 'ALLZONE Fulfilment Hub',
+            self::CARGO_LOGISTICS => 'ALLZONE Cargo Logistics',
         };
     }
 }

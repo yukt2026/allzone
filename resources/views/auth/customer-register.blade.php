@@ -8,7 +8,7 @@
             Create an account
         </h2>
         <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Join OneStall for hyper-local quick deliveries and marketplace shopping.
+            Join {{ setting('name', 'ALLZONE') }} for hyper-local quick deliveries and marketplace shopping.
         </p>
     </div>
 
@@ -63,7 +63,7 @@
         </div>
 
         <p class="text-[11px] text-slate-500 dark:text-slate-400 leading-normal">
-            By continuing, you agree to OneStall's Terms of Service and Privacy Policy.
+            By continuing, you agree to {{ setting('name', 'ALLZONE') }}'s Terms of Service and Privacy Policy.
         </p>
 
         <x-button type="submit" variant="primary" class="w-full py-2.5 shadow-md shadow-indigo-600/20">

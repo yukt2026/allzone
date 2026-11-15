@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Delivery Partner Registration - OneStall</title>
+    <title>Delivery Partner Registration - ALLZONE</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="bg-slate-900 text-white min-h-full font-sans flex flex-col justify-center items-center p-4 py-8">
@@ -14,7 +14,7 @@
             <div class="w-16 h-16 rounded-3xl bg-orange-500 text-white flex items-center justify-center mx-auto text-3xl shadow-lg shadow-orange-500/30">
                 🛵
             </div>
-            <h1 class="text-2xl font-black tracking-tight text-white">Join OneStall Delivery Fleet</h1>
+            <h1 class="text-2xl font-black tracking-tight text-white">Join {{ setting('name', 'ALLZONE') }} Delivery Fleet</h1>
             <p class="text-xs text-slate-400">Earn per order with instant payouts & flexible delivery shifts</p>
         </div>
 
@@ -188,7 +188,7 @@
                             class="mt-0.5 rounded border-slate-700 bg-slate-900 text-orange-500 focus:ring-0"
                         >
                         <span>
-                            I agree to the <a href="#" class="text-orange-400 hover:underline">OneStall Partner Terms of Service</a> and understand that my account requires KYC document verification before order assignments start.
+                            I agree to the <a href="#" class="text-orange-400 hover:underline">{{ setting('name', 'ALLZONE') }} Partner Terms of Service</a> and understand that my account requires KYC document verification before order assignments start.
                         </span>
                     </label>
                 </div>
@@ -212,7 +212,7 @@
         </div>
 
         <div class="text-center text-xs text-slate-500">
-            &copy; {{ date('Y') }} OneStall Hyperlocal Logistics Fleet
+            &copy; {{ date('Y') }} {{ setting('name', 'ALLZONE') }} Hyperlocal Logistics Fleet &bull; {{ setting('company_name', 'SK Refrigeration') }}
         </div>
     </div>
 

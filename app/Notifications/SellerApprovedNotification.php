@@ -38,14 +38,16 @@ class SellerApprovedNotification extends Notification implements ShouldQueue
         $loginUrl = route('seller.login');
         $storeName = $this->store ? $this->store->name : $this->seller->business_name;
 
+        $brandName = setting('name', 'ALLZONE');
+
         return (new MailMessage)
-            ->subject('Congratulations! Your OneStall Merchant Account is Approved')
+            ->subject("Congratulations! Your {$brandName} Merchant Account is Approved")
             ->greeting("Hello {$this->seller->business_name},")
-            ->line('Your merchant account application and KYC verification have been reviewed and approved by the OneStall onboarding team.')
+            ->line("Your merchant account application and KYC verification have been reviewed and approved by the {$brandName} onboarding team.")
             ->line("We have initialized your default digital storefront: **{$storeName}**.")
-            ->line('You can now log in to the OneStall Seller Central Portal to configure your catalogue, set up delivery radius, and start selling.')
+            ->line("You can now log in to the {$brandName} Seller Central Portal to configure your catalogue, set up delivery radius, and start selling.")
             ->action('Launch Seller Central', $loginUrl)
-            ->line('Thank you for partnering with OneStall Smart Commerce Platform!');
+            ->line("Thank you for partnering with {$brandName} Smart Commerce Platform!");
     }
 
     /**

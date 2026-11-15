@@ -42,7 +42,7 @@
             <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1">Total Stores</span>
             <div class="flex items-baseline justify-between">
                 <span class="text-2xl font-black font-mono text-slate-900 dark:text-white">{{ $metrics['total_stores'] }}</span>
-                <span class="text-[11px] font-medium text-slate-500">{{ $metrics['onestall_owned'] }} OneStall Hubs</span>
+                <span class="text-[11px] font-medium text-slate-500">{{ $metrics['onestall_owned'] }} {{ setting('name', 'ALLZONE') }} Hubs</span>
             </div>
         </div>
         <div class="p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs">

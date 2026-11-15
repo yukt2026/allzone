@@ -1,6 +1,6 @@
 @extends('layouts.storefront')
 
-@section('title', 'Hyperlocal Store Directory & Outlets - OneStall.in')
+@section('title', 'Hyperlocal Store Directory & Outlets - ' . setting('name', 'ALLZONE'))
 
 @section('content')
 <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8 space-y-5 sm:space-y-6"
@@ -273,7 +273,7 @@
                     @if(!empty($city))
                         Showing stores in <strong class="text-indigo-600">{{ $city }}</strong> ({{ $stores->total() }})
                     @elseif(!empty($filters['all_stores']))
-                        Showing all stores across OneStall Network ({{ $stores->total() }})
+                        Showing all stores across {{ setting('name', 'ALLZONE') }} Network ({{ $stores->total() }})
                     @else
                         {{ $stores->total() }} Stores Found Near {{ $location['address_label'] ?? 'Your Location' }}
                     @endif
@@ -400,7 +400,7 @@
                     <div class="space-y-1">
                         <h3 class="text-base font-bold text-slate-900">No stores found within {{ $filters['radius_km'] }} km of {{ $location['address_label'] ?? 'your location' }}</h3>
                         <p class="text-xs text-slate-500 max-w-md mx-auto">
-                            Don't worry! You can expand your delivery radius or explore certified stores across other cities in the OneStall Network.
+                            Don't worry! You can expand your delivery radius or explore certified stores across other cities in the {{ setting('name', 'ALLZONE') }} Network.
                         </p>
                     </div>
 
@@ -418,7 +418,7 @@
 
                 @if(!empty($fallbackStores) && $fallbackStores->isNotEmpty())
                     <div class="pt-4 space-y-3">
-                        <h4 class="text-xs font-bold text-slate-500 uppercase tracking-wider px-1">Top Verified Stores on OneStall Network</h4>
+                        <h4 class="text-xs font-bold text-slate-500 uppercase tracking-wider px-1">Top Verified Stores on {{ setting('name', 'ALLZONE') }} Network</h4>
                         @foreach($fallbackStores as $store)
                             @php
                                 $loc = $store->location;

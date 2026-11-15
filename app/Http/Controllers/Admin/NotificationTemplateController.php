@@ -171,44 +171,44 @@ class NotificationTemplateController extends Controller
         $defaults = [
             // 1. Order Confirmed
             ['event_key' => 'order_confirmed', 'channel' => 'mail', 'subject' => 'Order Confirmed #{order_number}', 'body' => 'Your order #{order_number} amounting to ₹{amount} has been successfully placed with {store_name}. Track your order here: {action_url}'],
-            ['event_key' => 'order_confirmed', 'channel' => 'sms', 'subject' => null, 'body' => 'OneStall: Order #{order_number} confirmed! Amount: ₹{amount}. Track: {action_url}'],
+            ['event_key' => 'order_confirmed', 'channel' => 'sms', 'subject' => null, 'body' => 'ALLZONE: Order #{order_number} confirmed! Amount: ₹{amount}. Track: {action_url}'],
             ['event_key' => 'order_confirmed', 'channel' => 'whatsapp', 'subject' => null, 'body' => 'Hello {name}! 🎉 Your order #{order_number} is confirmed. Total: ₹{amount}. View order details: {action_url}'],
             ['event_key' => 'order_confirmed', 'channel' => 'database', 'subject' => 'Order #{order_number} Confirmed', 'body' => 'Your order #{order_number} has been placed successfully.'],
             
             // 2. OTP Verification
-            ['event_key' => 'otp', 'channel' => 'sms', 'subject' => null, 'body' => 'Your OneStall verification OTP is {otp}. Valid for 10 minutes. Do not share.'],
-            ['event_key' => 'otp', 'channel' => 'whatsapp', 'subject' => null, 'body' => 'Your OneStall security OTP is *{otp}*. Valid for 10 mins.'],
-            ['event_key' => 'otp', 'channel' => 'mail', 'subject' => 'Your OneStall Verification Code', 'body' => 'Use code {otp} to complete your verification.'],
+            ['event_key' => 'otp', 'channel' => 'sms', 'subject' => null, 'body' => 'Your ALLZONE verification OTP is {otp}. Valid for 10 minutes. Do not share.'],
+            ['event_key' => 'otp', 'channel' => 'whatsapp', 'subject' => null, 'body' => 'Your ALLZONE security OTP is *{otp}*. Valid for 10 mins.'],
+            ['event_key' => 'otp', 'channel' => 'mail', 'subject' => 'Your ALLZONE Verification Code', 'body' => 'Use code {otp} to complete your verification.'],
 
             // 3. Payment Confirmed
             ['event_key' => 'payment_confirmed', 'channel' => 'mail', 'subject' => 'Payment Receipt for Order #{order_number}', 'body' => 'We received your payment of ₹{amount} via {payment_method} (Ref: {transaction_id}) for Order #{order_number}.'],
-            ['event_key' => 'payment_confirmed', 'channel' => 'sms', 'subject' => null, 'body' => 'OneStall: ₹{amount} received for order #{order_number} via {payment_method}. Txn: {transaction_id}'],
+            ['event_key' => 'payment_confirmed', 'channel' => 'sms', 'subject' => null, 'body' => 'ALLZONE: ₹{amount} received for order #{order_number} via {payment_method}. Txn: {transaction_id}'],
             ['event_key' => 'payment_confirmed', 'channel' => 'whatsapp', 'subject' => null, 'body' => '✅ Payment of ₹{amount} confirmed for Order #{order_number}. Receipt available at: {action_url}'],
             ['event_key' => 'payment_confirmed', 'channel' => 'database', 'subject' => 'Payment Received: ₹{amount}', 'body' => 'Payment of ₹{amount} received for order #{order_number}.'],
 
             // 4. Order Packing
-            ['event_key' => 'order_packing', 'channel' => 'sms', 'subject' => null, 'body' => 'OneStall: {store_name} is currently packing your {item_count} items for order #{order_number}.'],
+            ['event_key' => 'order_packing', 'channel' => 'sms', 'subject' => null, 'body' => 'ALLZONE: {store_name} is currently packing your {item_count} items for order #{order_number}.'],
             ['event_key' => 'order_packing', 'channel' => 'whatsapp', 'subject' => null, 'body' => '📦 Great news {name}! {store_name} is packing your {item_count} items for Order #{order_number}.'],
             ['event_key' => 'order_packing', 'channel' => 'database', 'subject' => 'Order #{order_number} is being packed', 'body' => '{store_name} has started packing your order.'],
 
             // 5. Shipment Update
-            ['event_key' => 'shipment_update', 'channel' => 'sms', 'subject' => null, 'body' => 'OneStall: Order #{order_number} dispatched via {courier_name}. AWB: {tracking_number}. Track: {action_url}'],
+            ['event_key' => 'shipment_update', 'channel' => 'sms', 'subject' => null, 'body' => 'ALLZONE: Order #{order_number} dispatched via {courier_name}. AWB: {tracking_number}. Track: {action_url}'],
             ['event_key' => 'shipment_update', 'channel' => 'whatsapp', 'subject' => null, 'body' => '🚚 Order #{order_number} is on its way via {courier_name} (AWB: {tracking_number}). Track live: {action_url}'],
             ['event_key' => 'shipment_update', 'channel' => 'database', 'subject' => 'Dispatched: #{order_number}', 'body' => 'Your shipment #{order_number} has been dispatched.'],
 
             // 6. Out for Delivery
-            ['event_key' => 'out_for_delivery', 'channel' => 'sms', 'subject' => null, 'body' => 'OneStall: Your package #{order_number} is out for delivery with {rider_name}! Live track: {action_url}'],
+            ['event_key' => 'out_for_delivery', 'channel' => 'sms', 'subject' => null, 'body' => 'ALLZONE: Your package #{order_number} is out for delivery with {rider_name}! Live track: {action_url}'],
             ['event_key' => 'out_for_delivery', 'channel' => 'whatsapp', 'subject' => null, 'body' => '🛵 Rider {rider_name} is on the way with your order #{order_number}! ETA: {eta}. View live map: {action_url}'],
             ['event_key' => 'out_for_delivery', 'channel' => 'database', 'subject' => 'Order Out for Delivery! 🛵', 'body' => 'Your order #{order_number} is out for delivery.'],
 
             // 7. Order Delivered
-            ['event_key' => 'order_delivered', 'channel' => 'sms', 'subject' => null, 'body' => 'OneStall: Package #{order_number} has been delivered. Enjoy your purchase!'],
+            ['event_key' => 'order_delivered', 'channel' => 'sms', 'subject' => null, 'body' => 'ALLZONE: Package #{order_number} has been delivered. Enjoy your purchase!'],
             ['event_key' => 'order_delivered', 'channel' => 'whatsapp', 'subject' => null, 'body' => '🎉 Package #{order_number} delivered successfully. Rate your experience: {action_url}'],
             ['event_key' => 'order_delivered', 'channel' => 'database', 'subject' => 'Delivered Successfully! 🎉', 'body' => 'Package #{order_number} has been delivered.'],
 
             // 8. Return & Refund
             ['event_key' => 'return_refund', 'channel' => 'mail', 'subject' => 'Refund Processed for Order #{order_number}', 'body' => 'Your refund of ₹{refund_amount} for return request #{return_id} has been initiated to your original payment method.'],
-            ['event_key' => 'return_refund', 'channel' => 'sms', 'subject' => null, 'body' => 'OneStall: Refund of ₹{refund_amount} for #{order_number} has been initiated.'],
+            ['event_key' => 'return_refund', 'channel' => 'sms', 'subject' => null, 'body' => 'ALLZONE: Refund of ₹{refund_amount} for #{order_number} has been initiated.'],
             ['event_key' => 'return_refund', 'channel' => 'database', 'subject' => 'Refund Initiated: ₹{refund_amount}', 'body' => 'Refund for return #{return_id} is in progress.'],
 
             // 9. Seller New Order
@@ -221,7 +221,7 @@ class NotificationTemplateController extends Controller
 
             // 11. Settlement Paid
             ['event_key' => 'settlement_paid', 'channel' => 'mail', 'subject' => 'Merchant Payout Settled #{settlement_id}', 'body' => 'Your merchant settlement #{settlement_id} for period {period} amounting to ₹{amount} has been paid via bank transfer (UTR: {utr}).'],
-            ['event_key' => 'settlement_paid', 'channel' => 'sms', 'subject' => null, 'body' => 'OneStall: Settlement ₹{amount} credited for period {period}. UTR: {utr}'],
+            ['event_key' => 'settlement_paid', 'channel' => 'sms', 'subject' => null, 'body' => 'ALLZONE: Settlement ₹{amount} credited for period {period}. UTR: {utr}'],
             ['event_key' => 'settlement_paid', 'channel' => 'database', 'subject' => 'Payout Processed: ₹{amount}', 'body' => 'Settlement #{settlement_id} has been credited.'],
 
             // 12. Promotional Announcement

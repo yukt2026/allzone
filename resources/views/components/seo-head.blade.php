@@ -37,7 +37,7 @@
 
 <!-- Open Graph / Facebook -->
 <meta property="og:type" content="{{ $meta['og']['type'] ?? 'website' }}">
-<meta property="og:site_name" content="{{ $meta['og']['site_name'] ?? config('app.name', 'OneStall') }}">
+<meta property="og:site_name" content="{{ $meta['og']['site_name'] ?? setting('name', 'ALLZONE') }}">
 <meta property="og:url" content="{{ $meta['og']['url'] ?? $meta['canonical'] }}">
 <meta property="og:title" content="{{ $meta['og']['title'] ?? $meta['title'] }}">
 <meta property="og:description" content="{{ $meta['og']['description'] ?? $meta['description'] }}">

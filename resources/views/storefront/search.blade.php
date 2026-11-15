@@ -11,11 +11,11 @@
                     @if($query)
                         Search results for "<span class="text-indigo-600">{{ $query }}</span>"
                     @else
-                        Explore OneStall Catalog
+                        Explore {{ setting('name', 'ALLZONE') }} Catalog
                     @endif
                 </h1>
                 <p class="text-xs text-slate-500 mt-0.5">
-                    Showing {{ $results->total() }} results across {{ setting('name', 'OneStall') }} network
+                    Showing {{ $results->total() }} results across {{ setting('name', 'ALLZONE') }} network
                 </p>
             </div>
 
@@ -303,7 +303,7 @@
                                 <div class="p-4 flex-1 flex flex-col justify-between space-y-3">
                                     <div>
                                         <h4 class="text-sm font-extrabold text-slate-900 group-hover:text-indigo-600 transition truncate">{{ $store->name }}</h4>
-                                        <p class="text-xs text-slate-500 line-clamp-2 mt-0.5">{{ $store->description ?: 'Authorized neighbourhood store on OneStall Network' }}</p>
+                                        <p class="text-xs text-slate-500 line-clamp-2 mt-0.5">{{ $store->description ?: ('Authorized neighbourhood store on ' . setting('name', 'ALLZONE') . ' Network') }}</p>
                                         <div class="flex items-center space-x-1.5 text-[10px] font-bold text-slate-600 mt-2">
                                             @if($store->accepts_quick_commerce)
                                                 <span class="text-amber-600">⚡ 15-30m Delivery</span>

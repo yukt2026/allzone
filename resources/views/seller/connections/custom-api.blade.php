@@ -16,7 +16,7 @@
                 <h3 class="font-bold text-sm">Save Your API Secret Now — Shown Once Only!</h3>
             </div>
             <p class="text-xs text-amber-700 dark:text-amber-300">
-                For security, OneStall stores only the cryptographic SHA-256 hash of your API secret. This plain secret will never be displayed again.
+                For security, {{ setting('name', 'ALLZONE') }} stores only the cryptographic SHA-256 hash of your API secret. This plain secret will never be displayed again.
             </p>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
                 <div class="p-3 rounded-xl bg-white dark:bg-slate-900 border border-amber-500/30">
@@ -107,8 +107,8 @@
 
                         <div>
                             <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Your Webhook URL (HTTPS)</label>
-                            <input type="url" name="webhook_url" value="{{ old('webhook_url', $connection->webhook_url) }}" placeholder="https://api.mybrand.com/webhooks/onestall" required class="w-full text-xs rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-slate-900 dark:text-white font-mono" />
-                            <span class="text-[10px] text-slate-400 mt-1 block">OneStall will POST order status events to this endpoint.</span>
+                            <input type="url" name="webhook_url" value="{{ old('webhook_url', $connection->webhook_url) }}" placeholder="https://api.mybrand.com/webhooks/allzone" required class="w-full text-xs rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-slate-900 dark:text-white font-mono" />
+                            <span class="text-[10px] text-slate-400 mt-1 block">{{ setting('name', 'ALLZONE') }} will POST order status events to this endpoint.</span>
                         </div>
 
                         <div>

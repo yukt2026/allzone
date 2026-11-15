@@ -443,13 +443,13 @@ class AdminDashboardService
         $topSellers = $this->getTopSellers($range);
         $categoryRevenue = $this->getRevenueByCategory($range);
 
-        $filename = "onestall_dashboard_summary_" . date('Y_m_d_His') . ".csv";
+        $filename = "allzone_dashboard_summary_" . date('Y_m_d_His') . ".csv";
 
         return new StreamedResponse(function () use ($stats, $topSellers, $categoryRevenue, $range) {
             $handle = fopen('php://output', 'w');
 
             // Header info
-            fputcsv($handle, ['OneStall Smart Commerce Platform - Executive Dashboard Summary']);
+            fputcsv($handle, [setting('name', 'ALLZONE') . ' Marketplace (SK Refrigeration) - Executive Dashboard Summary']);
             fputcsv($handle, ['Generated At', date('Y-m-d H:i:s'), 'Period Range', strtoupper($range)]);
             fputcsv($handle, []);
 

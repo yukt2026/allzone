@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>{{ $title ?? 'OneStall Rider Portal' }}</title>
+    <title>{{ $title ?? 'ALLZONE Delivery Partner' }} - {{ setting('name', 'ALLZONE') }}</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="bg-slate-100 text-slate-900 min-h-full font-sans antialiased flex flex-col selection:bg-orange-500 selection:text-white pb-20">

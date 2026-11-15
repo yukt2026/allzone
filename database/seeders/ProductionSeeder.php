@@ -26,13 +26,13 @@ class ProductionSeeder extends Seeder
         $this->call(RolesAndPermissionsSeeder::class);
 
         // 2. Super Admin User
-        $superAdminEmail = env('ADMIN_EMAIL', 'admin@onestall.in');
+        $superAdminEmail = env('ADMIN_EMAIL', 'admin@allzone.in');
         $superAdminPassword = env('ADMIN_PASSWORD', 'Password@123');
 
         $superAdmin = User::firstOrCreate(
             ['email' => $superAdminEmail],
             [
-                'name' => 'OneStall Super Admin',
+                'name' => 'ALLZONE Super Admin',
                 'phone' => '+919999900000',
                 'password' => Hash::make($superAdminPassword),
                 'status' => UserStatus::ACTIVE,
@@ -95,7 +95,7 @@ class ProductionSeeder extends Seeder
                 'type' => 'string',
                 'group' => 'cargo',
                 'label' => 'Cargo Waybill Prefix',
-                'description' => 'Tracking number prefix for OneStall Cargo logistics consignments',
+                'description' => 'Tracking number prefix for ALLZONE Cargo logistics consignments',
                 'is_public' => true,
             ],
             [
@@ -103,7 +103,7 @@ class ProductionSeeder extends Seeder
                 'value' => json_encode([
                     'Nearby Store',
                     'Nearby Seller',
-                    'OneStall Store',
+                    'ALLZONE Store',
                     'Regional Warehouse',
                     'National Seller',
                 ]),

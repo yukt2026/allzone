@@ -20,7 +20,7 @@ enum UserRole: string
             self::ADMIN => 'Platform Admin',
             self::SELLER => 'Verified Seller',
             self::STORE_MANAGER => 'Physical Store Manager',
-            self::CARGO_AGENT => 'OneStall Cargo Fleet Agent',
+            self::CARGO_AGENT => 'ALLZONE Cargo Fleet Agent',
             self::CUSTOMER => 'Customer',
         };
     }

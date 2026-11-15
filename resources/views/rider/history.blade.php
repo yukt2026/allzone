@@ -1,4 +1,4 @@
-@extends('layouts.rider', ['title' => 'Delivery History - OneStall Rider'])
+@extends('layouts.rider', ['title' => 'Delivery History - ALLZONE Rider'])
 
 @section('content')
 <div class="space-y-4">

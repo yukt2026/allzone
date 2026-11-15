@@ -79,7 +79,7 @@ class WishlistController extends Controller
             'products' => $products,
             'shareUrl' => route('wishlist.share', ['token' => $token]),
             'isSharedView' => true,
-            'sharedOwner' => $customer->user?->name ?? 'A OneStall Customer',
+            'sharedOwner' => $customer->user?->name ?? ('A ' . setting('name', 'ALLZONE') . ' Customer'),
         ]);
     }
 

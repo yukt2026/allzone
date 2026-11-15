@@ -324,6 +324,14 @@
                               x-text="currentVariant.in_stock ? '✓ In Stock (' + currentVariant.stock + ' ready)' : 'Out of Stock'"></span>
                     </div>
                 </div>
+            @else
+                <div class="flex items-center justify-between px-2 text-[11px] sm:text-xs text-slate-500">
+                    <span>SKU: <strong class="text-slate-800 font-mono" x-text="currentVariant.sku"></strong></span>
+                    <span :class="currentVariant.in_stock ? 'text-emerald-600 font-bold flex items-center space-x-1' : 'text-rose-500 font-bold flex items-center space-x-1'">
+                        <span class="inline-block w-2 h-2 rounded-full" :class="currentVariant.in_stock ? 'bg-emerald-500' : 'bg-rose-500'"></span>
+                        <span x-text="currentVariant.in_stock ? 'In Stock (' + currentVariant.stock + ' available)' : 'Out of Stock'"></span>
+                    </span>
+                </div>
             @endif
 
             <!-- Add to Cart & Primary Action Stepper -->
@@ -626,7 +634,7 @@
                                     <span>{{ $ans->answer }}</span>
                                 </div>
                                 <div class="text-[10px] text-slate-400">
-                                    Answered by {{ $ans->user?->name ?? 'OneStall Seller' }} &bull; {{ $ans->created_at->format('M d, Y') }}
+                                    Answered by {{ $ans->user?->name ?? (setting('name', 'ALLZONE') . ' Seller') }} &bull; {{ $ans->created_at->format('M d, Y') }}
                                 </div>
                             </div>
                         @endforeach

@@ -188,7 +188,7 @@
                                         {{ $inv->location->seller->business_name }}
                                     </a>
                                 @else
-                                    <span>OneStall Direct</span>
+                                    <span>{{ setting('name', 'ALLZONE') }} Direct</span>
                                 @endif
                             </td>
                             <td class="py-3.5 px-4">

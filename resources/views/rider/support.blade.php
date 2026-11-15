@@ -1,4 +1,4 @@
-@extends('layouts.rider', ['title' => 'Rider Support & Safety - OneStall'])
+@extends('layouts.rider', ['title' => 'Rider Support & Safety - ALLZONE'])
 
 @section('content')
 <div class="space-y-4">
@@ -42,7 +42,7 @@
             <a href="tel:+919876543200" class="py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl font-bold text-center transition">
                 📞 Call Hub Manager
             </a>
-            <a href="mailto:rider-support@onestall.com" class="py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl font-bold text-center transition">
+            <a href="mailto:rider-support@allzone.in" class="py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl font-bold text-center transition">
                 ✉️ Email Support
             </a>
         </div>

@@ -54,7 +54,7 @@ class CashfreeGateway implements PaymentGatewayInterface
             'customer_details' => [
                 'customer_id' => (string) $order->customer_id,
                 'customer_name' => $order->customer?->user?->name ?? 'Shopper',
-                'customer_email' => $order->customer?->user?->email ?? 'shopper@onestall.local',
+                'customer_email' => $order->customer?->user?->email ?? 'shopper@allzone.in',
                 'customer_phone' => $order->customer?->user?->phone ?? '9999999999',
             ],
             'order_meta' => [

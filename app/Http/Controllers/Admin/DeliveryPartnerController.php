@@ -153,7 +153,7 @@ class DeliveryPartnerController extends Controller
             ['phone' => $validated['phone']],
             [
                 'name' => $validated['name'],
-                'email' => 'rider_' . ($cleanPhone ?: uniqid()) . '@onestall.internal',
+                'email' => 'rider_' . ($cleanPhone ?: uniqid()) . '@allzone.internal',
                 'password' => Hash::make($request->input('password', 'Password@123')),
                 'status' => 'active',
                 'email_verified_at' => now(),

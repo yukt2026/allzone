@@ -26,14 +26,17 @@ class SellerSuspendedNotification extends Notification implements ShouldQueue
 
     public function toMail(object $notifiable): MailMessage
     {
+        $brandName = setting('name', 'ALLZONE');
+        $complianceEmail = setting('support_email', 'compliance@allzone.in');
+
         return (new MailMessage)
-            ->subject('Important Notice: OneStall Merchant Account Suspended')
+            ->subject("Important Notice: {$brandName} Merchant Account Suspended")
             ->greeting("Hello {$this->seller->business_name},")
-            ->line('Your merchant account and public storefront have been suspended by OneStall platform compliance.')
+            ->line("Your merchant account and public storefront have been suspended by {$brandName} platform compliance.")
             ->line('Reason for suspension:')
             ->line("> **{$this->reason}**")
             ->line('Your product catalogue and storefronts have been temporarily hidden from buyers.')
-            ->line('Please reach out to merchant compliance at compliance@onestall.in to resolve this matter.');
+            ->line("Please reach out to merchant compliance at {$complianceEmail} to resolve this matter.");
     }
 
     public function toArray(object $notifiable): array

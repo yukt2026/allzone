@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>{{ $title ?? 'Admin Command Central' }} - {{ setting('name', 'OneStall') }}</title>
+    <title>{{ $title ?? 'Admin Command Central' }} - {{ setting('name', 'ALLZONE') }}</title>
 
     <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
     <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('favicon.png') }}">
@@ -25,11 +25,11 @@
         <!-- Brand Header -->
         <div class="h-16 flex items-center justify-between px-6 border-b border-slate-800">
             <a href="{{ route('admin.dashboard') }}" class="flex items-center space-x-3">
-                <div class="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-indigo-600/30">
-                    1S
+                <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-700 via-indigo-600 to-amber-400 flex items-center justify-center text-white font-black text-sm shadow-lg shadow-indigo-600/30 tracking-tighter">
+                    AZ
                 </div>
                 <div>
-                    <span class="text-base font-bold text-white tracking-tight">OneStall</span>
+                    <span class="text-base font-bold text-white tracking-tight">ALLZONE</span>
                     <span class="text-[10px] uppercase font-bold tracking-widest text-indigo-400 block -mt-1">Super Admin</span>
                 </div>
             </a>
@@ -65,7 +65,7 @@
             </div>
 
             <div class="px-3 py-2 text-xs text-slate-400 rounded flex items-center justify-between">
-                <span>OneStall Cargo Hubs</span>
+                <span>{{ setting('name', 'ALLZONE') }} Cargo Hubs</span>
                 <span class="px-2 py-0.5 text-[10px] bg-slate-800 text-slate-300 rounded-full font-mono">12</span>
             </div>
 
@@ -91,7 +91,7 @@
                 </form>
             </div>
             <div class="text-[11px] text-slate-400 font-mono">
-                {{ auth()->user()->email ?? 'admin@onestall.in' }}
+                {{ auth()->user()->email ?? 'admin@allzone.in' }}
             </div>
         </div>
     </aside>

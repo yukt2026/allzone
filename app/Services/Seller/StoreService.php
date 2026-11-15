@@ -50,7 +50,7 @@ class StoreService
             $store = $seller->stores()->create([
                 'name' => $seller->business_name ?: 'Default Storefront',
                 'slug' => $slug,
-                'description' => 'Official OneStall storefront for ' . ($seller->business_name ?: 'merchant partner'),
+                'description' => 'Official ' . setting('name', 'ALLZONE') . ' storefront for ' . ($seller->business_name ?: 'merchant partner'),
                 'status' => StoreStatus::ACTIVE,
                 'accepts_quick_commerce' => true,
                 'accepts_pickup' => true,
@@ -93,7 +93,8 @@ class StoreService
             return ['available' => false, 'message' => "Store URL '{$cleanSlug}' is already claimed."];
         }
 
-        return ['available' => true, 'message' => "Store URL 'onestall.in/store/{$cleanSlug}' is available!"];
+        $host = parse_url(config('app.url', 'http://allzone.in'), PHP_URL_HOST) ?: 'allzone.in';
+        return ['available' => true, 'message' => "Store URL '{$host}/store/{$cleanSlug}' is available!"];
     }
 
     /**
@@ -291,7 +292,7 @@ class StoreService
             '@context' => 'https://schema.org',
             '@type' => 'Store',
             'name' => $store->name,
-            'description' => $store->description ?? "Shop online from {$store->name} on OneStall.in",
+            'description' => $store->description ?? ("Shop online from {$store->name} on " . setting('name', 'ALLZONE')),
             'url' => url("/store/{$store->slug}"),
             'telephone' => $store->phone,
             'image' => $store->logo ? url($store->logo) : url('/images/placeholder-store.png'),

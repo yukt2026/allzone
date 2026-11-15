@@ -210,7 +210,7 @@
                                 class="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 border-amber-300 dark:border-amber-700"
                             >
                             <label for="promotional_consent" class="text-xs font-semibold text-slate-800 dark:text-slate-200 cursor-pointer">
-                                I agree to receive curated deals, flash sale alerts, and promotional coupons from OneStall.
+                                I agree to receive curated deals, flash sale alerts, and promotional coupons from {{ setting('name', 'ALLZONE') }}.
                             </label>
                         </div>
 

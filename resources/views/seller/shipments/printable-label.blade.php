@@ -102,7 +102,7 @@
 
     <div class="label-container">
         <div class="header">
-            <div class="logo">ONESTALL CARGO</div>
+            <div class="logo">{{ strtoupper(setting('name', 'ALLZONE')) }} LOGISTICS</div>
             <div style="text-align: right; font-size: 10px; font-weight: bold;">
                 {{ $shipment->courier }}<br>
                 <span style="text-transform: uppercase;">{{ $shipment->service ?? 'Surface' }}</span>

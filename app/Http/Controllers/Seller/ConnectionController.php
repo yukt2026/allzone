@@ -86,7 +86,7 @@ class ConnectionController extends Controller
 
         return response($csv, 200, [
             'Content-Type' => 'text/csv',
-            'Content-Disposition' => 'attachment; filename="onestall_catalog_template.csv"',
+            'Content-Disposition' => 'attachment; filename="allzone_catalog_template.csv"',
         ]);
     }
 

@@ -18,7 +18,7 @@ enum SellerType: string
             self::MARKETPLACE => 'Marketplace Vendor',
             self::LOCAL_STORE => 'Local Retail Store',
             self::BRAND => 'Direct Brand Store',
-            self::ONESTALL_STORE => 'OneStall Direct Store',
+            self::ONESTALL_STORE => 'ALLZONE Direct Store',
             self::MULTI_STORE => 'Multi-Store Merchant Chain',
         };
     }

@@ -147,7 +147,7 @@ class LocationService
     {
         try {
             $response = \Illuminate\Support\Facades\Http::timeout(3.5)
-                ->withHeaders(['User-Agent' => 'OneStall/2.0 (Location Resolver)'])
+                ->withHeaders(['User-Agent' => 'ALLZONE/2.0 (Location Resolver)'])
                 ->get("https://api.bigdatacloud.net/data/reverse-geocode-client?latitude={$lat}&longitude={$lng}&localityLanguage=en");
 
             if ($response->successful()) {

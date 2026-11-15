@@ -69,7 +69,7 @@
     <!-- Footer Links -->
     <div class="pt-4 text-center border-t border-slate-200 dark:border-slate-800 space-y-2">
         <p class="text-xs text-slate-500 dark:text-slate-400">
-            New to OneStall Merchant network? 
+            New to {{ setting('name', 'ALLZONE') }} Merchant network? 
             <a href="{{ route('seller.register') }}" class="font-bold text-indigo-600 hover:text-indigo-500 dark:text-indigo-400">
                 Register as a Seller
             </a>

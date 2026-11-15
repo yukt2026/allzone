@@ -36,8 +36,8 @@ return [
     ],
 
     'razorpay' => [
-        'key_id' => env('RAZORPAY_KEY_ID', 'rzp_test_onestall_key'),
-        'key_secret' => env('RAZORPAY_KEY_SECRET', 'rzp_test_onestall_secret'),
+        'key_id' => env('RAZORPAY_KEY_ID', 'rzp_test_allzone_key'),
+        'key_secret' => env('RAZORPAY_KEY_SECRET', 'rzp_test_allzone_secret'),
         'webhook_secret' => env('RAZORPAY_WEBHOOK_SECRET', 'rzp_test_webhook_secret'),
     ],
 
@@ -49,7 +49,7 @@ return [
     ],
 
     'cargo' => [
-        'base_url' => env('CARGO_API_BASE_URL', 'https://api.onestallcargo.internal/v1'),
+        'base_url' => env('CARGO_API_BASE_URL', 'https://api.allzonecargo.internal/v1'),
         'api_key' => env('CARGO_API_KEY', 'osc_test_api_key_sec123'),
         'api_secret' => env('CARGO_API_SECRET', 'osc_test_secret_abc456'),
         'webhook_secret' => env('CARGO_WEBHOOK_SECRET', 'osc_webhook_secret_xyz789'),
@@ -57,6 +57,15 @@ return [
         'timeout' => (int) env('CARGO_TIMEOUT', 15),
         'retry_times' => (int) env('CARGO_RETRY_TIMES', 3),
         'retry_sleep' => (int) env('CARGO_RETRY_SLEEP_MS', 100),
+    ],
+
+    'shiprocket' => [
+        'email' => env('SHIPROCKET_EMAIL', ''),
+        'password' => env('SHIPROCKET_PASSWORD', ''),
+        'api_key' => env('SHIPROCKET_API_KEY', ''),
+        'base_url' => env('SHIPROCKET_BASE_URL', 'https://apiv2.shiprocket.in/v1/external'),
+        'fake' => (bool) env('SHIPROCKET_FAKE', true),
+        'is_enabled' => (bool) env('SHIPROCKET_ENABLED', false),
     ],
 
 ];

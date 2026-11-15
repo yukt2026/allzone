@@ -1,4 +1,4 @@
-@extends('layouts.rider', ['title' => 'Rider Profile & Account - OneStall'])
+@extends('layouts.rider', ['title' => 'Rider Profile & Account - ALLZONE'])
 
 @section('content')
 <div class="space-y-4" x-data="{ 
@@ -80,7 +80,7 @@
             </div>
             <div class="bg-slate-50 p-2.5 rounded-2xl border border-slate-100">
                 <span class="text-[10px] font-bold text-slate-400 uppercase block">Linked Email</span>
-                <span class="text-slate-700 truncate block">{{ $user?->email ?? 'rider_' . $rider->id . '@onestall.internal' }}</span>
+                <span class="text-slate-700 truncate block">{{ $user?->email ?? 'rider_' . $rider->id . '@allzone.internal' }}</span>
             </div>
             <div class="bg-slate-50 p-2.5 rounded-2xl border border-slate-100">
                 <span class="text-[10px] font-bold text-slate-400 uppercase block">Member Since</span>
@@ -236,7 +236,7 @@
                     type="email" 
                     name="email" 
                     value="{{ old('email', $user?->email) }}" 
-                    placeholder="partner@onestall.com" 
+                    placeholder="partner@allzone.in" 
                     class="w-full text-xs p-2.5 rounded-xl border border-slate-300 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-orange-500 transition"
                 />
             </div>

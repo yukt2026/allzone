@@ -217,11 +217,11 @@ class StorefrontService
     }
 
     /**
-     * Get OneStall direct / flagship stores.
+     * Get ALLZONE direct / flagship stores.
      */
     public function getOnestallStores(int $limit = 6): Collection
     {
-        return Cache::remember("storefront.onestall_stores_{$limit}", 600, function () use ($limit) {
+        return Cache::remember("storefront.allzone_stores_{$limit}", 600, function () use ($limit) {
             $stores = Store::active()
                 ->where('is_onestall_owned', true)
                 ->with(['location', 'timings'])

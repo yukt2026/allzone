@@ -87,7 +87,7 @@
             </a>
         </p>
         <p class="text-xs text-slate-400 dark:text-slate-500">
-            Selling on OneStall? 
+            Selling on {{ setting('name', 'ALLZONE') }}? 
             <a href="{{ route('seller.login') }}" class="font-semibold text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400">
                 Access Seller Hub &rarr;
             </a>

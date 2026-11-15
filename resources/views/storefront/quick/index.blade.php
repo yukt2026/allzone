@@ -1,6 +1,6 @@
 @extends('layouts.storefront')
 
-@section('title', 'Quick Commerce - 10-30 Minute Delivery | OneStall')
+@section('title', 'Quick Commerce - 10-30 Minute Delivery | ' . setting('name', 'ALLZONE'))
 
 @section('content')
 <div class="bg-slate-50 min-h-screen py-4 sm:py-8" x-data="{

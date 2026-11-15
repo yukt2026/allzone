@@ -233,7 +233,7 @@ class OrderStateMachine
                 $this->commissionService->recordReversal($fo, (float) $fo->total_amount, $note ?: 'Package refunded');
             }
 
-            // 5. Auto-trigger OneStall Cargo shipment for standard delivery
+            // 5. Auto-trigger ALLZONE Cargo shipment for standard delivery
             if ($toStatus === 'ready_to_ship' && $fo->fulfilment_type !== FulfilmentType::QUICK) {
                 \App\Jobs\Cargo\CreateShipmentJob::dispatch($fo);
             }

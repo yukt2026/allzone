@@ -59,7 +59,7 @@ class OneStallCargoProvider implements LogisticsProvider
 
             // Origin address (Store or Seller Hub)
             $origin = [
-                'name' => $store?->name ?? $seller?->company_name ?? 'OneStall Hub',
+                'name' => $store?->name ?? $seller?->company_name ?? (setting('name', 'ALLZONE') . ' Hub'),
                 'phone' => $store?->phone ?? $seller?->user?->phone ?? '9876543210',
                 'line1' => $store?->address ?? 'Plot 10, Industrial Hub',
                 'city' => $store?->city ?? 'Bengaluru',
@@ -100,7 +100,7 @@ class OneStallCargoProvider implements LogisticsProvider
                 'weight_kg' => $totalWeight,
                 'is_cod' => $isCod,
                 'cod_amount' => $codAmount,
-                'courier' => $options['courier'] ?? 'OneStall Express Surface',
+                'courier' => $options['courier'] ?? (setting('name', 'ALLZONE') . ' Express Surface'),
                 'service' => $options['service'] ?? 'surface',
                 'items_count' => $fulfilmentOrder->items->count(),
                 'declared_value' => (float) $fulfilmentOrder->subtotal,

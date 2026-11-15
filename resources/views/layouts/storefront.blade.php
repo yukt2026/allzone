@@ -64,7 +64,7 @@
             </div>
             <div class="hidden sm:flex items-center space-x-6 text-xs font-medium text-slate-300">
                 <span>Free delivery on orders over <strong class="text-amber-400">{{ format_currency(setting('free_delivery_threshold', 499)) }}</strong></span>
-                <a href="{{ route('seller.dashboard') }}" class="hover:text-amber-300 transition">Sell on {{ setting('name', 'OneStall') }}</a>
+                <a href="{{ route('seller.dashboard') }}" class="hover:text-amber-300 transition">Sell on {{ setting('name', 'ALLZONE') }}</a>
             </div>
         </div>
     </div>
@@ -101,15 +101,15 @@
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 6h16M4 12h16M4 18h16"/></svg>
                     </button>
 
-                    <a href="{{ route('home') }}" class="flex items-center space-x-1.5 sm:space-x-2 group min-w-0">
-                        <div class="w-8 h-8 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-gradient-to-tr from-indigo-700 via-indigo-600 to-amber-400 flex items-center justify-center text-white font-extrabold text-sm sm:text-2xl shadow-md group-hover:scale-105 transition-transform flex-shrink-0">
-                            1S
+                    <a href="{{ route('home') }}" class="flex items-center space-x-1.5 sm:space-x-2.5 group min-w-0">
+                        <div class="w-8 h-8 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-gradient-to-tr from-blue-700 via-indigo-600 to-amber-400 flex items-center justify-center text-white font-extrabold text-xs sm:text-lg shadow-md group-hover:scale-105 transition-transform flex-shrink-0 tracking-tighter">
+                            AZ
                         </div>
                         <div class="min-w-0">
-                            <span class="text-base sm:text-2xl font-black tracking-tight text-slate-900 group-hover:text-indigo-600 transition truncate block">
-                                {{ setting('name', 'OneStall') }}<span class="text-amber-500">.in</span>
+                            <span class="text-base sm:text-2xl font-black tracking-tight text-slate-900 group-hover:text-indigo-600 transition truncate block leading-none">
+                                {{ setting('name', 'ALLZONE') }}
                             </span>
-                            <span class="hidden sm:block text-[10px] font-bold text-slate-400 tracking-wider uppercase -mt-1">{{ setting('tagline', 'Omnichannel Commerce') }}</span>
+                            <span class="hidden sm:block text-[9px] font-bold text-slate-400 tracking-wider uppercase mt-0.5">By {{ setting('company_name', 'SK Refrigeration') }}</span>
                         </div>
                     </a>
 
@@ -313,9 +313,10 @@
                                     <p class="text-[11px] text-slate-500 truncate">{{ auth()->user()->email ?? auth()->user()->phone }}</p>
                                 </div>
                                 <div class="py-1">
+                                    <a href="{{ route('customer.profile') }}" class="block px-4 py-2 text-indigo-600 hover:bg-indigo-50 font-bold">My Profile &amp; Addresses</a>
                                     <a href="{{ route('orders.index') }}" class="block px-4 py-2 text-slate-700 hover:bg-slate-50 font-medium">My Orders</a>
+                                    <a href="{{ route('wishlist.index') }}" class="block px-4 py-2 text-slate-700 hover:bg-slate-50 font-medium">My Wishlist</a>
                                     <a href="{{ route('notifications.index') }}" class="block px-4 py-2 text-slate-700 hover:bg-slate-50 font-medium">Notifications &amp; Preferences</a>
-                                    <button type="button" @click="$store.location.modalOpen = true; open = false" class="w-full text-left px-4 py-2 text-slate-700 hover:bg-slate-50 font-medium">Saved Addresses</button>
                                 </div>
                                 @if(auth()->user()->hasRole('seller_owner') || auth()->user()->seller)
                                     <div class="py-1">
@@ -482,7 +483,7 @@
                     <!-- Customer Support Hotline -->
                     <div class="hidden xl:flex items-center space-x-1 text-slate-400 font-medium">
                         <svg class="w-3.5 h-3.5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
-                        <span>Support: {{ setting('support_phone', '1800-ONESTALL') }}</span>
+                        <span>Support: {{ setting('support_phone', '1800-ALLZONE') }}</span>
                     </div>
                 </div>
             </div>
@@ -800,7 +801,7 @@
                                 🛍️
                             </div>
                             <div class="min-w-0">
-                                <h3 class="font-extrabold text-sm text-white">{{ setting('name', 'OneStall') }} Menu</h3>
+                                <h3 class="font-extrabold text-sm text-white">{{ setting('name', 'ALLZONE') }} Menu</h3>
                                 <a href="{{ route('login') }}" class="text-[11px] text-amber-400 font-bold hover:underline flex items-center space-x-1">
                                     <span>Sign in for best deals</span>
                                     <span>&rarr;</span>
@@ -986,8 +987,8 @@
                     </div>
                     @auth
                         <div class="pt-1 border-t border-slate-200/80 flex items-center justify-between px-2">
-                            <a href="{{ route('orders.index') }}" @click="mobileCategoryOpen = false" class="text-indigo-600 font-semibold hover:underline">
-                                My Orders
+                            <a href="{{ route('customer.profile') }}" @click="mobileCategoryOpen = false" class="text-indigo-600 font-semibold hover:underline">
+                                My Account &amp; Orders
                             </a>
                             <form method="POST" action="{{ route('logout') }}">
                                 @csrf
@@ -1037,7 +1038,7 @@
 
             <!-- Account -->
             @auth
-                <a href="{{ route('orders.index') }}" class="flex flex-col items-center py-1 text-slate-600 hover:text-indigo-600">
+                <a href="{{ route('customer.profile') }}" class="flex flex-col items-center py-1 text-slate-600 hover:text-indigo-600">
                     <div class="w-5 h-5 rounded-full bg-indigo-600 text-white text-[10px] font-bold flex items-center justify-center">
                         {{ substr(auth()->user()->name, 0, 1) }}
                     </div>
@@ -1105,16 +1106,19 @@
                 <!-- Brand Info -->
                 <div class="md:col-span-2 space-y-4">
                     <div class="flex items-center space-x-2 text-white font-black text-xl">
-                        <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-amber-400 flex items-center justify-center text-white text-base">
-                            1S
+                        <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-700 via-indigo-600 to-amber-400 flex items-center justify-center text-white text-base font-extrabold tracking-tighter">
+                            AZ
                         </div>
-                        <span>OneStall.in</span>
+                        <div class="leading-none">
+                            <span class="block text-lg font-black tracking-tight text-white">{{ setting('name', 'ALLZONE') }}</span>
+                            <span class="block text-[9px] font-bold text-slate-400 tracking-wider uppercase mt-0.5">{{ setting('company_name', 'SK Refrigeration') }}</span>
+                        </div>
                     </div>
                     <p class="text-xs text-slate-400 leading-relaxed max-w-sm">
-                        India's pioneering omnichannel retail platform. Unifying national marketplace selections, Blinkit-speed local grocery deliveries, physical store connections, and OneStall Cargo freight logistics.
+                        Smart Multi-Vendor E-Commerce Marketplace operated by SK Refrigeration. Unifying national marketplace selections, 10-30 minute quick commerce delivery from local partner stores, and reliable logistics.
                     </p>
                     <div class="pt-2">
-                        <span class="text-[11px] font-bold uppercase tracking-wider text-slate-300 block mb-2">Subscribe to OneStall Weekly Deals</span>
+                        <span class="text-[11px] font-bold uppercase tracking-wider text-slate-300 block mb-2">Subscribe to ALLZONE Weekly Deals</span>
                         <div class="flex max-w-xs">
                             <input type="email" placeholder="Enter your email" class="w-full bg-slate-800 border-0 rounded-l-xl text-xs text-white placeholder-slate-500 focus:ring-1 focus:ring-indigo-500 py-2 px-3" />
                             <button type="button" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-3 text-xs rounded-r-xl transition">Join</button>
@@ -1149,14 +1153,14 @@
                 <div>
                     <h5 class="text-xs font-bold uppercase tracking-wider text-white mb-4">Customer Care</h5>
                     <ul class="space-y-2 text-xs">
-                        <li><a href="{{ route('pages.show', 'help-support') }}" class="hover:text-white transition">Help & Support Desk</a></li>
+                        <li><a href="{{ route('contact') }}" class="hover:text-white transition">Contact Us &amp; Support</a></li>
+                        <li><a href="{{ route('pages.show', 'about-us') }}" class="hover:text-white transition">About ALLZONE (SK Refrigeration)</a></li>
                         <li><a href="{{ route('orders.index') }}" class="hover:text-white transition">Track Your Order</a></li>
-                        <li><a href="{{ route('pages.show', 'returns-and-cancellation') }}" class="hover:text-white transition">Returns & Cancellation</a></li>
+                        <li><a href="{{ route('pages.show', 'returns-and-cancellation') }}" class="hover:text-white transition">Returns &amp; Cancellation</a></li>
                         <li><a href="{{ route('pages.show', 'shipping-policy') }}" class="hover:text-white transition">Shipping Policy</a></li>
                         <li><a href="{{ route('pages.show', 'privacy-policy') }}" class="hover:text-white transition">Privacy Policy</a></li>
                         <li><a href="{{ route('pages.show', 'terms-of-service') }}" class="hover:text-white transition">Terms of Service</a></li>
-                        <li><a href="{{ route('pages.show', 'security') }}" class="hover:text-white transition">Security & Trust Center</a></li>
-                        <li><a href="{{ route('pages.show', 'contact-us') }}" class="hover:text-white transition">Contact Us</a></li>
+                        <li><a href="{{ route('pages.show', 'security') }}" class="hover:text-white transition">Security &amp; Trust Center</a></li>
                     </ul>
                 </div>
             </div>
@@ -1164,7 +1168,7 @@
             <!-- Bottom Copyright & Payment Badges -->
             <div class="border-t border-slate-800 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] text-slate-500">
                 <div>
-                    &copy; {{ date('Y') }} {{ setting('company_name', 'OneStall Technologies Pvt. Ltd.') }}. All rights reserved. &bull; Support: <span class="text-slate-300 font-semibold">{{ setting('support_phone', '1800-ONESTALL') }}</span>
+                    &copy; {{ date('Y') }} {{ setting('name', 'ALLZONE') }} &bull; {{ setting('company_name', 'SK Refrigeration') }}. All rights reserved. &bull; Support: <span class="text-slate-300 font-semibold">{{ setting('support_phone', '1800-ALLZONE') }}</span>
                 </div>
                 <div class="flex items-center space-x-3 text-slate-400">
                     <span class="px-2 py-0.5 rounded bg-slate-800 text-[10px] font-mono">UPI</span>

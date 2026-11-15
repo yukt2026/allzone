@@ -6,6 +6,13 @@ use Illuminate\Support\Facades\Route;
 Route::get('/config', [StorefrontApiController::class, 'config'])->name('config');
 Route::get('/health', [\App\Http\Controllers\HealthCheckController::class, 'check'])->name('api.health');
 
+// Storefront Mobile App & External Catalogue Endpoints
+Route::get('/home', [StorefrontApiController::class, 'home'])->name('api.storefront.home');
+Route::get('/categories', [StorefrontApiController::class, 'categories'])->name('api.storefront.categories');
+Route::get('/brands', [StorefrontApiController::class, 'brands'])->name('api.storefront.brands');
+Route::get('/products', [StorefrontApiController::class, 'products'])->name('api.storefront.products');
+Route::get('/products/{slug}', [StorefrontApiController::class, 'productDetail'])->name('api.storefront.product.detail');
+
 // AI Semantic Search Query Parsing & Recommendations
 Route::get('/search/parse', [\App\Http\Controllers\Storefront\SearchController::class, 'parseQueryApi'])->name('api.search.parse');
 Route::get('/products/{product}/recommendations', function (\App\Models\Product $product, \App\Services\AI\Contracts\RecommendationServiceInterface $recService) {
@@ -24,7 +31,7 @@ Route::get('/recommendations/personalized', function (\Illuminate\Http\Request $
 Route::get('/quick/stores', [\App\Http\Controllers\Storefront\QuickCommerceController::class, 'nearbyStoresApi'])->name('api.quick.stores');
 Route::post('/rider/location', [\App\Http\Controllers\Rider\RiderController::class, 'updateLocation'])->name('api.rider.location');
 
-// OneStall Cargo Webhook Receiver
+// ALLZONE Cargo Webhook Receiver
 Route::post('/cargo/webhook', [\App\Http\Controllers\Api\CargoWebhookController::class, 'handle'])->name('cargo.webhook');
 
 // Connect My Shop — Public Integration Endpoints & Webhooks

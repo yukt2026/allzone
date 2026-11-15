@@ -16,6 +16,18 @@
     $hasReviews = $productReviews && $productReviews->isNotEmpty();
     $rating = $hasReviews ? (float) $productReviews->avg('rating') : ($product->reviews_avg_rating ? (float) $product->reviews_avg_rating : null);
     $reviewCount = $hasReviews ? $productReviews->count() : ($product->reviews_count ?? 0);
+
+    $inStock = true;
+    if ($variant) {
+        if ($variant->relationLoaded('inventories')) {
+            $inStock = $variant->inventories->sum(fn ($i) => max(0, $i->quantity_on_hand - $i->quantity_reserved)) > 0;
+        } elseif ($product->relationLoaded('variants')) {
+            $matchingV = $product->variants->firstWhere('id', $variantId);
+            if ($matchingV && $matchingV->relationLoaded('inventories')) {
+                $inStock = $matchingV->inventories->sum(fn ($i) => max(0, $i->quantity_on_hand - $i->quantity_reserved)) > 0;
+            }
+        }
+    }
 @endphp
 
 <div class="group relative flex flex-col justify-between bg-white rounded-3xl border border-slate-200/90 hover:border-indigo-300 hover:shadow-xl transition-all duration-300 overflow-hidden p-3 sm:p-4 shadow-xs"
@@ -57,7 +69,11 @@
                     </span>
                 @endif
 
-                @if($discount > 0)
+                @if(!$inStock)
+                    <span class="inline-flex items-center px-1.5 py-0.5 rounded-lg text-[8px] sm:text-[10px] font-black bg-slate-900 text-white shadow-xs">
+                        OUT OF STOCK
+                    </span>
+                @elseif($discount > 0)
                     <span class="inline-flex items-center px-1.5 py-0.5 rounded-lg text-[8px] sm:text-[10px] font-black bg-rose-500 text-white shadow-xs">
                         {{ $discount }}% OFF
                     </span>
@@ -87,14 +103,14 @@
                  decoding="async"
                  width="240"
                  height="240"
-                 onerror="this.onerror=null; this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 300 300\' width=\'300\' height=\'300\'><rect width=\'300\' height=\'300\' rx=\'28\' fill=\'%23f8fafc\'/><circle cx=\'150\' cy=\'135\' r=\'52\' fill=\'%23eef2f6\'/><path d=\'M132 118 h36 l6 38 h-48 z\' fill=\'%236366f1\' fill-opacity=\'0.15\' stroke=\'%236366f1\' stroke-width=\'3\' stroke-linejoin=\'round\'/><path d=\'M141 118 v-7 a9 9 0 0 1 18 0 v7\' fill=\'none\' stroke=\'%236366f1\' stroke-width=\'3\' stroke-linecap=\'round\'/><circle cx=\'150\' cy=\'137\' r=\'3\' fill=\'%236366f1\'/><text x=\'150\' y=\'232\' font-family=\'sans-serif\' font-size=\'12\' font-weight=\'800\' fill=\'%2394a3b8\' letter-spacing=\'2\' text-anchor=\'middle\'>ONESTALL</text></svg>';"
+                 onerror="this.onerror=null; this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 300 300\' width=\'300\' height=\'300\'><rect width=\'300\' height=\'300\' rx=\'28\' fill=\'%23f8fafc\'/><circle cx=\'150\' cy=\'135\' r=\'52\' fill=\'%23eef2f6\'/><path d=\'M132 118 h36 l6 38 h-48 z\' fill=\'%236366f1\' fill-opacity=\'0.15\' stroke=\'%236366f1\' stroke-width=\'3\' stroke-linejoin=\'round\'/><path d=\'M141 118 v-7 a9 9 0 0 1 18 0 v7\' fill=\'none\' stroke=\'%236366f1\' stroke-width=\'3\' stroke-linecap=\'round\'/><circle cx=\'150\' cy=\'137\' r=\'3\' fill=\'%236366f1\'/><text x=\'150\' y=\'232\' font-family=\'sans-serif\' font-size=\'12\' font-weight=\'800\' fill=\'%2394a3b8\' letter-spacing=\'2\' text-anchor=\'middle\'>ALLZONE</text></svg>';"
                  class="w-full h-full object-contain p-2 sm:p-3 group-hover:scale-105 transition-transform duration-300">
         </a>
 
         <!-- Brand / Store Info -->
         <div class="flex items-center justify-between text-[10px] sm:text-[11px] text-slate-500 mb-1">
             <a href="{{ $product->brand ? route('brand.show', $product->brand->slug) : '#' }}" class="truncate font-bold text-indigo-600 hover:underline max-w-[85px] sm:max-w-[120px]">
-                {{ $product->brand?->name ?? $product->seller?->business_name ?? 'OneStall Direct' }}
+                {{ $product->brand?->name ?? $product->seller?->business_name ?? (setting('name', 'ALLZONE') . ' Direct') }}
             </a>
             @if($rating)
                 <div class="flex items-center text-amber-500 font-bold space-x-0.5">
@@ -136,34 +152,40 @@
 
         <!-- Add to Cart / Qty Stepper -->
         <div class="flex-shrink-0">
-            <!-- Button when 0 in cart -->
-            <template x-if="inCartQty === 0">
-                <button type="button"
-                        @click.prevent.stop="addToCart()"
-                        class="px-3 sm:px-4 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-600 text-indigo-700 hover:text-white font-extrabold text-[10px] sm:text-xs uppercase tracking-wider transition-all shadow-2xs hover:shadow flex items-center space-x-1 border border-indigo-200 hover:border-indigo-600 active:scale-95">
-                    <span>ADD</span>
-                    <span class="text-xs font-black">+</span>
-                </button>
-            </template>
+            @if(!$inStock)
+                <span class="px-2.5 sm:px-3 py-1.5 rounded-xl bg-slate-100 text-slate-400 font-extrabold text-[9px] sm:text-[10px] uppercase tracking-wider border border-slate-200 cursor-not-allowed select-none">
+                    SOLD OUT
+                </span>
+            @else
+                <!-- Button when 0 in cart -->
+                <template x-if="inCartQty === 0">
+                    <button type="button"
+                            @click.prevent.stop="addToCart()"
+                            class="px-3 sm:px-4 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-600 text-indigo-700 hover:text-white font-extrabold text-[10px] sm:text-xs uppercase tracking-wider transition-all shadow-2xs hover:shadow flex items-center space-x-1 border border-indigo-200 hover:border-indigo-600 active:scale-95">
+                        <span>ADD</span>
+                        <span class="text-xs font-black">+</span>
+                    </button>
+                </template>
 
-            <!-- Quantity Stepper when >= 1 in cart -->
-            <template x-if="inCartQty > 0">
-                <div class="inline-flex items-center rounded-xl bg-indigo-600 text-white font-bold text-xs shadow-md border border-indigo-700 overflow-hidden">
-                    <button type="button"
-                            @click.prevent.stop="decrement()"
-                            class="px-2.5 py-1.5 hover:bg-indigo-700 active:bg-indigo-800 transition flex items-center justify-center font-black text-xs"
-                            aria-label="Decrease quantity">
-                        -
-                    </button>
-                    <span class="px-2 py-0.5 text-xs font-black min-w-[20px] text-center" x-text="inCartQty"></span>
-                    <button type="button"
-                            @click.prevent.stop="increment()"
-                            class="px-2.5 py-1.5 hover:bg-indigo-700 active:bg-indigo-800 transition flex items-center justify-center font-black text-xs"
-                            aria-label="Increase quantity">
-                        +
-                    </button>
-                </div>
-            </template>
+                <!-- Quantity Stepper when >= 1 in cart -->
+                <template x-if="inCartQty > 0">
+                    <div class="inline-flex items-center rounded-xl bg-indigo-600 text-white font-bold text-xs shadow-md border border-indigo-700 overflow-hidden">
+                        <button type="button"
+                                @click.prevent.stop="decrement()"
+                                class="px-2.5 py-1.5 hover:bg-indigo-700 active:bg-indigo-800 transition flex items-center justify-center font-black text-xs"
+                                aria-label="Decrease quantity">
+                            -
+                        </button>
+                        <span class="px-2 py-0.5 text-xs font-black min-w-[20px] text-center" x-text="inCartQty"></span>
+                        <button type="button"
+                                @click.prevent.stop="increment()"
+                                class="px-2.5 py-1.5 hover:bg-indigo-700 active:bg-indigo-800 transition flex items-center justify-center font-black text-xs"
+                                aria-label="Increase quantity">
+                            +
+                        </button>
+                    </div>
+                </template>
+            @endif
         </div>
     </div>
 </div>

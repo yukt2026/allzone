@@ -12,7 +12,7 @@
             Seller Access Blocked
         </h2>
         <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Access for <strong class="text-slate-900 dark:text-white">{{ $seller->business_name ?? 'Your Business' }}</strong> has been temporarily suspended by OneStall Administration.
+            Access for <strong class="text-slate-900 dark:text-white">{{ $seller->business_name ?? 'Your Business' }}</strong> has been temporarily suspended by {{ setting('name', 'ALLZONE') }} Administration.
         </p>
     </div>
 
@@ -34,8 +34,8 @@
         </div>
 
         <div class="pt-4 border-t border-rose-200/80 dark:border-rose-900 flex items-center justify-between">
-            <span class="text-xs text-rose-800 dark:text-rose-300 font-semibold">OneStall Grievance Desk</span>
-            <a href="mailto:grievance@onestall.in" class="px-3.5 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition">
+            <span class="text-xs text-rose-800 dark:text-rose-300 font-semibold">{{ setting('name', 'ALLZONE') }} Grievance Desk</span>
+            <a href="mailto:{{ setting('support_email', 'grievance@allzone.in') }}" class="px-3.5 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition">
                 Submit Appeal &rarr;
             </a>
         </div>

@@ -183,7 +183,7 @@
                 <div class="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
                     <div>
                         <span class="text-slate-400">Logistics Carrier:</span>
-                        <div class="font-semibold text-slate-800 dark:text-slate-200 mt-0.5">OneStall Cargo Freight</div>
+                        <div class="font-semibold text-slate-800 dark:text-slate-200 mt-0.5">{{ setting('name', 'ALLZONE') }} Cargo Freight</div>
                     </div>
                     <div>
                         <span class="text-slate-400">Pickup Waybill:</span>

@@ -227,7 +227,7 @@
                 <div class="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
                     <div>
                         <span class="text-slate-400">Cargo Partner:</span>
-                        <div class="font-semibold text-slate-800 dark:text-slate-200 mt-0.5">OneStall Logistics Cargo</div>
+                        <div class="font-semibold text-slate-800 dark:text-slate-200 mt-0.5">{{ setting('name', 'ALLZONE') }} Logistics Cargo</div>
                     </div>
                     <div>
                         <span class="text-slate-400">Pickup Waybill:</span>
@@ -421,7 +421,7 @@
         <div @click.away="approveModalOpen = false" class="bg-white dark:bg-slate-900 rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-200 dark:border-slate-800">
             <h3 class="font-bold text-base text-slate-900 dark:text-slate-100">Approve Return Request</h3>
             <p class="text-xs text-slate-500 mt-1">
-                Approving this claim initiates reverse pickup booking via OneStall Cargo logistics.
+                Approving this claim initiates reverse pickup booking via {{ setting('name', 'ALLZONE') }} Cargo logistics.
             </p>
 
             <form method="POST" action="{{ route('seller.returns.approve', $return) }}" class="mt-4 space-y-4">
@@ -434,7 +434,7 @@
                 <div class="flex items-center space-x-2">
                     <input type="checkbox" name="auto_schedule_pickup" id="auto_pickup" value="1" checked class="rounded border-slate-300 text-primary-600 focus:ring-primary-500">
                     <label for="auto_pickup" class="text-xs text-slate-700 dark:text-slate-300 font-medium">
-                        Automatically book OneStall Cargo reverse pickup now
+                        Automatically book {{ setting('name', 'ALLZONE') }} Cargo reverse pickup now
                     </label>
                 </div>
 

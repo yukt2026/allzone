@@ -59,12 +59,12 @@
 
                                 <td class="py-3 px-4 text-xs">
                                     <div class="font-medium text-slate-800 dark:text-slate-200">
-                                        {{ $fo?->seller?->business_name ?? $fo?->seller?->legal_name ?? 'OneStall Direct' }}
+                                        {{ $fo?->seller?->business_name ?? $fo?->seller?->legal_name ?? (setting('name', 'ALLZONE') . ' Direct') }}
                                     </div>
                                 </td>
 
                                 <td class="py-3 px-4 text-xs">
-                                    <div class="font-semibold text-slate-800 dark:text-slate-200">{{ $shp->courier ?: 'OneStall Cargo' }}</div>
+                                    <div class="font-semibold text-slate-800 dark:text-slate-200">{{ $shp->courier ?: (setting('name', 'ALLZONE') . ' Cargo') }}</div>
                                     <div class="text-[10px] text-slate-400 uppercase">{{ $shp->service ?? 'Surface' }}</div>
                                 </td>
 

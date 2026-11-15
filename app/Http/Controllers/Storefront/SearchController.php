@@ -93,12 +93,14 @@ class SearchController extends Controller
         // Applied Filter Chips
         $appliedChips = $this->buildAppliedChips($request, $filters);
 
+        $brandName = setting('name', 'ALLZONE');
+
         return view('storefront.search', [
             'query' => $query,
             'tab' => $tab,
             'sort' => $sort,
             'seoOverrides' => [
-                'title' => $query ? "Search results for \"{$query}\" | OneStall" : 'Search Catalog & Stores | OneStall',
+                'title' => $query ? "Search results for \"{$query}\" | {$brandName}" : "Search Catalog & Stores | {$brandName}",
                 'noindex' => true,
             ],
             'filters' => $filters,

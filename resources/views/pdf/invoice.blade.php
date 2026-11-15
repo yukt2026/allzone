@@ -112,8 +112,8 @@
     <table class="header" width="100%">
         <tr>
             <td>
-                <div class="company-name">{{ setting('name', 'OneStall') }}</div>
-                <div style="color: #64748b; font-size: 11px;">Smart Omnichannel Commerce Platform</div>
+                <div class="company-name">{{ setting('name', 'ALLZONE') }}</div>
+                <div style="color: #64748b; font-size: 11px;">Operated by {{ setting('company_name', 'SK Refrigeration') }}</div>
                 <div style="font-size: 10px; color: #64748b;">GSTIN: {{ setting('platform_gstin', '29AAAAA0000A1Z5') }}</div>
             </td>
             <td style="text-align: right;">
@@ -177,7 +177,7 @@
                             <div style="color: #94a3b8; font-size: 9px;">SKU: {{ $item->sku }}</div>
                         </td>
                         <td>
-                            <div style="font-weight: 600;">{{ $fo->store?->name ?? $fo->seller?->business_name ?? 'OneStall Warehouse' }}</div>
+                            <div style="font-weight: 600;">{{ $fo->store?->name ?? $fo->seller?->business_name ?? (setting('name', 'ALLZONE') . ' Hub') }}</div>
                             <div style="font-size: 9px; color: #4f46e5;">{{ $fo->fulfilment_type->label() }}</div>
                         </td>
                         <td style="text-align: center;">{{ $item->qty }}</td>
@@ -219,7 +219,7 @@
 
     <div class="footer">
         This is a computer-generated invoice and requires no physical signature.<br>
-        For inquiries, contact support at <strong>support@onestall.in</strong> | Thank you for shopping with {{ setting('name', 'OneStall') }}!
+        For inquiries, contact support at <strong>{{ setting('support_email', 'support@allzone.in') }}</strong> | Thank you for shopping with {{ setting('name', 'ALLZONE') }}!
     </div>
 
 </body>

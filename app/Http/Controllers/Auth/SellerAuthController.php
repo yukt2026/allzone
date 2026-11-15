@@ -93,7 +93,7 @@ class SellerAuthController extends Controller
         if (!$user->hasAnyRole(['seller_owner', 'store_manager', 'inventory_staff', 'packing_staff']) && !$user->seller) {
             Auth::logout();
             throw ValidationException::withMessages([
-                'email' => 'Access denied. This portal is exclusively for verified OneStall sellers and store staff.',
+                'email' => 'Access denied. This portal is exclusively for verified ' . setting('name', 'ALLZONE') . ' sellers and store staff.',
             ]);
         }
 

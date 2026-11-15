@@ -132,8 +132,8 @@
     <table class="meta-table header">
         <tr>
             <td>
-                <div class="company-name">{{ setting('name', 'OneStall') }} Marketplace</div>
-                <div class="company-sub">Unified Merchant Commerce & Logistics Network</div>
+                <div class="company-name">{{ setting('name', 'ALLZONE') }} Marketplace</div>
+                <div class="company-sub">Operated by {{ setting('company_name', 'SK Refrigeration') }}</div>
             </td>
             <td>
                 <div class="statement-title">Settlement Statement</div>
@@ -257,7 +257,7 @@
 
     <div class="footer">
         This is a computer generated settlement statement and does not require a physical signature.<br>
-        For settlement inquiries or disputes, contact OneStall Finance Support at finance@onestall.com.
+        For settlement inquiries or disputes, contact {{ setting('name', 'ALLZONE') }} Finance Support at {{ setting('support_email', 'support@allzone.in') }}.
     </div>
 </body>
 </html>

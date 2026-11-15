@@ -11,7 +11,7 @@
             Administration Portal
         </h2>
         <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Access OneStall multi-vendor operations, settlement ledgers, and logistics routing.
+            Access {{ setting('name', 'ALLZONE') }} multi-vendor operations, settlement ledgers, and logistics routing.
         </p>
     </div>
 
@@ -31,7 +31,7 @@
             name="email" 
             label="Admin corporate email" 
             :value="old('email')" 
-            placeholder="admin@onestall.in" 
+            placeholder="admin@allzone.in" 
             required 
             autofocus 
         />

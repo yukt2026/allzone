@@ -147,7 +147,7 @@ class CommissionService
         }
 
         // 5. Priority 5: Fallback to platform database setting
-        $fallbackRate = (float) Setting::get('default_commission_pct', config('onestall.default_commission_pct', 10.00));
+        $fallbackRate = (float) Setting::get('default_commission_pct', config('allzone.default_commission_pct', config('onestall.default_commission_pct', 10.00)));
 
         return [
             'rule' => null,

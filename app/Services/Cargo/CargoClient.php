@@ -23,7 +23,7 @@ class CargoClient
 
     public function __construct()
     {
-        $this->baseUrl = (string) (Setting::get('cargo_base_url') ?: config('services.cargo.base_url', 'https://api.onestallcargo.internal/v1'));
+        $this->baseUrl = (string) (Setting::get('cargo_base_url') ?: config('services.cargo.base_url', 'https://api.allzonecargo.internal/v1'));
         $this->apiKey = (string) (Setting::get('cargo_api_key') ?: config('services.cargo.api_key', 'osc_test_api_key_sec123'));
         $this->apiSecret = (string) (Setting::get('cargo_api_secret') ?: config('services.cargo.api_secret', 'osc_test_secret_abc456'));
         $this->webhookSecret = (string) (Setting::get('cargo_webhook_secret') ?: config('services.cargo.webhook_secret', 'osc_webhook_secret_xyz789'));
@@ -92,10 +92,10 @@ class CargoClient
                 'shipment_id' => 'CARGO-' . strtoupper(uniqid()),
                 'shipment_number' => $shipmentNumber,
                 'awb' => $awb,
-                'courier' => $payload['courier'] ?? 'OneStall Express Surface',
+                'courier' => $payload['courier'] ?? 'ALLZONE Express Surface',
                 'service' => $payload['service'] ?? 'surface',
                 'status' => 'manifest_created',
-                'label_url' => "https://cargo.onestall.internal/labels/{$awb}.pdf",
+                'label_url' => "https://cargo.allzone.internal/labels/{$awb}.pdf",
                 'charges' => (float) ($payload['estimated_charges'] ?? 145.00),
                 'created_at' => now()->toIso8601String(),
             ];
@@ -116,8 +116,8 @@ class CargoClient
                 'success' => true,
                 'shipment_number' => $shipmentNumber,
                 'awb' => $awb,
-                'courier' => $payload['courier'] ?? 'OneStall Express',
-                'label_url' => "https://cargo.onestall.internal/labels/{$awb}.pdf",
+                'courier' => $payload['courier'] ?? 'ALLZONE Express',
+                'label_url' => "https://cargo.allzone.internal/labels/{$awb}.pdf",
                 'barcode_svg' => '<svg>BARCODE-' . $awb . '</svg>',
                 'assigned_at' => now()->toIso8601String(),
             ];
@@ -138,7 +138,7 @@ class CargoClient
             return [
                 [
                     'courier_code' => 'onestall_express',
-                    'courier_name' => 'OneStall Express Air',
+                    'courier_name' => 'ALLZONE Express Air',
                     'service_type' => 'air',
                     'rate' => round(120.00 + ($weight * 40.00) + ($isCod ? 35.00 : 0.00), 2),
                     'estimated_days' => 2,
@@ -147,7 +147,7 @@ class CargoClient
                 ],
                 [
                     'courier_code' => 'onestall_surface',
-                    'courier_name' => 'OneStall Cargo Surface',
+                    'courier_name' => 'ALLZONE Cargo Surface',
                     'service_type' => 'surface',
                     'rate' => round(70.00 + ($weight * 25.00) + ($isCod ? 35.00 : 0.00), 2),
                     'estimated_days' => 4,
@@ -259,7 +259,7 @@ class CargoClient
                 'waybill' => $waybill,
                 'tracking_number' => $waybill,
                 'status' => 'reverse_pickup_scheduled',
-                'courier' => 'OneStall Cargo Logistics',
+                'courier' => 'ALLZONE Cargo Logistics',
                 'pickup_date' => now()->addDay()->format('Y-m-d'),
                 'pickup_slot' => '10:00 - 14:00',
             ];

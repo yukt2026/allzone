@@ -34,7 +34,7 @@ class ProductRejectedNotification extends Notification implements ShouldQueue
             ->line("> **{$this->reason}**")
             ->line('You can edit your listing, fix the identified issues, and re-submit it for moderation.')
             ->action('Edit Product Listing', route('seller.dashboard'))
-            ->line('For listing guidelines, please review the OneStall Merchant Catalogue Policy.');
+            ->line('For listing guidelines, please review the ' . setting('name', 'ALLZONE') . ' Merchant Catalogue Policy.');
     }
 
     public function toArray(object $notifiable): array

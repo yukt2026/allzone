@@ -583,7 +583,7 @@ function storeReportsPage(config) {
         exportCsv() {
             const rep = config.report;
             let csv = [];
-            csv.push(['OneStall Store Performance Report']);
+            csv.push(['ALLZONE Store Performance Report']);
             csv.push(['Store / Scope', config.storeName]);
             csv.push(['Window Range', `${rep.from} to ${rep.to} (${config.rangeLabel})`]);
             csv.push([]);

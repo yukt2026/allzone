@@ -4,7 +4,7 @@
 <div class="space-y-12 max-w-7xl mx-auto pb-16">
     <!-- Component 1: Page Header -->
     <x-page-header 
-        title="OneStall Design System & UI Kit" 
+        title="{{ setting('name', 'ALLZONE') }} Design System & UI Kit" 
         subtitle="Visual test bench for all 22 reusable Blade + Tailwind CSS + Alpine.js components. Responsive down to 360px."
         :breadcrumbs="['Command Central' => route('admin.dashboard'), 'Design System' => route('admin.uikit')]"
     >
@@ -60,7 +60,7 @@
                 value="42 Consignments" 
                 change="-2.1% transit delays" 
                 changeType="down"
-                badge="OneStall Cargo"
+                badge="ALLZONE Cargo"
                 color="rose" 
             />
         </div>
@@ -159,7 +159,7 @@
                             <x-avatar name="Priya Sharma" size="xs" status="online" />
                             <x-avatar name="Anand Verma" size="sm" status="online" />
                             <x-avatar name="Rahul Dravid" size="md" status="busy" />
-                            <x-avatar name="OneStall Admin" size="lg" status="online" />
+                            <x-avatar name="ALLZONE Admin" size="lg" status="online" />
                             <x-avatar name="Kiran Rao" size="xl" status="offline" />
                         </div>
                     </div>
@@ -215,8 +215,8 @@
                         :options="[
                             'physical_store' => 'Physical Store Connect (10-30m)',
                             'seller_warehouse' => 'Seller Direct Warehouse',
-                            'onestall_hub' => 'OneStall Regional Logistics Center',
-                            'cargo_freight' => 'OneStall Cargo Heavy Fleet',
+                            'onestall_hub' => 'ALLZONE Regional Logistics Center',
+                            'cargo_freight' => 'ALLZONE Cargo Heavy Fleet',
                         ]"
                         selected="physical_store"
                     />
@@ -311,7 +311,7 @@
                     <p class="text-slate-500 dark:text-slate-400 mt-1">Multi-location stock availability managed under isolated tenant scopes.</p>
                 </div>
                 <div x-show="currentTab === 'cargo'" class="p-4 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200/80 dark:border-slate-800 text-xs">
-                    <p class="font-bold text-slate-900 dark:text-white">OneStall Cargo Linehaul Tracking</p>
+                    <p class="font-bold text-slate-900 dark:text-white">ALLZONE Cargo Linehaul Tracking</p>
                     <p class="text-slate-500 dark:text-slate-400 mt-1">Heavy bulk consignments with automated waybill manifests.</p>
                 </div>
             </x-tabs>
@@ -329,7 +329,7 @@
         >
             <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition">
                 <td class="px-6 py-4 font-mono font-bold text-xs text-indigo-600 dark:text-indigo-400">
-                    #OS-202611-001
+                    #AZ-202611-001
                 </td>
                 <td class="px-6 py-4">
                     <x-badge variant="warning" dot size="sm">Quick Commerce</x-badge>
@@ -347,7 +347,7 @@
                 </td>
                 <td class="px-6 py-4 text-right">
                     <x-confirm-delete 
-                        title="Cancel Order #OS-202611-001?"
+                        title="Cancel Order #AZ-202611-001?"
                         message="Cancelling this order will release reserved stock back to the physical store pool."
                         triggerText="Cancel"
                     />
@@ -356,11 +356,11 @@
 
             <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition">
                 <td class="px-6 py-4 font-mono font-bold text-xs text-indigo-600 dark:text-indigo-400">
-                    #OS-202611-002
+                    #AZ-202611-002
                 </td>
                 <td class="px-6 py-4">
                     <x-badge variant="info" size="sm">Cargo Logistics</x-badge>
-                    <span class="block text-[10px] text-slate-400 mt-0.5">Consignment OSC-8192</span>
+                    <span class="block text-[10px] text-slate-400 mt-0.5">Consignment AZL-8192</span>
                 </td>
                 <td class="px-6 py-4">
                     <div class="font-bold text-slate-900 dark:text-white">₹ 34,500.00</div>
@@ -400,7 +400,7 @@
                             'borderRadius' => 6,
                         ],
                         [
-                            'label' => 'OneStall Cargo (Freight)',
+                            'label' => 'ALLZONE Cargo (Freight)',
                             'data' => [85000, 92000, 78000, 105000, 110000, 94000, 89000],
                             'backgroundColor' => '#6366f1',
                             'borderRadius' => 6,
@@ -464,7 +464,7 @@
 </div>
 
 <!-- Interactive Demo Modal -->
-<x-modal name="demo-modal" title="OneStall Modal Component" size="md">
+<x-modal name="demo-modal" title="ALLZONE Modal Component" size="md">
     <div class="space-y-3 text-xs leading-relaxed text-slate-600 dark:text-slate-300">
         <p>This modal is rendered with Alpine.js and features smooth CSS opacity/scale transitions, backdrop blur, and handles closing via backdrop clicks and the <kbd class="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 font-mono text-[10px]">Esc</kbd> key.</p>
         <x-alert type="info">

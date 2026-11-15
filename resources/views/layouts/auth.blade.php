@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>{{ $title ?? 'Sign In' }} - {{ config('onestall.name', 'OneStall') }}</title>
+    <title>{{ $title ?? 'Sign In' }} - {{ setting('name', 'ALLZONE') }}</title>
 
     <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
     <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('favicon.png') }}">
@@ -52,12 +52,12 @@
             <!-- Top Brand -->
             <div class="relative z-10 flex items-center space-x-3">
                 <a href="{{ route('home') }}" class="flex items-center space-x-2">
-                    <div class="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white font-extrabold text-xl shadow-lg shadow-indigo-600/30">
-                        1S
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-700 via-indigo-600 to-amber-400 flex items-center justify-center text-white font-extrabold text-sm shadow-lg shadow-indigo-600/30 tracking-tighter">
+                        AZ
                     </div>
                     <div>
-                        <span class="text-xl font-bold tracking-tight text-white">OneStall<span class="text-indigo-400">.in</span></span>
-                        <span class="block text-[10px] font-semibold text-slate-400 uppercase tracking-widest -mt-1">Smart Commerce</span>
+                        <span class="text-xl font-bold tracking-tight text-white">{{ setting('name', 'ALLZONE') }}</span>
+                        <span class="block text-[9px] font-semibold text-slate-400 uppercase tracking-widest -mt-1">By {{ setting('company_name', 'SK Refrigeration') }}</span>
                     </div>
                 </a>
             </div>
@@ -65,16 +65,16 @@
             <!-- Central Pitch -->
             <div class="relative z-10 my-auto py-12 max-w-lg space-y-6">
                 <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-amber-400/20 border border-amber-400/30 text-amber-300 text-xs font-bold">
-                    <span>⚡ HYPER-LOCAL SPEED & NATIONAL REACH</span>
+                    <span>⚡ HYPER-LOCAL SPEED &amp; NATIONAL REACH</span>
                 </div>
 
                 <h1 class="text-4xl sm:text-5xl font-extrabold text-white tracking-tight leading-tight">
-                    One Store, <br>
-                    <span class="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-indigo-300 to-indigo-400">All You Need.</span>
+                    One Marketplace, <br>
+                    <span class="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-indigo-300 to-indigo-400">All In Your Zone.</span>
                 </h1>
 
                 <p class="text-sm text-slate-300 leading-relaxed">
-                    Access India's unified smart commerce engine: instant local deliveries from physical store connect, dark store dispatch, national marketplace catalogue, and heavy OneStall Cargo logistics.
+                    Access {{ setting('name', 'ALLZONE') }} by {{ setting('company_name', 'SK Refrigeration') }}: instant local deliveries from verified neighbourhood store connect, nationwide multi-vendor catalog, and express logistics.
                 </p>
 
                 <!-- Value Proposition Badges -->
@@ -86,17 +86,17 @@
                     </div>
 
                     <div class="p-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md">
-                        <div class="text-indigo-400 font-extrabold text-xl">Cargo Fleet</div>
-                        <div class="text-xs font-semibold text-white mt-0.5">OneStall Logistics</div>
-                        <p class="text-[11px] text-slate-400 mt-1">Inter-city linehaul & heavy freight</p>
+                        <div class="text-indigo-400 font-extrabold text-xl">Express Fleet</div>
+                        <div class="text-xs font-semibold text-white mt-0.5">ALLZONE Logistics</div>
+                        <p class="text-[11px] text-slate-400 mt-1">Inter-city linehaul &amp; express freight</p>
                     </div>
                 </div>
             </div>
 
             <!-- Footer Quote -->
             <div class="relative z-10 text-xs text-slate-400 border-t border-slate-800 pt-6 flex items-center justify-between">
-                <span>&copy; {{ date('Y') }} OneStall Technologies Inc.</span>
-                <span class="text-slate-400">Enterprise SLA Active</span>
+                <span>&copy; {{ date('Y') }} {{ setting('company_name', 'SK Refrigeration') }}.</span>
+                <span class="text-slate-400">Enterprise Marketplace Active</span>
             </div>
         </div>
 
@@ -105,8 +105,8 @@
             <!-- Mobile Brand Header & Theme Toggle -->
             <div class="flex items-center justify-between pb-6">
                 <a href="{{ route('home') }}" class="flex items-center space-x-2 lg:hidden">
-                    <div class="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-bold text-sm">1S</div>
-                    <span class="text-lg font-bold text-slate-900 dark:text-white">OneStall</span>
+                    <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-blue-700 via-indigo-600 to-amber-400 flex items-center justify-center text-white font-extrabold text-xs">AZ</div>
+                    <span class="text-lg font-bold text-slate-900 dark:text-white">{{ setting('name', 'ALLZONE') }}</span>
                 </a>
 
                 <div class="ml-auto flex items-center space-x-3">
@@ -136,7 +136,7 @@
 
             <!-- Bottom Disclaimer -->
             <div class="pt-6 border-t border-slate-200/80 dark:border-slate-800 text-center text-xs text-slate-500 dark:text-slate-400">
-                Protected by OneStall Enterprise Security and Multi-Tenant Isolation.
+                Protected by {{ setting('name', 'ALLZONE') }} Enterprise Security and Multi-Tenant Isolation.
             </div>
         </div>
     </div>

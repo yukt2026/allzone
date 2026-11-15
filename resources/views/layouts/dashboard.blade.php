@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>{{ $title ?? 'Dashboard' }} - {{ config('onestall.name', 'OneStall') }}</title>
+    <title>{{ $title ?? 'Dashboard' }} - {{ setting('name', 'ALLZONE') }}</title>
 
     <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
     <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('favicon.png') }}">
@@ -298,11 +298,11 @@
             <!-- Sidebar Header / Logo -->
             <div class="h-16 flex items-center justify-between px-4 border-b border-slate-200/80 dark:border-slate-800">
                 <a href="{{ $isSeller ? route('seller.dashboard') : route('admin.dashboard') }}" class="flex items-center space-x-3 overflow-hidden">
-                    <div class="w-9 h-9 rounded-xl {{ $isSeller ? 'bg-gradient-to-tr from-emerald-600 to-teal-500 shadow-emerald-500/20' : 'bg-gradient-to-tr from-indigo-600 to-violet-500 shadow-indigo-500/20' }} flex items-center justify-center text-white font-extrabold text-lg shadow-md shrink-0">
-                        1S
+                    <div class="w-9 h-9 rounded-xl {{ $isSeller ? 'bg-gradient-to-tr from-emerald-600 to-teal-500 shadow-emerald-500/20' : 'bg-gradient-to-tr from-blue-700 via-indigo-600 to-amber-400 shadow-indigo-500/20' }} flex items-center justify-center text-white font-extrabold text-sm shadow-md shrink-0 tracking-tighter">
+                        AZ
                     </div>
                     <div x-show="!sidebarCollapsed" x-transition class="whitespace-nowrap min-w-0">
-                        <span class="text-base font-bold text-slate-900 dark:text-white tracking-tight">OneStall</span>
+                        <span class="text-base font-bold text-slate-900 dark:text-white tracking-tight">{{ setting('name', 'ALLZONE') }}</span>
                         <span class="block text-[10px] font-bold uppercase tracking-widest {{ $isSeller ? 'text-emerald-500' : 'text-indigo-500' }} -mt-1 truncate max-w-[140px]">
                             {{ $isSeller ? ($seller?->business_name ?? 'Seller Studio') : 'Admin Central' }}
                         </span>
@@ -528,7 +528,7 @@
                                 @if($isSeller)
                                     <span class="truncate">{{ $seller?->business_name ?? 'Seller Studio' }}</span>
                                 @else
-                                    <span>{{ auth()->user()->email ?? 'admin@onestall.in' }}</span>
+                                    <span>{{ auth()->user()->email ?? 'admin@allzone.in' }}</span>
                                 @endif
                             </p>
                         </div>

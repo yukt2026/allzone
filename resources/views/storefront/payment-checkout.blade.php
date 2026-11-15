@@ -1,6 +1,6 @@
 @extends('layouts.storefront')
 
-@section('title', 'Complete Payment - OneStall.in')
+@section('title', 'Complete Payment - ' . setting('name', 'ALLZONE'))
 
 @section('content')
 <div class="min-h-screen bg-slate-50 py-10 sm:py-16"
@@ -16,7 +16,7 @@
                     key: this.paymentData.key_id,
                     amount: Math.round(this.paymentData.amount * 100),
                     currency: this.paymentData.currency,
-                    name: 'OneStall Omnichannel',
+                    name: '{{ setting('name', 'ALLZONE') }}',
                     description: 'Order #' + this.paymentData.order_number,
                     order_id: this.paymentData.gateway_order_id,
                     handler: function (response) {
@@ -130,7 +130,7 @@
         @csrf
         <input type="hidden" name="razorpay_order_id" id="rzp-order-id" value="{{ $paymentData['gateway_order_id'] }}">
         <input type="hidden" name="razorpay_payment_id" id="rzp-payment-id" value="pay_sim_{{ uniqid() }}">
-        <input type="hidden" name="razorpay_signature" id="rzp-signature" value="{{ hash_hmac('sha256', $paymentData['gateway_order_id'] . '|pay_sim_default', config('services.razorpay.key_secret', 'rzp_test_onestall_secret')) }}">
+        <input type="hidden" name="razorpay_signature" id="rzp-signature" value="{{ hash_hmac('sha256', $paymentData['gateway_order_id'] . '|pay_sim_default', config('services.razorpay.key_secret', 'rzp_test_allzone_secret')) }}">
     </form>
 
     <!-- Hidden form for Razorpay Failure -->

@@ -83,7 +83,7 @@ class DemoSeeder extends Seeder
         $riders = [];
         for ($r = 1; $r <= 3; $r++) {
             $riderUser = User::firstOrCreate(
-                ['email' => "rider{$r}@onestall.in"],
+                ['email' => "rider{$r}@allzone.in"],
                 [
                     'name' => "Rider {$r} Kumar",
                     'phone' => "+91980000000{$r}",
@@ -112,7 +112,7 @@ class DemoSeeder extends Seeder
         $sellerConfigs = [
             [
                 'name' => 'Bengaluru SuperMart & Fresh',
-                'email' => 'seller.supermart@onestall.in',
+                'email' => 'seller.supermart@allzone.in',
                 'phone' => '+919811100001',
                 'type' => SellerType::LOCAL_STORE,
                 'store_name' => 'Bengaluru SuperMart Koramangala',
@@ -123,7 +123,7 @@ class DemoSeeder extends Seeder
             ],
             [
                 'name' => 'Karnataka Agro & Organic Farms',
-                'email' => 'seller.agro@onestall.in',
+                'email' => 'seller.agro@allzone.in',
                 'phone' => '+919811100002',
                 'type' => SellerType::BRAND,
                 'store_name' => 'Karnataka Agro Direct',
@@ -134,7 +134,7 @@ class DemoSeeder extends Seeder
             ],
             [
                 'name' => 'TechZone Electronics Hub',
-                'email' => 'seller.techzone@onestall.in',
+                'email' => 'seller.techzone@allzone.in',
                 'phone' => '+919811100003',
                 'type' => SellerType::MULTI_STORE,
                 'store_name' => 'TechZone Flagship Store Indiranagar',
@@ -144,11 +144,11 @@ class DemoSeeder extends Seeder
                 'lng' => 77.6408,
             ],
             [
-                'name' => 'OneStall Express Dark Store #1',
-                'email' => 'darkstore1@onestall.in',
+                'name' => 'ALLZONE Express Dark Store #1',
+                'email' => 'darkstore1@allzone.in',
                 'phone' => '+919811100004',
                 'type' => SellerType::ONESTALL_STORE,
-                'store_name' => 'OneStall Express Quick Pod HSR',
+                'store_name' => 'ALLZONE Express Quick Pod HSR',
                 'is_onestall' => true,
                 'quick' => true,
                 'lat' => 12.9121,
@@ -156,7 +156,7 @@ class DemoSeeder extends Seeder
             ],
             [
                 'name' => 'Deccan Apparel & Lifestyle',
-                'email' => 'seller.deccan@onestall.in',
+                'email' => 'seller.deccan@allzone.in',
                 'phone' => '+919811100005',
                 'type' => SellerType::MARKETPLACE,
                 'store_name' => 'Deccan Lifestyle Store',
@@ -216,7 +216,7 @@ class DemoSeeder extends Seeder
                 ['seller_id' => $seller->id, 'slug' => Str::slug($sc['store_name'])],
                 [
                     'name' => $sc['store_name'],
-                    'description' => 'Official verified partner on OneStall.in.',
+                    'description' => 'Official verified partner on ALLZONE.',
                     'phone' => $sc['phone'],
                     'email' => $sc['email'],
                     'status' => StoreStatus::ACTIVE,
@@ -348,7 +348,7 @@ class DemoSeeder extends Seeder
                     'category_id' => $category?->id,
                     'title' => $bp['title'],
                     'short_desc' => 'High quality authentic product guaranteed with express doorstep dispatch.',
-                    'description' => $bp['title'] . ' is carefully sourced and quality certified. Best price and guaranteed authenticity on OneStall.in.',
+                    'description' => $bp['title'] . ' is carefully sourced and quality certified. Best price and guaranteed authenticity on ALLZONE.',
                     'status' => ProductStatus::ACTIVE,
                     'product_type' => ProductType::SIMPLE,
                     'hsn_code' => 'HSN' . (10000000 + $pIndex),
@@ -357,14 +357,14 @@ class DemoSeeder extends Seeder
                     'is_returnable' => true,
                     'is_cod_allowed' => true,
                     'is_quick_capable' => $bp['quick'],
-                    'meta_title' => $bp['title'] . ' | Buy Online at Best Price on OneStall',
-                    'meta_description' => 'Order ' . $bp['title'] . ' online with fast delivery on OneStall.in.',
+                    'meta_title' => $bp['title'] . ' | Buy Online at Best Price on ALLZONE',
+                    'meta_description' => 'Order ' . $bp['title'] . ' online with fast delivery on ALLZONE.',
                 ]
             );
 
             // Variant
             $variant = ProductVariant::firstOrCreate(
-                ['sku' => 'OS-SKU-' . str_pad((string) ($pIndex + 1), 4, '0', STR_PAD_LEFT)],
+                ['sku' => 'AZ-SKU-' . str_pad((string) ($pIndex + 1), 4, '0', STR_PAD_LEFT)],
                 [
                     'product_id' => $product->id,
                     'barcode' => '890' . str_pad((string) (1234567890 + $pIndex), 10, '0', STR_PAD_LEFT),
@@ -397,7 +397,7 @@ class DemoSeeder extends Seeder
                 ['product_id' => $product->id, 'key' => 'Brand'],
                 [
                     'group' => 'General',
-                    'value' => $brand?->name ?? 'OneStall Assured',
+                    'value' => $brand?->name ?? 'ALLZONE Assured',
                 ]
             );
 
@@ -666,7 +666,7 @@ class DemoSeeder extends Seeder
                     'shipment_number' => 'OSC-SHP-' . str_pad((string) $i, 5, '0', STR_PAD_LEFT),
                     'provider' => 'onestall_cargo',
                     'awb' => 'AWB' . (9000000000 + $i),
-                    'courier' => $isQuick ? 'OneStall Hyperlocal Express' : 'OneStall Cargo Linehaul',
+                    'courier' => $isQuick ? 'ALLZONE Hyperlocal Express' : 'ALLZONE Cargo Linehaul',
                     'service' => $isQuick ? 'Hyperlocal' : 'Surface Express',
                     'status' => ($orderStatus === OrderStatus::DELIVERED) ? ShipmentStatus::DELIVERED : ShipmentStatus::IN_TRANSIT,
                     'pickup_status' => 'picked_up',
@@ -820,7 +820,7 @@ class DemoSeeder extends Seeder
             ['support_ticket_id' => $ticket->id],
             [
                 'user_id' => $customers[0]->user_id,
-                'message' => 'Hi OneStall team, could you please email me the GST invoice with business PAN added?',
+                'message' => 'Hi ALLZONE team, could you please email me the GST invoice with business PAN added?',
                 'is_internal' => false,
             ]
         );

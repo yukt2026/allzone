@@ -18,13 +18,17 @@ class VerifyCustomApiCredentials
     public function handle(Request $request, Closure $next, ?string $requiredScope = null): Response
     {
         $apiKey = $request->header('X-Api-Key')
+            ?? $request->header('X-AllZone-Key')
+            ?? $request->header('X-AllZone-Api-Key')
             ?? $request->header('X-OneStall-Key')
             ?? $request->header('X-OneStall-Api-Key');
 
         $apiSecret = $request->header('X-Api-Secret')
+            ?? $request->header('X-AllZone-Secret')
             ?? $request->header('X-OneStall-Secret');
 
-        $signature = $request->header('X-OneStall-Signature');
+        $signature = $request->header('X-AllZone-Signature')
+            ?? $request->header('X-OneStall-Signature');
 
         // Check Bearer Token "key:secret" format fallback
         if (empty($apiKey) && $request->bearerToken()) {

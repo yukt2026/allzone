@@ -71,7 +71,8 @@ class SupportAiReplyService implements SupportAiReplyInterface
                     $replyText = "Hello {$ticket->user?->name},\n\nYour order #{$order->order_number} has not yet been marked delivered. Return and replacement requests can be submitted immediately once the package is received and inspected.";
                 }
             } else {
-                $replyText = "Hello {$ticket->user?->name},\n\nOneStall offers a 7-day easy return and replacement policy on all eligible marketplace products. Please mention your Order Number so we can immediately guide you through the process.";
+                $brand = setting('name', 'ALLZONE');
+                $replyText = "Hello {$ticket->user?->name},\n\n{$brand} offers a 7-day easy return and replacement policy on all eligible marketplace products. Please mention your Order Number so we can immediately guide you through the process.";
             }
         } elseif (preg_match('/\b(refund|money back|account|double charge|debited|deducted|payment failed)\b/i', $textToAnalyze)) {
             $intent = 'refund_payment';
@@ -103,7 +104,8 @@ class SupportAiReplyService implements SupportAiReplyInterface
                 $replyText = "Hello {$ticket->user?->name},\n\nPlease specify which Order Number you would like to cancel so we can check if it can still be stopped before dispatch.";
             }
         } else {
-            $replyText = "Hello {$ticket->user?->name},\n\nThank you for reaching out to OneStall Customer Care! We have received your query regarding '{$ticket->subject}'. Our support specialist will review your ticket and reply shortly.";
+            $brand = setting('name', 'ALLZONE');
+            $replyText = "Hello {$ticket->user?->name},\n\nThank you for reaching out to {$brand} Customer Care! We have received your query regarding '{$ticket->subject}'. Our support specialist will review your ticket and reply shortly.";
         }
 
         // 2. Automated Posting If Confident

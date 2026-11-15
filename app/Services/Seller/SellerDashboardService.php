@@ -540,7 +540,7 @@ class SellerDashboardService
             ],
             [
                 'id' => 'anc-2',
-                'badge' => '📦 OneStall Cargo',
+                'badge' => '📦 ' . (function_exists('setting') ? setting('name', 'ALLZONE') : 'ALLZONE') . ' Cargo',
                 'badge_color' => 'sky',
                 'title' => 'NH-48 Inter-City Cargo Linehaul Guaranteed 48h SLA',
                 'description' => 'Consignment dispatches from Bengaluru to Mumbai Central now operate on fixed 48-hour scheduled departures.',

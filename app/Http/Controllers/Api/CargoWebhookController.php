@@ -33,7 +33,7 @@ class CargoWebhookController extends Controller
     ) {}
 
     /**
-     * Handle incoming webhook notifications from OneStall Cargo logistics platform.
+     * Handle incoming webhook notifications from ALLZONE Cargo logistics platform.
      */
     public function handle(Request $request): JsonResponse
     {

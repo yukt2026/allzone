@@ -25,13 +25,13 @@ class FulfilmentService
      */
     public function getPriorityList(): array
     {
-        $priority = Setting::get('fulfilment_priority', config('onestall.fulfilment_priority', [
+        $priority = Setting::get('fulfilment_priority', config('allzone.fulfilment_priority', config('onestall.fulfilment_priority', [
             'nearby_store',
             'nearby_seller',
             'onestall_store',
             'regional_warehouse',
             'national_seller',
-        ]));
+        ])));
 
         return is_array($priority) ? $priority : json_decode((string) $priority, true) ?? [];
     }

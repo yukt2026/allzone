@@ -15,7 +15,7 @@ enum InventoryLocationType: string
         return match ($this) {
             self::STORE => 'Physical Retail Store',
             self::WAREHOUSE => 'Seller Fulfillment Warehouse',
-            self::ONESTALL_STORE => 'OneStall Dark Store / Hub',
+            self::ONESTALL_STORE => 'ALLZONE Dark Store / Hub',
         };
     }
 }

@@ -1,6 +1,6 @@
 @extends('layouts.storefront')
 
-@section('title', $isSharedView ? ($sharedOwner . '\'s Wishlist - OneStall.in') : 'My Wishlist - OneStall.in')
+@section('title', $isSharedView ? ($sharedOwner . '\'s Wishlist - ' . setting('name', 'ALLZONE')) : ('My Wishlist - ' . setting('name', 'ALLZONE')))
 
 @section('content')
 <div class="min-h-screen bg-slate-50 py-6 sm:py-8"
@@ -52,7 +52,7 @@
                 </div>
 
                 <a href="{{ route('home') }}" class="px-5 py-2.5 rounded-2xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-800 font-bold text-xs shadow-sm transition">
-                    Explore OneStall
+                    Explore {{ setting('name', 'ALLZONE') }}
                 </a>
             </div>
         @endif
@@ -167,7 +167,7 @@
                             <!-- Product Info -->
                             <div class="p-4 space-y-1.5">
                                 <div class="text-[11px] text-slate-400 font-semibold uppercase tracking-wider">
-                                    {{ $product->brand?->name ?? ($product->seller?->business_name ?? 'OneStall') }}
+                                    {{ $product->brand?->name ?? ($product->seller?->business_name ?? setting('name', 'ALLZONE')) }}
                                 </div>
                                 <a href="{{ route('product.show', $product->slug) }}" class="text-xs sm:text-sm font-extrabold text-slate-900 hover:text-indigo-600 line-clamp-2 transition leading-snug">
                                     {{ $product->title }}

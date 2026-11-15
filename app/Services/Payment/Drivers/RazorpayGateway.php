@@ -23,12 +23,12 @@ class RazorpayGateway implements PaymentGatewayInterface
 
     public function getKeyId(): string
     {
-        return (string) Setting::get('razorpay_key_id', config('services.razorpay.key_id', 'rzp_test_onestall_key'));
+        return (string) Setting::get('razorpay_key_id', config('services.razorpay.key_id', 'rzp_test_allzone_key'));
     }
 
     public function getKeySecret(): string
     {
-        return (string) Setting::get('razorpay_key_secret', config('services.razorpay.key_secret', 'rzp_test_onestall_secret'));
+        return (string) Setting::get('razorpay_key_secret', config('services.razorpay.key_secret', 'rzp_test_allzone_secret'));
     }
 
     public function getWebhookSecret(): string

@@ -532,7 +532,7 @@
                                     </span>
                                     @if($store->is_onestall_owned)
                                         <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-100 dark:bg-indigo-950/60 text-indigo-800 dark:text-indigo-300">
-                                            OneStall Direct
+                                            {{ setting('name', 'ALLZONE') }} Direct
                                         </span>
                                     @endif
                                 </div>

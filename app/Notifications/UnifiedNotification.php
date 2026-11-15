@@ -73,7 +73,7 @@ class UnifiedNotification extends Notification implements ShouldQueue
 
         if ($template) {
             $rendered = $template->render($vars);
-            $subject = $rendered['subject'] ?? "Notification from " . setting('name', 'OneStall');
+            $subject = $rendered['subject'] ?? ("Notification from " . setting('name', 'ALLZONE'));
             $body = $rendered['body'];
         } else {
             $subject = $this->getDefaultSubject();
@@ -89,7 +89,7 @@ class UnifiedNotification extends Notification implements ShouldQueue
             $mail->action($this->variables['action_text'] ?? 'View Details', (string) $this->variables['action_url']);
         }
 
-        return $mail->line('Thank you for choosing ' . setting('name', 'OneStall') . '!');
+        return $mail->line('Thank you for choosing ' . setting('name', 'ALLZONE') . '!');
     }
 
     public function toArray(object $notifiable): array
@@ -181,8 +181,10 @@ class UnifiedNotification extends Notification implements ShouldQueue
 
     protected function getDefaultSubject(): string
     {
+        $brandName = setting('name', 'ALLZONE');
+
         return match ($this->eventKey) {
-            'otp' => 'Your OneStall Verification Code',
+            'otp' => "Your {$brandName} Verification Code",
             'order_confirmed' => 'Order Confirmed - ' . ($this->variables['order_number'] ?? ''),
             'payment_confirmed' => 'Payment Successful - ' . ($this->variables['order_number'] ?? ''),
             'order_packing' => 'Your order is being packed',
@@ -194,7 +196,7 @@ class UnifiedNotification extends Notification implements ShouldQueue
             'low_stock' => 'Low Stock Warning: ' . ($this->variables['product_title'] ?? 'Item'),
             'settlement_paid' => 'Seller Payout Dispatched',
             'promotional' => 'Special Deal Just For You!',
-            default => 'Notification from OneStall',
+            default => "Notification from {$brandName}",
         };
     }
 

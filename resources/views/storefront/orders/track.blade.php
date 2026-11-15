@@ -1,6 +1,6 @@
 @extends('layouts.storefront')
 
-@section('title', 'Track Package #' . $fo->fulfilment_order_number . ' - ' . setting('name', 'OneStall.in'))
+@section('title', 'Track Package #' . $fo->fulfilment_order_number . ' - ' . setting('name', 'ALLZONE'))
 
 @section('content')
 <div class="min-h-screen bg-slate-50 py-8 sm:py-12">

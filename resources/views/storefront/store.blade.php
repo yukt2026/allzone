@@ -1,5 +1,5 @@
 @extends('layouts.storefront', [
-    'title' => $store->meta_title ?: $store->name . ' - Storefront on OneStall.in',
+    'title' => $store->meta_title ?: $store->name . ' - Storefront on ' . setting('name', 'ALLZONE'),
     'metaDescription' => $store->meta_description ?: ($store->description ?: 'Shop fresh groceries, daily essentials, and local goods from ' . $store->name),
 ])
 
@@ -540,7 +540,7 @@ function publicStorefront(config) {
                 try {
                     await navigator.share({
                         title: @js($store->name),
-                        text: 'Shop from ' + @js($store->name) + ' on OneStall.in',
+                        text: 'Shop from ' + @js($store->name) + ' on ' + @js(setting('name', 'ALLZONE')),
                         url: window.location.href,
                     });
                 } catch (e) {

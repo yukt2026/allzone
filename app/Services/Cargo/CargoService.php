@@ -23,7 +23,7 @@ class CargoService
      */
     public function generateWaybill(): string
     {
-        $prefix = (string) Setting::get('cargo_tracking_prefix', config('onestall.cargo_tracking_prefix', 'OSC-'));
+        $prefix = (string) Setting::get('cargo_tracking_prefix', config('allzone.cargo_tracking_prefix', config('onestall.cargo_tracking_prefix', 'AZL-')));
 
         return $prefix . now()->format('Ymd') . '-' . strtoupper(Str::random(6));
     }
@@ -55,7 +55,7 @@ class CargoService
             return [
                 'tracking_number' => $result['tracking_number'] ?? $orderReturn->pickup_waybill,
                 'waybill' => $result['waybill'] ?? $orderReturn->pickup_waybill,
-                'courier' => $result['courier'] ?? 'OneStall Cargo Logistics',
+                'courier' => $result['courier'] ?? 'ALLZONE Cargo Logistics',
                 'status' => $result['status'] ?? 'reverse_pickup_scheduled',
                 'estimated_pickup_at' => now()->addHours(24)->toIso8601String(),
             ];
@@ -68,7 +68,7 @@ class CargoService
         return [
             'tracking_number' => $waybill,
             'waybill' => $waybill,
-            'courier' => 'OneStall Cargo Logistics',
+            'courier' => 'ALLZONE Cargo Logistics',
             'status' => 'reverse_pickup_scheduled',
             'estimated_pickup_at' => now()->addHours(24)->toIso8601String(),
         ];

@@ -179,12 +179,12 @@ class Store extends Model
 
     public function getLogoUrlAttribute(): ?string
     {
-        return image_url($this->logo);
+        return $this->logo ? image_url($this->logo) : asset('images/placeholder-store.svg');
     }
 
     public function getBannerUrlAttribute(): ?string
     {
-        return image_url($this->banner);
+        return $this->banner ? image_url($this->banner) : asset('images/placeholder-banner.svg');
     }
 
     /**

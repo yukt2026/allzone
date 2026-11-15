@@ -38,12 +38,19 @@ class ShippingSettingController extends Controller
             'quick_max_radius_km' => (float) Setting::get('shipping_quick_max_radius_km', 8.00),
             'standard_base_fee' => (float) Setting::get('shipping_standard_base_fee', 40.00),
             'rto_max_attempts' => (int) Setting::get('shipping_rto_max_attempts', 3),
-            // OneStall Cargo API
-            'cargo_base_url' => Setting::get('cargo_base_url', config('services.cargo.base_url', 'https://api.onestallcargo.internal/v1')),
+            // ALLZONE Cargo API
+            'cargo_base_url' => Setting::get('cargo_base_url', config('services.cargo.base_url', 'https://api.allzonecargo.internal/v1')),
             'cargo_api_key' => Setting::get('cargo_api_key', config('services.cargo.api_key', 'osc_test_api_key_sec123')),
             'cargo_api_secret' => Setting::get('cargo_api_secret', config('services.cargo.api_secret', 'osc_test_secret_abc456')),
             'cargo_webhook_secret' => Setting::get('cargo_webhook_secret', config('services.cargo.webhook_secret', 'osc_webhook_secret_xyz789')),
             'cargo_fake' => (bool) (Setting::get('cargo_fake') ?? config('services.cargo.fake', true)),
+            // Shiprocket Logistics API
+            'shiprocket_email' => Setting::get('shiprocket_email', config('services.shiprocket.email', '')),
+            'shiprocket_password' => Setting::get('shiprocket_password', config('services.shiprocket.password', '')),
+            'shiprocket_api_key' => Setting::get('shiprocket_api_key', config('services.shiprocket.api_key', '')),
+            'shiprocket_base_url' => Setting::get('shiprocket_base_url', config('services.shiprocket.base_url', 'https://apiv2.shiprocket.in/v1/external')),
+            'shiprocket_enabled' => (bool) (Setting::get('shiprocket_enabled') ?? config('services.shiprocket.is_enabled', false)),
+            'shiprocket_fake' => (bool) (Setting::get('shiprocket_fake') ?? config('services.shiprocket.fake', true)),
         ];
 
         $metrics = [
@@ -129,6 +136,12 @@ class ShippingSettingController extends Controller
             'cargo_api_secret' => ['nullable', 'string', 'max:255'],
             'cargo_webhook_secret' => ['nullable', 'string', 'max:255'],
             'cargo_fake' => ['nullable', 'boolean'],
+            'shiprocket_email' => ['nullable', 'string', 'max:255'],
+            'shiprocket_password' => ['nullable', 'string', 'max:255'],
+            'shiprocket_api_key' => ['nullable', 'string', 'max:255'],
+            'shiprocket_base_url' => ['nullable', 'string', 'max:255'],
+            'shiprocket_enabled' => ['nullable', 'boolean'],
+            'shiprocket_fake' => ['nullable', 'boolean'],
         ]);
 
         Setting::set('shipping_default_weight_kg', $validated['default_weight_kg'], 'shipping');
@@ -147,7 +160,7 @@ class ShippingSettingController extends Controller
         Setting::set('quick_max_radius_km', $validated['quick_max_radius_km'], 'delivery');
         Setting::set('cod_max_limit_amount', $validated['cod_max_limit'], 'payment');
 
-        // OneStall Cargo Platform Settings
+        // ALLZONE Cargo Platform Settings
         if (!empty($validated['cargo_base_url'])) {
             Setting::set('cargo_base_url', $validated['cargo_base_url'], 'cargo');
         }
@@ -162,12 +175,28 @@ class ShippingSettingController extends Controller
         }
         Setting::set('cargo_fake', $request->boolean('cargo_fake'), 'cargo');
 
+        // Shiprocket Logistics Platform Settings
+        if (isset($validated['shiprocket_email'])) {
+            Setting::set('shiprocket_email', $validated['shiprocket_email'], 'shiprocket');
+        }
+        if (isset($validated['shiprocket_password'])) {
+            Setting::set('shiprocket_password', $validated['shiprocket_password'], 'shiprocket');
+        }
+        if (isset($validated['shiprocket_api_key'])) {
+            Setting::set('shiprocket_api_key', $validated['shiprocket_api_key'], 'shiprocket');
+        }
+        if (!empty($validated['shiprocket_base_url'])) {
+            Setting::set('shiprocket_base_url', $validated['shiprocket_base_url'], 'shiprocket');
+        }
+        Setting::set('shiprocket_enabled', $request->boolean('shiprocket_enabled'), 'shiprocket');
+        Setting::set('shiprocket_fake', $request->boolean('shiprocket_fake'), 'shiprocket');
+
         if (function_exists('activity')) {
             activity('settings')
                 ->causedBy(auth()->user())
                 ->log("Shipping and courier routing settings updated");
         }
 
-        return back()->with('success', 'Shipping and OneStall Cargo logistics configuration updated successfully.');
+        return back()->with('success', 'Shipping and ' . setting('name', 'ALLZONE') . ' Cargo logistics configuration updated successfully.');
     }
 }

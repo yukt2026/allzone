@@ -9,7 +9,7 @@
     <!-- Header -->
     <x-page-header 
         title="Consignment: {{ $shipment->awb ?? $shipment->shipment_number }}" 
-        subtitle="OneStall Cargo real-time tracking, courier waybill status, and exception handling."
+        subtitle="{{ setting('name', 'ALLZONE') }} Cargo real-time tracking, courier waybill status, and exception handling."
         :breadcrumbs="[
             'Seller Studio' => route('seller.dashboard'), 
             'Shipments' => route('seller.shipments.index'), 
@@ -153,7 +153,7 @@
 
                 <div class="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center text-xs">
                     <div>
-                        <span class="text-slate-400">OneStall Cargo Shipment Ref:</span>
+                        <span class="text-slate-400">{{ setting('name', 'ALLZONE') }} Cargo Shipment Ref:</span>
                         <span class="font-mono font-semibold text-slate-800 dark:text-slate-200 ml-1">{{ $shipment->shipment_number }}</span>
                     </div>
                     <div>
@@ -167,7 +167,7 @@
             <x-card>
                 <div class="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
                     <h3 class="font-bold text-sm text-slate-900 dark:text-slate-100 flex items-center space-x-2">
-                        <span>OneStall Cargo Live Tracking Timeline</span>
+                        <span>{{ setting('name', 'ALLZONE') }} Cargo Live Tracking Timeline</span>
                     </h3>
                     <span class="text-xs text-slate-400">
                         {{ $shipment->tracking->count() }} event(s) recorded
@@ -314,7 +314,7 @@
         <div @click.away="pickupModalOpen = false" class="bg-white dark:bg-slate-900 rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-200 dark:border-slate-800">
             <h3 class="font-bold text-base text-slate-900 dark:text-slate-100">Schedule Carrier Warehouse Pickup</h3>
             <p class="text-xs text-slate-500 mt-1">
-                Carrier vehicle dispatch will be booked with OneStall Cargo for your origin warehouse.
+                Carrier vehicle dispatch will be booked with {{ setting('name', 'ALLZONE') }} Cargo for your origin warehouse.
             </p>
 
             <form method="POST" action="{{ route('seller.shipments.request_pickup', $shipment) }}" class="mt-4 space-y-4">

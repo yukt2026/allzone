@@ -36,7 +36,7 @@ class NewOrderSellerNotification extends Notification implements ShouldQueue
             ->line("You have received a new {$type} order (#{$orderNumber} / Package #{$foNumber}) amounting to **{$amount}**.")
             ->line("Please accept and pack this package promptly according to dispatch SLA.")
             ->action('View & Process Order', route('seller.orders.show', $this->fulfilmentOrder))
-            ->line('Thank you for being a valued merchant partner on ' . setting('name', 'OneStall') . '!');
+            ->line('Thank you for being a valued merchant partner on ' . setting('name', 'ALLZONE') . '!');
     }
 
     public function toArray(object $notifiable): array

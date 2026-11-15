@@ -46,7 +46,7 @@ class LogOtpDriver implements OtpServiceInterface
         }
 
         // Log to application log (Log driver implementation)
-        Log::info("OneStall Security OTP for [{$normalizedPhone}]: [{$otpCode}] (Valid for 5 minutes)");
+        Log::info("ALLZONE Security OTP for [{$normalizedPhone}]: [{$otpCode}] (Valid for 5 minutes)");
 
         return [
             'success' => true,

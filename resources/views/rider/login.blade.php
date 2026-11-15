@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Rider Login - OneStall Delivery Fleet</title>
+    <title>Rider Login - ALLZONE Delivery Fleet</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="bg-slate-900 text-white min-h-full font-sans flex flex-col justify-center items-center p-4">
@@ -14,7 +14,7 @@
             <div class="w-16 h-16 rounded-3xl bg-orange-500 text-white flex items-center justify-center mx-auto text-3xl shadow-lg shadow-orange-500/30">
                 🛵
             </div>
-            <h1 class="text-2xl font-black tracking-tight text-white">OneStall Rider</h1>
+            <h1 class="text-2xl font-black tracking-tight text-white">{{ setting('name', 'ALLZONE') }} Rider</h1>
             <p class="text-xs text-slate-400">Hyperlocal Delivery Partner Portal</p>
         </div>
 
@@ -89,7 +89,7 @@
         </div>
 
         <div class="text-center text-xs text-slate-500">
-            &copy; {{ date('Y') }} OneStall Hyperlocal Logistics Fleet
+            &copy; {{ date('Y') }} {{ setting('name', 'ALLZONE') }} Hyperlocal Logistics Fleet &bull; {{ setting('company_name', 'SK Refrigeration') }}
         </div>
     </div>
 

@@ -80,7 +80,7 @@
                         <span>Store Verified & Approved</span>
                     </div>
                     <h2 class="text-xl font-black text-slate-900 dark:text-white mt-2">
-                        🎉 Your OneStall Merchant Store is Ready!
+                        🎉 Your {{ setting('name', 'ALLZONE') }} Merchant Store is Ready!
                     </h2>
                     <p class="text-xs text-slate-600 dark:text-slate-300 mt-1">
                         Congratulations! Your business verification and KYC compliance checks are complete. Follow the launch checklist below to publish your digital catalog and begin receiving customer orders.
@@ -228,8 +228,8 @@
             <!-- View Submitted Application Summary -->
             <div class="pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs">
                 <span class="text-slate-500">Need urgent review or assistance?</span>
-                <a href="mailto:kyc@onestall.in" class="font-bold text-indigo-600 dark:text-indigo-400 hover:underline">
-                    Contact Onboarding Desk (kyc@onestall.in) &rarr;
+                <a href="mailto:{{ setting('support_email', 'kyc@allzone.in') }}" class="font-bold text-indigo-600 dark:text-indigo-400 hover:underline">
+                    Contact Onboarding Desk ({{ setting('support_email', 'kyc@allzone.in') }}) &rarr;
                 </a>
             </div>
         </div>
@@ -1122,7 +1122,7 @@
                                 class="mt-0.5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
                             />
                             <span class="text-xs text-slate-700 dark:text-slate-300">
-                                I agree to the <strong>OneStall Merchant Marketplace Agreement</strong>, Quick Commerce SLA guidelines, and Commission schedule.
+                                I agree to the <strong>{{ setting('name', 'ALLZONE') }} Merchant Marketplace Agreement</strong>, Quick Commerce SLA guidelines, and Commission schedule.
                             </span>
                         </label>
 

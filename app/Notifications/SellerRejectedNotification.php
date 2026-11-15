@@ -26,15 +26,18 @@ class SellerRejectedNotification extends Notification implements ShouldQueue
 
     public function toMail(object $notifiable): MailMessage
     {
+        $brandName = setting('name', 'ALLZONE');
+        $supportEmail = setting('support_email', 'support@allzone.in');
+
         return (new MailMessage)
-            ->subject('Important Update Regarding Your OneStall Merchant Application')
+            ->subject("Important Update Regarding Your {$brandName} Merchant Application")
             ->greeting("Hello {$this->seller->business_name},")
             ->line('Our verification team has reviewed your KYC documents and merchant application.')
             ->line('Unfortunately, your application could not be approved due to the following reason:')
             ->line("> **{$this->reason}**")
             ->line('You can review your documents and resubmit corrected proofs through your onboarding dashboard.')
             ->action('Access Onboarding Portal', route('seller.onboarding'))
-            ->line('If you have any questions, please contact seller support at support@onestall.in.');
+            ->line("If you have any questions, please contact seller support at {$supportEmail}.");
     }
 
     public function toArray(object $notifiable): array

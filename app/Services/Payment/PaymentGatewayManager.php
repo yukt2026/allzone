@@ -39,7 +39,7 @@ class PaymentGatewayManager
      */
     public function getDefaultDriver(): string
     {
-        return (string) Setting::get('payment_gateway_default', config('onestall.payment_gateway', 'razorpay'));
+        return (string) Setting::get('payment_gateway_default', config('allzone.payment_gateway', config('onestall.payment_gateway', 'razorpay')));
     }
 
     /**

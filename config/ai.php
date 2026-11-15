@@ -6,7 +6,7 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | OneStall Marketplace AI Engine Configuration & Feature Flags
+    | ALLZONE Marketplace AI Engine Configuration & Feature Flags
     |--------------------------------------------------------------------------
     |
     | All AI capabilities operate behind strict interfaces, feature flags,

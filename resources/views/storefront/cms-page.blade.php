@@ -1,6 +1,6 @@
 @extends('layouts.storefront')
 
-@section('title', $page->meta_title ?: ($page->title . ' - ' . setting('name', 'OneStall')))
+@section('title', $page->meta_title ?: ($page->title . ' - ' . setting('name', 'ALLZONE')))
 
 @section('content')
 <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">

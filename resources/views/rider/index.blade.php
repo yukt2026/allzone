@@ -1,4 +1,4 @@
-@extends('layouts.rider', ['title' => 'Rider Dashboard - OneStall'])
+@extends('layouts.rider', ['title' => 'Rider Dashboard - ALLZONE'])
 
 @section('content')
 <div class="space-y-4" x-data="riderDashboard()">

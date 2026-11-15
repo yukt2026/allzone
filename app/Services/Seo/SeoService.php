@@ -24,8 +24,8 @@ class SeoService
         ?Request $request = null
     ): array {
         $request = $request ?? request();
-        $siteName = (string) setting('name', 'OneStall');
-        $defaultTitle = (string) setting('meta_title', "{$siteName} - Smart Omnichannel & Quick Commerce Marketplace");
+        $siteName = (string) setting('name', 'ALLZONE');
+        $defaultTitle = (string) setting('meta_title', "{$siteName} - Multi-Vendor Marketplace | SK Refrigeration");
         $defaultDesc = (string) setting('meta_description', "Shop groceries, electronics, and daily essentials with instant 10-30 min quick delivery or nationwide cargo shipping.");
         $defaultOgImage = (string) setting('default_og_image', asset('images/og-default.jpg'));
 
@@ -213,11 +213,11 @@ class SeoService
      */
     public function organizationSchema(): array
     {
-        $siteName = (string) setting('name', 'OneStall');
+        $siteName = (string) setting('name', 'ALLZONE');
         $siteUrl = url('/');
-        $logo = (string) setting('logo', asset('images/logo.png'));
-        $phone = (string) setting('support_phone', '+91-1800-123-4567');
-        $email = (string) setting('support_email', 'support@onestall.com');
+        $logo = (string) setting('logo', asset('images/allzone-logo.svg'));
+        $phone = (string) setting('support_phone', '1800-ALLZONE');
+        $email = (string) setting('support_email', 'support@allzone.in');
 
         return [
             '@context' => 'https://schema.org',
@@ -263,7 +263,7 @@ class SeoService
         }
 
         $price = '0.00';
-        $sku = 'OS-PRD-' . $product->id;
+        $sku = 'AZ-PRD-' . $product->id;
         $inStock = true;
 
         if ($product->relationLoaded('variants') && $product->variants->isNotEmpty()) {
@@ -272,7 +272,7 @@ class SeoService
             $sku = (string) ($firstVariant->sku ?? $sku);
         }
 
-        $sellerName = $product->seller?->business_name ?? setting('name', 'OneStall');
+        $sellerName = $product->seller?->business_name ?? setting('name', 'ALLZONE');
 
         $schema = [
             '@context' => 'https://schema.org',

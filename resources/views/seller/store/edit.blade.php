@@ -681,7 +681,7 @@
                 <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 space-y-1">
                     <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Google Search Result Snippet Preview</span>
                     <div class="text-[11px] text-slate-500 font-mono truncate" x-text="publicUrl"></div>
-                    <div class="text-sm font-bold text-indigo-600 dark:text-indigo-400 hover:underline truncate" x-text="(metaTitle || 'Your Store') + ' | OneStall.in'"></div>
+                    <div class="text-sm font-bold text-indigo-600 dark:text-indigo-400 hover:underline truncate" x-text="(metaTitle || 'Your Store') + ' | ALLZONE'"></div>
                     <p class="text-xs text-slate-600 dark:text-slate-400 line-clamp-2" x-text="metaDesc || 'Order groceries, organic produce, and daily essentials from our verified digital storefront.'"></p>
                 </div>
             </div>

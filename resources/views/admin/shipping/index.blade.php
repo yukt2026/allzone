@@ -5,8 +5,8 @@
 
     <!-- Page Header -->
     <x-page-header 
-        title="Logistics & OneStall Cargo Oversight" 
-        subtitle="Manage courier fallback priority chain, OneStall Cargo integration credentials, live consignments, and NDR/RTO exceptions."
+        title="Logistics & {{ setting('name', 'ALLZONE') }} Cargo Oversight" 
+        subtitle="Manage courier fallback priority chain, {{ setting('name', 'ALLZONE') }} Cargo integration credentials, live consignments, and NDR/RTO exceptions."
         :breadcrumbs="['Command Console' => route('admin.dashboard'), 'Shipping & Logistics' => '#']"
     >
         <x-slot name="actions">
@@ -63,12 +63,12 @@
     <form method="POST" action="{{ route('admin.shipping.update') }}" class="space-y-6">
         @csrf
 
-        <!-- OneStall Cargo API & Sandbox Card -->
+        <!-- ALLZONE Cargo API & Sandbox Card -->
         <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm space-y-4">
             <div class="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
                 <div>
-                    <h3 class="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider text-[11px]">OneStall Cargo Platform Credentials</h3>
-                    <p class="text-xs text-slate-500 mt-0.5">Configuration and authentication credentials for external OneStall Cargo logistics API.</p>
+                    <h3 class="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider text-[11px]">{{ setting('name', 'ALLZONE') }} Cargo Platform Credentials</h3>
+                    <p class="text-xs text-slate-500 mt-0.5">Configuration and authentication credentials for external {{ setting('name', 'ALLZONE') }} Cargo logistics API.</p>
                 </div>
                 <div class="flex items-center space-x-2">
                     <input type="checkbox" name="cargo_fake" id="cargo_fake_toggle" value="1" {{ $settings['cargo_fake'] ? 'checked' : '' }} class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
@@ -85,7 +85,7 @@
                         type="url" 
                         name="cargo_base_url" 
                         value="{{ old('cargo_base_url', $settings['cargo_base_url']) }}" 
-                        placeholder="https://api.onestallcargo.internal/v1"
+                        placeholder="https://api.allzonecargo.internal/v1"
                         class="w-full text-xs rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white p-2.5 font-mono"
                     >
                 </div>
@@ -130,6 +130,72 @@
             </div>
         </div>
 
+        <!-- Shiprocket API Configuration Card -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm space-y-4">
+            <div class="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
+                <div>
+                    <h3 class="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider text-[11px]">Shiprocket Aggregator Configuration</h3>
+                    <p class="text-xs text-slate-500 mt-0.5">Automate consignment generation, AWBs, and tracking through Shiprocket multi-carrier logistics network.</p>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <label class="inline-flex items-center space-x-2 text-xs font-semibold text-slate-700 dark:text-slate-300">
+                        <input type="checkbox" name="shiprocket_enabled" value="1" {{ ($settings['shiprocket_enabled'] ?? false) ? 'checked' : '' }} class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
+                        <span>Enable Shiprocket Integration</span>
+                    </label>
+                    <label class="inline-flex items-center space-x-2 text-xs font-semibold text-slate-700 dark:text-slate-300">
+                        <input type="checkbox" name="shiprocket_fake" value="1" {{ ($settings['shiprocket_fake'] ?? true) ? 'checked' : '' }} class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
+                        <span>Sandbox / Simulation Mode</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Shiprocket Registered Email</label>
+                    <input 
+                        type="email" 
+                        name="shiprocket_email" 
+                        value="{{ old('shiprocket_email', $settings['shiprocket_email'] ?? '') }}" 
+                        placeholder="logistics@allzone.in"
+                        class="w-full text-xs rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white p-2.5"
+                    >
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Shiprocket Account Password</label>
+                    <input 
+                        type="password" 
+                        name="shiprocket_password" 
+                        value="{{ old('shiprocket_password', $settings['shiprocket_password'] ?? '') }}" 
+                        placeholder="••••••••••••"
+                        class="w-full text-xs rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white p-2.5 font-mono"
+                    >
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Shiprocket API Token / Key (Optional)</label>
+                    <input 
+                        type="password" 
+                        name="shiprocket_api_key" 
+                        value="{{ old('shiprocket_api_key', $settings['shiprocket_api_key'] ?? '') }}" 
+                        placeholder="Custom API Token (if using direct token)"
+                        class="w-full text-xs rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white p-2.5 font-mono"
+                    >
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Shiprocket API Base URL</label>
+                    <input 
+                        type="url" 
+                        name="shiprocket_base_url" 
+                        value="{{ old('shiprocket_base_url', $settings['shiprocket_base_url'] ?? 'https://apiv2.shiprocket.in/v1/external') }}" 
+                        placeholder="https://apiv2.shiprocket.in/v1/external"
+                        class="w-full text-xs rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white p-2.5 font-mono"
+                    >
+                </div>
+            </div>
+        </div>
+
         <!-- Courier Priority Chain Card -->
         <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm space-y-4">
             <div class="flex items-center justify-between">
@@ -142,7 +208,8 @@
             <div class="space-y-3 pt-2" id="courier-priority-list">
                 @php
                     $availableCouriers = [
-                        'onestall_cargo' => ['name' => 'OneStall Cargo (Internal Fleet)', 'desc' => 'Native quick commerce & hyper-local express delivery fleet'],
+                        'onestall_cargo' => ['name' => 'ALLZONE Cargo (Internal Fleet)', 'desc' => 'Native quick commerce & hyper-local express delivery fleet'],
+                        'shiprocket' => ['name' => 'Shiprocket Logistics Hub', 'desc' => 'Multi-carrier automated routing and pan-India shipping aggregator'],
                         'delhivery' => ['name' => 'Delhivery Express', 'desc' => 'Surface & Air national multimodal network with reverse logistics'],
                         'bluedart' => ['name' => 'Blue Dart Aviation', 'desc' => 'High-priority premium air cargo for tier-1 & tier-2 destinations'],
                         'shadowfax' => ['name' => 'Shadowfax On-Demand', 'desc' => 'Last-mile 2-wheeler intra-city and instant rider network'],
@@ -332,10 +399,10 @@
                             @endif
                         </td>
                         <td class="px-6 py-4 text-slate-800 dark:text-slate-200">
-                            {{ $fo?->seller?->business_name ?? $fo?->seller?->legal_name ?? 'OneStall Direct' }}
+                            {{ $fo?->seller?->business_name ?? $fo?->seller?->legal_name ?? (setting('name', 'ALLZONE') . ' Direct') }}
                         </td>
                         <td class="px-6 py-4">
-                            <div class="font-semibold text-slate-900 dark:text-white">{{ $shp->courier ?: 'OneStall Cargo' }}</div>
+                            <div class="font-semibold text-slate-900 dark:text-white">{{ $shp->courier ?: (setting('name', 'ALLZONE') . ' Cargo') }}</div>
                             <div class="font-mono text-[10px] text-slate-400 mt-0.5">
                                 {{ $shp->awb ? 'AWB: ' . $shp->awb : 'Missing AWB' }}
                             </div>

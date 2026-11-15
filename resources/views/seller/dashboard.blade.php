@@ -440,7 +440,7 @@
         </x-card>
 
         <!-- 4. Platform Announcements from Admin -->
-        <x-card title="Platform Notices" subtitle="Updates from OneStall Command">
+        <x-card title="Platform Notices" subtitle="Updates from {{ setting('name', 'ALLZONE') }} Command">
             <div class="space-y-3">
                 @foreach($announcements as $anc)
                     <div class="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200/60 dark:border-slate-800 text-xs space-y-1">

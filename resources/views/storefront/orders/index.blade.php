@@ -1,6 +1,6 @@
 @extends('layouts.storefront')
 
-@section('title', 'My Orders - ' . setting('name', 'OneStall.in'))
+@section('title', 'My Orders - ' . setting('name', 'ALLZONE'))
 
 @section('content')
 <div class="min-h-screen bg-slate-50 py-8 sm:py-12">
@@ -134,7 +134,7 @@
                                                 Package #{{ $fo->fulfilment_order_number }}
                                             </span>
                                             <span class="text-xs text-slate-400 font-medium">
-                                                via {{ $fo->store?->name ?? $fo->seller?->business_name ?? 'OneStall Logistics' }}
+                                                via {{ $fo->store?->name ?? $fo->seller?->business_name ?? (setting('name', 'ALLZONE') . ' Logistics') }}
                                             </span>
                                         </div>
 

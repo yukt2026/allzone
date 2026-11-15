@@ -159,7 +159,7 @@ class StoreOutletController extends Controller
             $handle = fopen('php://output', 'w');
             fputs($handle, "\xEF\xBB\xBF");
 
-            fputcsv($handle, ['OneStall Store Performance Report']);
+            fputcsv($handle, [setting('name', 'ALLZONE') . ' Store Performance Report']);
             fputcsv($handle, ['Store / Scope', $storeName]);
             fputcsv($handle, ['Window Range', "{$report['from']} to {$report['to']} ({$range})"]);
             fputcsv($handle, []);
