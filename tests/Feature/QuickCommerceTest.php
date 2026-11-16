@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
-use App\Enums\DeliveryAssignmentStatus;
 use App\Enums\FulfilmentType;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentMethod;
@@ -14,8 +13,6 @@ use App\Enums\SellerType;
 use App\Enums\StoreStatus;
 use App\Models\Customer;
 use App\Models\CustomerAddress;
-use App\Models\DeliveryAssignment;
-use App\Models\DeliveryPartner;
 use App\Models\FulfilmentOrder;
 use App\Models\Inventory;
 use App\Models\InventoryLocation;
@@ -46,7 +43,6 @@ class QuickCommerceTest extends TestCase
     protected CustomerAddress $customerAddress;
     protected Product $product;
     protected ProductVariant $variant;
-    protected DeliveryPartner $rider;
 
     protected function setUp(): void
     {
@@ -90,7 +86,6 @@ class QuickCommerceTest extends TestCase
             'quick_max_orders' => 5,
             'quick_prep_time_minutes' => 10,
             'quick_order_timeout_seconds' => 120,
-            'quick_auto_assign_rider' => true,
         ]);
         StoreLocation::create([
             'store_id' => $this->storeA->id,
@@ -120,7 +115,6 @@ class QuickCommerceTest extends TestCase
             'quick_max_orders' => 15,
             'quick_prep_time_minutes' => 12,
             'quick_order_timeout_seconds' => 120,
-            'quick_auto_assign_rider' => true,
         ]);
         StoreLocation::create([
             'store_id' => $this->storeB->id,
@@ -193,19 +187,6 @@ class QuickCommerceTest extends TestCase
             'location_id' => $locB->id,
             'quantity_on_hand' => 100,
             'quantity_reserved' => 0,
-        ]);
-
-        // 6. Delivery Partner (Rider)
-        $this->rider = DeliveryPartner::create([
-            'name' => 'Mahesh Rider',
-            'phone' => '9123456789',
-            'vehicle' => 'Ather 450X',
-            'vehicle_number' => 'KA-01-EQ-9988',
-            'is_active' => true,
-            'status' => 'available',
-            'active_orders_count' => 0,
-            'current_lat' => 12.9345,
-            'current_lng' => 77.6248,
         ]);
     }
 
@@ -471,10 +452,12 @@ class QuickCommerceTest extends TestCase
     }
 
     /**
-     * Test 5: Rider Auto-Assignment upon Order Ready.
+     * Test 5: Shiprocket Job Dispatched upon Order Ready.
      */
-    public function test_rider_auto_assigned_when_order_marked_ready(): void
+    public function test_shiprocket_job_dispatched_when_order_marked_ready(): void
     {
+        \Illuminate\Support\Facades\Queue::fake();
+
         $parentOrder = Order::create([
             'order_number' => 'OS-DISPATCH-01',
             'customer_id' => $this->customer->id,
@@ -506,118 +489,27 @@ class QuickCommerceTest extends TestCase
             ->assertRedirect();
 
         $fo->refresh();
-        $this->rider->refresh();
-
-        $this->assertEquals('rider_assigned', $fo->status);
-        $this->assertEquals('busy', $this->rider->status);
-        $this->assertEquals(1, $this->rider->active_orders_count);
-
-        $this->assertDatabaseHas('delivery_assignments', [
-            'fulfilment_order_id' => $fo->id,
-            'delivery_partner_id' => $this->rider->id,
-            'status' => DeliveryAssignmentStatus::ASSIGNED->value,
-        ]);
+        $this->assertEquals('ready', $fo->status);
+        \Illuminate\Support\Facades\Queue::assertPushed(\App\Jobs\Cargo\CreateShipmentJob::class);
     }
 
     /**
-     * Test 6: Rider mobile screen, OTP delivery handshake, and completion.
+     * Test 6: Verify internal rider module and endpoints are completely inaccessible.
      */
-    public function test_rider_mobile_otp_delivery_handshake(): void
+    public function test_internal_rider_module_is_completely_inaccessible(): void
     {
-        $parentOrder = Order::create([
-            'order_number' => 'OS-OTP-01',
-            'customer_id' => $this->customer->id,
-            'address_snapshot' => $this->customerAddress->toArray(),
-            'subtotal' => 65,
-            'discount' => 0,
-            'delivery_fee' => 30,
-            'tax' => 0,
-            'total' => 95,
-            'payment_method' => PaymentMethod::UPI,
-            'payment_status' => PaymentStatus::PAID,
-            'status' => OrderStatus::PROCESSING,
-        ]);
-
-        $fo = FulfilmentOrder::create([
-            'order_id' => $parentOrder->id,
-            'fulfilment_order_number' => 'OS-OTP-01-FO1',
-            'seller_id' => $this->seller->id,
-            'store_id' => $this->storeA->id,
-            'fulfilment_type' => FulfilmentType::QUICK,
-            'status' => 'ready',
-            'subtotal' => 65,
-            'delivery_fee' => 30,
-            'delivery_otp' => '984512',
-        ]);
-
-        $assignment = DeliveryAssignment::create([
-            'fulfilment_order_id' => $fo->id,
-            'delivery_partner_id' => $this->rider->id,
-            'status' => DeliveryAssignmentStatus::ASSIGNED,
-            'assigned_at' => now(),
-        ]);
-        $this->rider->status = 'busy';
-        $this->rider->active_orders_count = 1;
-        $this->rider->save();
-
-        // 1. Rider accepts assignment
-        $this->post("/rider/orders/{$assignment->id}/accept")
-            ->assertRedirect();
-        $assignment->refresh();
-        $this->assertEquals(DeliveryAssignmentStatus::ACCEPTED, $assignment->status);
-
-        // 2. Rider marks picked up from store
-        $this->post("/rider/orders/{$assignment->id}/pickup")
-            ->assertRedirect();
-        $assignment->refresh();
-        $fo->refresh();
-        $this->assertEquals(DeliveryAssignmentStatus::PICKED_UP, $assignment->status);
-        $this->assertEquals('out_for_delivery', $fo->status);
-
-        // 3. Attempt delivery with WRONG OTP -> rejected
-        $this->post("/rider/orders/{$assignment->id}/deliver", ['otp' => '000000'])
-            ->assertSessionHas('error');
-        $this->assertNotEquals('delivered', $fo->refresh()->status);
-
-        // 4. Submit CORRECT OTP -> success
-        $this->post("/rider/orders/{$assignment->id}/deliver", ['otp' => '984512'])
-            ->assertRedirect('/rider')
-            ->assertSessionHas('success');
-
-        $assignment->refresh();
-        $fo->refresh();
-        $this->rider->refresh();
-
-        $this->assertEquals(DeliveryAssignmentStatus::DELIVERED, $assignment->status);
-        $this->assertTrue($assignment->otp_verified);
-        $this->assertEquals('delivered', $fo->status);
-        $this->assertNotNull($fo->delivered_at);
-
-        // Rider should now be freed back to available
-        $this->assertEquals('available', $this->rider->status);
-        $this->assertEquals(0, $this->rider->active_orders_count);
+        $this->get('/rider')->assertNotFound();
+        $this->get('/rider/login')->assertNotFound();
+        $this->post('/rider/orders/1/deliver')->assertNotFound();
+        $this->postJson('/api/v1/rider/location')->assertNotFound();
+        $this->get('/admin/delivery-partners')->assertNotFound();
     }
 
     /**
-     * Test 7: Telemetry, live coordinates ping, and customer live location endpoint.
+     * Test 7: Legacy live-tracking cleanly redirects customer to official Shiprocket tracking.
      */
-    public function test_telemetry_and_customer_live_tracking_endpoints(): void
+    public function test_customer_live_tracking_redirects_to_shiprocket_tracking(): void
     {
-        // 1. Telemetry location update API
-        $response = $this->postJson('/api/v1/rider/location', [
-            'rider_id' => $this->rider->id,
-            'lat' => 12.9360,
-            'lng' => 77.6255,
-        ]);
-
-        $response->assertOk()
-            ->assertJsonPath('success', true)
-            ->assertJsonPath('lat', 12.936);
-
-        $this->rider->refresh();
-        $this->assertEquals(12.936, $this->rider->current_lat);
-
-        // 2. Customer live tracking screen & location endpoint
         $order = Order::create([
             'order_number' => 'OS-LIVE-01',
             'customer_id' => $this->customer->id,
@@ -641,30 +533,12 @@ class QuickCommerceTest extends TestCase
             'status' => 'out_for_delivery',
             'subtotal' => 65,
             'delivery_fee' => 30,
-            'delivery_otp' => '123456',
         ]);
 
-        DeliveryAssignment::create([
-            'fulfilment_order_id' => $fo->id,
-            'delivery_partner_id' => $this->rider->id,
-            'status' => DeliveryAssignmentStatus::PICKED_UP,
-            'assigned_at' => now(),
-        ]);
-
-        // Customer page render
+        // Customer page render redirects to orders.track
         $this->actingAs($this->customerUser)
             ->get("/orders/{$order->id}/live-tracking")
-            ->assertOk()
-            ->assertSee('Quick Commerce Live Tracking')
-            ->assertSee('123456');
-
-        // Customer live location API polling
-        $liveRes = $this->getJson("/orders/{$order->id}/live-location");
-        $liveRes->assertOk()
-            ->assertJsonPath('delivery_otp', '123456')
-            ->assertJsonPath('package_status', 'out_for_delivery')
-            ->assertJsonPath('rider.name', 'Mahesh Rider')
-            ->assertJsonPath('rider.lat', 12.936);
+            ->assertRedirect(route('orders.track', [$order->order_number, $fo->fulfilment_order_number]));
     }
 
     /**

@@ -27,9 +27,8 @@ Route::get('/recommendations/personalized', function (\Illuminate\Http\Request $
     ]);
 })->name('api.recommendations.personalized');
 
-// Quick Commerce Hyperlocal Discovery & Rider Telemetry
+// Quick Commerce Hyperlocal Store Discovery
 Route::get('/quick/stores', [\App\Http\Controllers\Storefront\QuickCommerceController::class, 'nearbyStoresApi'])->name('api.quick.stores');
-Route::post('/rider/location', [\App\Http\Controllers\Rider\RiderController::class, 'updateLocation'])->name('api.rider.location');
 
 // ALLZONE Cargo & Shiprocket Logistics Webhook Receivers
 Route::post('/cargo/webhook', [\App\Http\Controllers\Api\CargoWebhookController::class, 'handle'])->name('cargo.webhook');

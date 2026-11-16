@@ -40,7 +40,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'orders.view', 'orders.create', 'orders.manage', 'orders.cancel',
             'fulfilment.view', 'fulfilment.accept', 'fulfilment.pack', 'fulfilment.dispatch',
             // Logistics & Delivery
-            'cargo.view', 'cargo.manage', 'cargo.assign_rider', 'cargo.update_status',
+            'cargo.view', 'cargo.manage', 'cargo.dispatch_shipment', 'cargo.update_status',
             // Payments & Settlements
             'payments.view', 'payments.refund',
             'commissions.manage',

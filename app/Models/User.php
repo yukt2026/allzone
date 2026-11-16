@@ -100,14 +100,6 @@ class User extends Authenticatable
     }
 
     /**
-     * Delivery partner (rider) profile relationship.
-     */
-    public function deliveryPartner(): HasOne
-    {
-        return $this->hasOne(DeliveryPartner::class);
-    }
-
-    /**
      * Customer delivery addresses.
      */
     public function addresses(): HasMany

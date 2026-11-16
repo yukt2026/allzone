@@ -4,16 +4,14 @@ declare(strict_types=1);
 
 namespace App\Services\QuickCommerce;
 
-use App\Enums\DeliveryAssignmentStatus;
 use App\Enums\FulfilmentType;
+use App\Enums\ShipmentStatus;
 use App\Enums\StoreStatus;
-use App\Models\DeliveryAssignment;
-use App\Models\DeliveryPartner;
 use App\Models\FulfilmentOrder;
 use App\Models\Product;
+use App\Models\Shipment;
 use App\Models\Store;
 use App\Services\Order\OrderStateMachine;
-use App\Services\Rider\RiderEarningsService;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
@@ -154,246 +152,6 @@ class QuickCommerceService
     }
 
     /**
-     * Automatically assign the nearest available delivery partner to a ready quick fulfilment order.
-     */
-    public function autoAssignRider(FulfilmentOrder $fulfilmentOrder, ?int $excludePartnerId = null): ?DeliveryPartner
-    {
-        $store = $fulfilmentOrder->store;
-        $storeLat = $store?->location?->lat ?? 12.9716;
-        $storeLng = $store?->location?->lng ?? 77.5946;
-
-        // Find available delivery partners
-        $availablePartners = DeliveryPartner::query()
-            ->where('is_active', true)
-            ->where('status', 'available')
-            ->when($excludePartnerId, fn ($q) => $q->where('id', '!=', $excludePartnerId))
-            ->get();
-
-        if ($availablePartners->isEmpty()) {
-            // Fallback: any active partner with fewer than 2 active assignments
-            $availablePartners = DeliveryPartner::query()
-                ->where('is_active', true)
-                ->where('active_orders_count', '<', 2)
-                ->when($excludePartnerId, fn ($q) => $q->where('id', '!=', $excludePartnerId))
-                ->get();
-        }
-
-        if ($availablePartners->isEmpty()) {
-            Log::warning("QuickCommerce: No available delivery partners found for FO #{$fulfilmentOrder->fulfilment_order_number}");
-            return null;
-        }
-
-        // Rank by distance to store
-        $bestPartner = $availablePartners->sortBy(fn ($partner) => $partner->distanceTo((float) $storeLat, (float) $storeLng))->first();
-
-        if ($bestPartner) {
-            $this->assignPartnerToOrder($fulfilmentOrder, $bestPartner, 'Auto-assigned by Quick Commerce dispatch engine');
-        }
-
-        return $bestPartner;
-    }
-
-    /**
-     * Manually or automatically attach a delivery partner to a fulfilment order.
-     */
-    public function assignPartnerToOrder(
-        FulfilmentOrder $fo,
-        DeliveryPartner $partner,
-        string $note = 'Assigned delivery partner'
-    ): DeliveryAssignment {
-        return DB::transaction(function () use ($fo, $partner, $note) {
-            // Ensure delivery OTP exists for this package
-            $fo->ensureDeliveryOtp();
-
-            $existing = DeliveryAssignment::where('fulfilment_order_id', $fo->id)->first();
-            $alreadyAssignedToThisPartner = $existing && (int)$existing->delivery_partner_id === (int)$partner->id;
-
-            $assignment = DeliveryAssignment::updateOrCreate(
-                ['fulfilment_order_id' => $fo->id],
-                [
-                    'delivery_partner_id' => $partner->id,
-                    'status' => DeliveryAssignmentStatus::ASSIGNED,
-                    'pickup_otp' => $existing?->pickup_otp ?? (string) random_int(1000, 9999),
-                    'assigned_at' => now(),
-                    'notes' => $note,
-                ]
-            );
-
-            // Update partner status and active count only if not already assigned
-            if (!$alreadyAssignedToThisPartner) {
-                $partner->status = 'busy';
-                $partner->active_orders_count = max(1, $partner->active_orders_count + 1);
-                $partner->save();
-            }
-
-            // Transition FO status if eligible
-            if ($this->stateMachine->canTransitionFulfilment($fo, 'rider_assigned')) {
-                $this->stateMachine->transitionFulfilmentOrder(
-                    $fo,
-                    'rider_assigned',
-                    $note . " (#{$partner->name})",
-                    auth()->id()
-                );
-            }
-
-            Log::info("Rider #{$partner->id} ({$partner->name}) assigned to Quick Order #{$fo->fulfilment_order_number}");
-
-            return $assignment;
-        });
-    }
-
-    /**
-     * Verify customer OTP and complete rider delivery.
-     *
-     * @return array{success: bool, message: string}
-     */
-    public function verifyDeliveryOtp(FulfilmentOrder $fo, string $enteredOtp): array
-    {
-        $cleanOtp = trim($enteredOtp);
-        $expectedOtp = trim((string) $fo->delivery_otp);
-
-        if (empty($expectedOtp) || $cleanOtp !== $expectedOtp) {
-            return [
-                'success' => false,
-                'message' => 'Invalid delivery OTP. Please verify the code displayed on customer\'s order tracking screen.',
-            ];
-        }
-
-        DB::transaction(function () use ($fo) {
-            // Update DeliveryAssignment
-            $assignment = $fo->deliveryAssignment;
-            if ($assignment) {
-                $assignment->status = DeliveryAssignmentStatus::DELIVERED;
-                $assignment->otp_verified = true;
-                $assignment->delivered_at = now();
-
-                // If Cash On Delivery, record collected cash
-                if ($fo->order && $fo->order->payment_method === \App\Enums\PaymentMethod::COD) {
-                    $codAmount = (float) $fo->total_amount;
-                    $assignment->cod_amount_collected = $codAmount;
-                    $assignment->cod_collected_at = now();
-                    if ($assignment->deliveryPartner) {
-                        $assignment->deliveryPartner->current_cash_in_hand = round((float) $assignment->deliveryPartner->current_cash_in_hand + $codAmount, 2);
-                    }
-                }
-
-                $assignment->save();
-
-                // Credit Rider Earnings & Wallet
-                try {
-                    app(RiderEarningsService::class)->creditEarnings($assignment);
-                } catch (\Throwable $e) {
-                    Log::error("Failed to credit rider earnings for assignment #{$assignment->id}: {$e->getMessage()}");
-                }
-
-                // Free up the delivery partner
-                if ($assignment->deliveryPartner) {
-                    $partner = $assignment->deliveryPartner;
-                    $partner->active_orders_count = max(0, $partner->active_orders_count - 1);
-                    if ($partner->active_orders_count === 0) {
-                        $partner->status = 'available';
-                    }
-                    $partner->save();
-                }
-            }
-
-            // Transition FulfilmentOrder to delivered
-            $this->stateMachine->transitionFulfilmentOrder(
-                $fo,
-                'delivered',
-                'Package delivered successfully with Customer OTP verification.',
-                auth()->id()
-            );
-        });
-
-        return [
-            'success' => true,
-            'message' => 'Order marked delivered successfully!',
-        ];
-    }
-
-    /**
-     * Handle delivery partner rejecting assigned task, freeing partner and re-dispatching to next candidate.
-     */
-    public function reassignOnReject(DeliveryAssignment $assignment, string $reason = 'Rider declined job'): ?DeliveryPartner
-    {
-        return DB::transaction(function () use ($assignment, $reason) {
-            $fo = $assignment->fulfilmentOrder;
-            $partner = $assignment->deliveryPartner;
-
-            // 1. Mark assignment as rejected
-            $assignment->status = DeliveryAssignmentStatus::REJECTED;
-            $assignment->rejection_reason = $reason;
-            $assignment->rejected_at = now();
-            $assignment->save();
-
-            // 2. Free up rejecting partner
-            if ($partner) {
-                $partner->active_orders_count = max(0, $partner->active_orders_count - 1);
-                if ($partner->active_orders_count === 0) {
-                    $partner->status = 'available';
-                }
-                $partner->save();
-            }
-
-            if (!$fo) {
-                return null;
-            }
-
-            // 3. Reset FO status to ready for dispatch
-            $this->stateMachine->transitionFulfilmentOrder(
-                $fo,
-                'ready',
-                "Previous rider declined ({$reason}); resetting for next candidate",
-                auth()->id()
-            );
-
-            // 4. Trigger auto-assign to next nearest candidate (excluding rejecting partner)
-            return $this->autoAssignRider($fo, $partner?->id);
-        });
-    }
-
-    /**
-     * Handle delivery failure (e.g. customer unreachable, premises closed) and trigger store return.
-     */
-    public function handleDeliveryFailure(
-        DeliveryAssignment $assignment,
-        string $reason,
-        ?string $notes = null
-    ): void {
-        DB::transaction(function () use ($assignment, $reason, $notes) {
-            $fo = $assignment->fulfilmentOrder;
-            $partner = $assignment->deliveryPartner;
-
-            $assignment->status = DeliveryAssignmentStatus::CANCELLED;
-            $assignment->failed_at = now();
-            $assignment->failure_reason = $reason;
-            $assignment->failure_notes = $notes;
-            $assignment->save();
-
-            // Free partner capacity
-            if ($partner) {
-                $partner->active_orders_count = max(0, $partner->active_orders_count - 1);
-                if ($partner->active_orders_count === 0) {
-                    $partner->status = 'available';
-                }
-                $partner->save();
-            }
-
-            if ($fo) {
-                if ($this->stateMachine->canTransitionFulfilment($fo, 'delivery_failed')) {
-                    $this->stateMachine->transitionFulfilmentOrder(
-                        $fo,
-                        'delivery_failed',
-                        "Delivery attempt failed: " . ucfirst(str_replace('_', ' ', $reason)) . ($notes ? " ({$notes})" : ""),
-                        auth()->id()
-                    );
-                }
-            }
-        });
-    }
-
-    /**
      * Compute data for Admin Quick Commerce Realtime Ops Dashboard.
      */
     public function getOpsDashboardData(): array
@@ -403,7 +161,7 @@ class QuickCommerceService
             ->with([
                 'store.location',
                 'order.customerAddress',
-                'deliveryAssignment.deliveryPartner',
+                'shipment.tracking',
                 'items',
             ])
             ->where('fulfilment_type', FulfilmentType::QUICK)
@@ -438,11 +196,14 @@ class QuickCommerceService
                 ];
             });
 
-        // 4. Riders Status
-        $riders = DeliveryPartner::query()->get();
-        $activeRidersCount = $riders->where('is_active', true)->count();
-        $availableRidersCount = $riders->where('status', 'available')->count();
-        $busyRidersCount = $riders->where('status', 'busy')->count();
+        // 4. Logistics Status
+        $activeShipmentsCount = Shipment::query()
+            ->whereIn('status', [
+                ShipmentStatus::PICKED_UP,
+                ShipmentStatus::IN_TRANSIT,
+                ShipmentStatus::OUT_FOR_DELIVERY,
+            ])
+            ->count();
 
         // 5. KPIs Today
         $todayDelivered = FulfilmentOrder::query()
@@ -462,12 +223,8 @@ class QuickCommerceService
             'breached_orders' => $breachedOrders->values(),
             'breached_count' => $breachedOrders->count(),
             'stores_load' => $stores,
-            'riders_summary' => [
-                'total' => $riders->count(),
-                'active' => $activeRidersCount,
-                'available' => $availableRidersCount,
-                'busy' => $busyRidersCount,
-            ],
+            'shipments_active_count' => $activeShipmentsCount,
+            'logistics_partner' => 'Shiprocket',
             'today_total' => $todayTotal,
             'today_delivered' => $todayDelivered,
         ];

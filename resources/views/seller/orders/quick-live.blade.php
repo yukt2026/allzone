@@ -68,7 +68,7 @@
     <!-- Clean Page Header with Breadcrumbs & Sound Toggle -->
     <x-page-header 
         title="Quick 15m Dispatch Console" 
-        subtitle="Real-time order intake, pick-and-pack workflow, automated rider dispatch, and SLA countdowns."
+        subtitle="Real-time order intake, pick-and-pack workflow, automated Shiprocket courier dispatch, and SLA countdowns."
         :breadcrumbs="['Seller Studio' => route('seller.dashboard'), 'Orders' => route('seller.orders.index'), 'Quick Dispatch' => '#']"
     >
         <x-slot name="badge">
@@ -190,27 +190,27 @@
             <span class="text-[10px] text-slate-400 mt-2 block">Accepted &amp; Picking</span>
         </div>
 
-        <!-- 3. Ready for Pickup -->
+        <!-- 3. Ready for Courier Dispatch -->
         <div class="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm transition hover:shadow-md flex flex-col justify-between">
             <div class="flex items-center justify-between mb-2">
                 <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Ready / Dispatch</span>
-                <span class="text-xs">🛵</span>
+                <span class="text-xs">🚚</span>
             </div>
             <div class="flex items-baseline justify-between">
-                <div class="text-2xl sm:text-3xl font-black text-purple-600 dark:text-purple-400" x-text="orders.filter(o => ['ready', 'rider_assigned'].includes(o.status)).length">0</div>
-                <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-300">Awaiting</span>
+                <div class="text-2xl sm:text-3xl font-black text-purple-600 dark:text-purple-400" x-text="orders.filter(o => ['ready', 'ready_to_ship'].includes(o.status)).length">0</div>
+                <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-300">Shiprocket</span>
             </div>
-            <span class="text-[10px] text-slate-400 mt-2 block">Courier at Store</span>
+            <span class="text-[10px] text-slate-400 mt-2 block">Awaiting Courier</span>
         </div>
 
-        <!-- 4. En Route -->
+        <!-- 4. En Route / In Transit -->
         <div class="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm transition hover:shadow-md flex flex-col justify-between">
             <div class="flex items-center justify-between mb-2">
-                <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">En Route</span>
+                <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">In Transit</span>
                 <span class="text-xs">🚀</span>
             </div>
             <div class="flex items-baseline justify-between">
-                <div class="text-2xl sm:text-3xl font-black text-emerald-600 dark:text-emerald-400" x-text="orders.filter(o => ['picked_up', 'out_for_delivery'].includes(o.status)).length">0</div>
+                <div class="text-2xl sm:text-3xl font-black text-emerald-600 dark:text-emerald-400" x-text="orders.filter(o => ['shipped', 'in_transit', 'out_for_delivery'].includes(o.status)).length">0</div>
                 <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-300">Live</span>
             </div>
             <span class="text-[10px] text-slate-400 mt-2 block">Doorstep Delivery</span>
@@ -339,7 +339,7 @@
     <div class="space-y-4 pt-3">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <h3 class="text-sm font-black text-slate-900 dark:text-slate-100 flex items-center gap-2">
-                <span>📦 Store Preparation &amp; Rider Dispatch</span>
+                <span>📦 Store Preparation &amp; Shiprocket Dispatch</span>
             </h3>
 
             <!-- Stage Filter Pills -->
@@ -363,14 +363,14 @@
                     class="px-3 py-1 rounded-lg transition"
                     :class="filterStatus === 'ready' ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'"
                 >
-                    Ready for Pickup
+                    Ready for Courier
                 </button>
                 <button 
                     @click="filterStatus = 'en_route'" 
                     class="px-3 py-1 rounded-lg transition"
                     :class="filterStatus === 'en_route' ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'"
                 >
-                    En Route
+                    In Transit
                 </button>
             </div>
         </div>
@@ -382,7 +382,7 @@
                     📦
                 </div>
                 <p class="font-bold text-slate-700 dark:text-slate-300">No Orders in Preparation</p>
-                <p class="text-[11px] text-slate-400 mt-1">Accepted orders will appear here automatically for picking, packing, and rider handover.</p>
+                <p class="text-[11px] text-slate-400 mt-1">Accepted orders will appear here automatically for picking, packing, and Shiprocket dispatch.</p>
             </div>
         </template>
 
@@ -391,8 +391,8 @@
             <template x-for="order in orders.filter(o => {
                 if (o.status === 'placed') return false;
                 if (filterStatus === 'packing') return ['store_accepted', 'packing'].includes(o.status);
-                if (filterStatus === 'ready') return ['ready', 'rider_assigned'].includes(o.status);
-                if (filterStatus === 'en_route') return ['picked_up', 'out_for_delivery'].includes(o.status);
+                if (filterStatus === 'ready') return ['ready', 'ready_to_ship'].includes(o.status);
+                if (filterStatus === 'en_route') return ['shipped', 'in_transit', 'out_for_delivery'].includes(o.status);
                 return true;
             })" :key="order.id">
                 <div class="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between transition hover:shadow-md">
@@ -407,9 +407,8 @@
                                   :class="{
                                       'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300': order.status === 'store_accepted',
                                       'bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-300': order.status === 'packing',
-                                      'bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300': order.status === 'ready',
-                                      'bg-indigo-100 text-indigo-800 dark:bg-indigo-950 dark:text-indigo-300': order.status === 'rider_assigned',
-                                      'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300': ['picked_up', 'out_for_delivery'].includes(order.status)
+                                      'bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300': ['ready', 'ready_to_ship'].includes(order.status),
+                                      'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300': ['shipped', 'in_transit', 'out_for_delivery'].includes(order.status)
                                   }"
                                   x-text="order.status_label || order.status.replace('_', ' ')">
                             </span>
@@ -452,63 +451,41 @@
                             </form>
                         </template>
 
-                        <!-- 3. Ready -> Assign Delivery Rider -->
-                        <template x-if="order.status === 'ready'">
+                        <!-- 3. Ready / Ready to Ship -> Shiprocket Dispatch Status -->
+                        <template x-if="['ready', 'ready_to_ship'].includes(order.status)">
                             <div class="space-y-2">
-                                <form :action="'{{ url('/seller/orders') }}/' + order.id + '/assign-rider'" method="POST" class="flex gap-2">
-                                    @csrf
-                                    <select name="delivery_partner_id" class="text-xs rounded-xl border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 flex-1 focus:ring-amber-500">
-                                        <option value="">-- Nearest Available Rider --</option>
-                                        @foreach($availableRiders as $rider)
-                                            <option value="{{ $rider->id }}">{{ $rider->name }} ({{ $rider->vehicle }})</option>
-                                        @endforeach
-                                    </select>
-                                    <button type="submit" class="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 dark:bg-slate-700 dark:hover:bg-slate-600 text-white text-xs font-bold rounded-xl transition">
-                                        Dispatch
-                                    </button>
-                                </form>
-                            </div>
-                        </template>
-
-                        <!-- 4. Rider Assigned -> Handover to Rider & Dispatch -->
-                        <template x-if="order.status === 'rider_assigned'">
-                            <div class="space-y-2">
-                                <div class="bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-900/60 rounded-xl p-2.5 text-xs text-indigo-900 dark:text-indigo-200 flex items-center justify-between">
-                                    <div>
-                                        <span class="font-bold block" x-text="'🛵 ' + (order.rider ? order.rider.name : 'Rider Assigned')"></span>
-                                        <span class="text-[11px] text-indigo-600 dark:text-indigo-400" x-text="order.rider ? (order.rider.phone + ' • ' + (order.rider.vehicle || 'Bike')) : 'Rider arriving at store'"></span>
+                                <div class="bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-900/60 rounded-xl p-2.5 text-xs text-indigo-900 dark:text-indigo-200">
+                                    <div class="flex items-center justify-between">
+                                        <span class="font-bold">🚚 Shiprocket Dispatch</span>
+                                        <span class="text-[10px] bg-indigo-200 dark:bg-indigo-900 text-indigo-900 dark:text-indigo-200 font-bold px-2 py-0.5 rounded-full">Processing</span>
                                     </div>
-                                    <span class="text-[10px] bg-indigo-200 dark:bg-indigo-900 text-indigo-900 dark:text-indigo-200 font-bold px-2 py-0.5 rounded-full">At Store</span>
+                                    <template x-if="order.shipment && order.shipment.awb">
+                                        <div class="mt-1 text-[11px] text-indigo-700 dark:text-indigo-300 font-mono">
+                                            Courier: <span class="font-bold" x-text="order.shipment.courier || 'Shiprocket'"></span> • AWB: <span class="font-bold" x-text="order.shipment.awb"></span>
+                                        </div>
+                                    </template>
+                                    <template x-if="!order.shipment || !order.shipment.awb">
+                                        <div class="mt-1 text-[11px] text-slate-500">
+                                            Consignment submitted. Awaiting AWB generation from Shiprocket.
+                                        </div>
+                                    </template>
                                 </div>
-
-                                <form :action="'{{ url('/seller/orders') }}/' + order.id + '/handover'" method="POST">
-                                    @csrf
-                                    <button type="submit" class="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs shadow transition flex items-center justify-center gap-1.5">
-                                        <span>Hand Over Bag &amp; Mark En Route &rarr;</span>
-                                    </button>
-                                </form>
                             </div>
                         </template>
 
-                        <!-- 5. Picked Up / Out for Delivery -> Live En Route Status -->
-                        <template x-if="['picked_up', 'out_for_delivery'].includes(order.status)">
+                        <!-- 4. Shipped / In Transit / Out for Delivery -->
+                        <template x-if="['shipped', 'in_transit', 'out_for_delivery'].includes(order.status)">
                             <div class="bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/60 rounded-xl p-3 text-xs text-emerald-900 dark:text-emerald-200 flex flex-col gap-1.5">
                                 <div class="flex items-center justify-between">
                                     <span class="font-black text-emerald-700 dark:text-emerald-400 flex items-center gap-1">
-                                        <span>🛵 Rider En Route to Doorstep</span>
+                                        <span>🚚 Courier In Transit</span>
                                     </span>
-                                    <span class="text-[10px] bg-emerald-200 dark:bg-emerald-900 text-emerald-900 dark:text-emerald-200 font-black px-2 py-0.5 rounded-full">Active</span>
+                                    <span class="text-[10px] bg-emerald-200 dark:bg-emerald-900 text-emerald-900 dark:text-emerald-200 font-black px-2 py-0.5 rounded-full" x-text="order.status.replace('_', ' ').toUpperCase()"></span>
                                 </div>
-                                <div class="text-[11px] text-slate-500 dark:text-slate-400 flex items-center justify-between">
-                                    <span x-text="order.rider ? order.rider.name : 'Delivery Partner'"></span>
-                                    <span class="font-mono" x-text="order.rider ? order.rider.phone : ''"></span>
+                                <div class="text-[11px] text-slate-600 dark:text-slate-300 flex items-center justify-between">
+                                    <span x-text="order.shipment ? (order.shipment.courier || 'Shiprocket Express') : 'Courier Partner'"></span>
+                                    <span class="font-mono font-bold" x-text="order.shipment && order.shipment.awb ? ('AWB: ' + order.shipment.awb) : ''"></span>
                                 </div>
-                                <template x-if="order.delivery_otp">
-                                    <div class="mt-1 pt-1.5 border-t border-emerald-200/60 dark:border-emerald-900/40 flex items-center justify-between text-[11px]">
-                                        <span class="text-slate-400">Delivery OTP:</span>
-                                        <span class="font-mono font-black text-slate-800 dark:text-slate-200" x-text="order.delivery_otp"></span>
-                                    </div>
-                                </template>
                             </div>
                         </template>
                     </div>

@@ -1,7 +1,7 @@
 @extends('layouts.dashboard', ['portal' => 'seller', 'title' => 'Process Order #' . $fo->fulfilment_order_number])
 
 @section('content')
-<div class="space-y-6" x-data="{ assignStaffModal: false, rejectModal: false }">
+<div class="space-y-6" x-data="{ rejectModal: false }">
 
     <!-- Page Header & Action Bar -->
     <x-page-header 
@@ -80,14 +80,6 @@
                     >
                         Reject Order
                     </button>
-                @elseif($target === 'rider_assigned')
-                    <button 
-                        type="button" 
-                        @click="assignStaffModal = true" 
-                        class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-xs transition"
-                    >
-                        Assign Rider / Staff &rarr;
-                    </button>
                 @else
                     <form method="POST" action="{{ route('seller.orders.transition', $fo) }}" class="inline">
                         @csrf
@@ -131,7 +123,7 @@
                 Inventory Location: <strong>{{ $fo->inventoryLocation?->name ?? 'Primary Store Room' }}</strong> ({{ $fo->inventoryLocation?->code ?? 'LOC-01' }})
             </div>
             <div class="pt-2 border-t border-slate-100 dark:border-slate-800 text-xs text-slate-500">
-                Rider Assigned: <strong class="text-slate-800 dark:text-slate-200">{{ $fo->deliveryAssignment?->deliveryPartner?->name ?? 'Unassigned' }}</strong>
+                Courier / AWB: <strong class="text-slate-800 dark:text-slate-200">{{ $fo->shipment?->awb ? (($fo->shipment->courier ?? 'Shiprocket') . ' - ' . $fo->shipment->awb) : 'Pending Shiprocket AWB' }}</strong>
             </div>
         </div>
 
@@ -264,55 +256,6 @@
         </div>
     </div>
 
-    <!-- Assign Staff Modal -->
-    <div 
-        x-show="assignStaffModal" 
-        x-cloak 
-        class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-xs"
-        @keydown.escape.window="assignStaffModal = false"
-    >
-        <div 
-            @click.away="assignStaffModal = false" 
-            class="bg-white dark:bg-slate-900 rounded-3xl max-w-md w-full p-6 sm:p-8 space-y-4 shadow-2xl border border-slate-200 dark:border-slate-800"
-        >
-            <div class="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 flex items-center justify-center text-2xl mx-auto">
-                🛵
-            </div>
-            <div class="text-center space-y-1">
-                <h3 class="text-lg font-black text-slate-900 dark:text-white">Assign Rider / Staff</h3>
-                <p class="text-xs text-slate-500">Select an in-store runner or authorized delivery partner rider for package #{{ $fo->fulfilment_order_number }}.</p>
-            </div>
-
-            <form method="POST" action="{{ route('seller.orders.assign_staff', $fo) }}" class="space-y-4">
-                @csrf
-                <div>
-                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Select Delivery Partner / Courier</label>
-                    <select name="delivery_partner_id" class="w-full text-xs font-medium p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white">
-                        <option value="">-- Choose Courier / Partner --</option>
-                        @foreach($deliveryPartners as $partner)
-                            <option value="{{ $partner->id }}">{{ $partner->name }} ({{ strtoupper($partner->code) }})</option>
-                        @endforeach
-                    </select>
-                </div>
-
-                <div class="flex items-center space-x-3 pt-2">
-                    <button 
-                        type="button" 
-                        @click="assignStaffModal = false" 
-                        class="w-1/2 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-bold transition"
-                    >
-                        Cancel
-                    </button>
-                    <button 
-                        type="submit" 
-                        class="w-1/2 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-xs transition"
-                    >
-                        Assign &amp; Dispatch
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
 
 </div>
 @endsection

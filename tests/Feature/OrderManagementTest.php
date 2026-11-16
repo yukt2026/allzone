@@ -17,7 +17,6 @@ use App\Enums\StoreStatus;
 use App\Models\Category;
 use App\Models\Customer;
 use App\Models\CustomerAddress;
-use App\Models\DeliveryPartner;
 use App\Models\FulfilmentOrder;
 use App\Models\Inventory;
 use App\Models\InventoryLocation;
@@ -336,14 +335,14 @@ class OrderManagementTest extends TestCase
 
     public function test_customer_can_track_shipment_and_view_milestones(): void
     {
-        [$order, $fo] = $this->createOrder(FulfilmentType::QUICK, 'rider_assigned', OrderStatus::PROCESSING);
+        [$order, $fo] = $this->createOrder(FulfilmentType::QUICK, 'in_transit', OrderStatus::PROCESSING);
 
         $response = $this->actingAs($this->customerUser)->get(route('orders.track', [$order->order_number, $fo->fulfilment_order_number]));
 
         $response->assertStatus(200);
         $response->assertViewIs('storefront.orders.track');
         $response->assertSee($fo->fulfilment_order_number);
-        $response->assertSee('Rider Assigned');
+        $response->assertSee('In Transit');
     }
 
     public function test_customer_can_submit_return_request_for_delivered_order(): void
@@ -439,14 +438,7 @@ class OrderManagementTest extends TestCase
             ->assertRedirect();
         $this->assertEquals('ready', $fo->fresh()->status);
 
-        // 4. Assign Rider: ready -> rider_assigned
-        $partner = DeliveryPartner::create(['name' => 'Shadowfax Express', 'phone' => '9988776655', 'is_active' => true]);
-        $this->actingAs($this->sellerUser)
-            ->post(route('seller.orders.assign_staff', $fo), ['delivery_partner_id' => $partner->id])
-            ->assertRedirect();
-        $this->assertEquals('rider_assigned', $fo->fresh()->status);
-
-        // 5. Rider Picked Up: rider_assigned -> picked_up
+        // 4. Courier Picked Up: ready -> picked_up
         $this->actingAs($this->sellerUser)
             ->post(route('seller.orders.transition', $fo), ['target_status' => 'picked_up'])
             ->assertRedirect();

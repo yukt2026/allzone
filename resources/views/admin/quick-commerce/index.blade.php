@@ -31,10 +31,10 @@
                 </form>
 
                 <a 
-                    href="{{ route('admin.delivery_partners.index') }}" 
+                    href="{{ route('admin.shipping.index') }}" 
                     class="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-lg shadow-sm flex items-center space-x-1.5 transition"
                 >
-                    <span>🛵 Manage Rider Fleet</span>
+                    <span>📦 Shiprocket Logistics</span>
                 </a>
 
                 <button 
@@ -85,15 +85,14 @@
             <div class="text-[11px] text-slate-400 mt-1">Hyperlocal completed</div>
         </div>
 
-        <!-- Riders Fleet (Avail / Total) -->
+        <!-- Shiprocket Shipments in Transit -->
         <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm">
-            <div class="text-xs font-medium text-slate-500 dark:text-slate-400">Riders (Available / Total)</div>
-            <div class="text-3xl font-black text-slate-900 dark:text-white mt-1">
-                <span x-text="ops.riders_summary.available">{{ $ops['riders_summary']['available'] }}</span>
-                <span class="text-slate-400 font-normal text-xl">/ <span x-text="ops.riders_summary.total">{{ $ops['riders_summary']['total'] }}</span></span>
+            <div class="text-xs font-medium text-slate-500 dark:text-slate-400">Shiprocket Dispatches</div>
+            <div class="text-3xl font-black text-indigo-600 dark:text-indigo-400 mt-1" x-text="ops.shipments_active_count">
+                {{ $ops['shipments_active_count'] ?? 0 }}
             </div>
-            <div class="text-[11px] text-indigo-600 dark:text-indigo-400 mt-1">
-                <span x-text="ops.riders_summary.busy">{{ $ops['riders_summary']['busy'] }}</span> currently on deliveries
+            <div class="text-[11px] text-slate-400 mt-1">
+                Courier partner in-transit
             </div>
         </div>
     </div>
@@ -154,7 +153,7 @@
             </div>
             <div>
                 <div class="text-xs font-bold text-emerald-900 dark:text-emerald-200">All Hyperlocal SLAs Healthy &amp; On Track</div>
-                <div class="text-[11px] text-emerald-700 dark:text-emerald-400">Store acceptance times and rider transit windows are operating within optimal 10-30 minute thresholds.</div>
+                <div class="text-[11px] text-emerald-700 dark:text-emerald-400">Store acceptance times and courier transit windows are operating within optimal thresholds.</div>
             </div>
         </div>
         <span class="text-[10px] font-mono px-2 py-1 rounded-full bg-emerald-100 dark:bg-emerald-900/80 text-emerald-800 dark:text-emerald-300 font-bold">
@@ -247,7 +246,7 @@
                                 <th class="pb-3">Order / Package</th>
                                 <th class="pb-3">Store</th>
                                 <th class="pb-3">Live Status</th>
-                                <th class="pb-3">Rider Partner</th>
+                                <th class="pb-3">Shiprocket Courier &amp; AWB</th>
                                 <th class="pb-3">Elapsed</th>
                                 <th class="pb-3 text-right">Actions</th>
                             </tr>
@@ -280,13 +279,15 @@
                                         </span>
                                     </td>
                                     <td class="py-3 text-slate-700 dark:text-slate-300">
-                                        @if($fo->deliveryAssignment?->deliveryPartner)
-                                            <div class="font-medium">{{ $fo->deliveryAssignment->deliveryPartner->name }}</div>
-                                            <div class="text-[10px] text-slate-400">{{ $fo->deliveryAssignment->deliveryPartner->phone ?? 'Assigned' }}</div>
+                                        @if($fo->shipment)
+                                            <div class="font-medium">{{ $fo->shipment->courier_name ?? 'Shiprocket' }}</div>
+                                            <div class="text-[10px] font-mono text-indigo-600 dark:text-indigo-400">
+                                                AWB: {{ $fo->shipment->awb_code ?? 'Pending AWB' }}
+                                            </div>
                                         @else
                                             <span class="text-amber-600 dark:text-amber-400 font-semibold text-[11px] flex items-center space-x-1">
                                                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-                                                <span>Awaiting Rider</span>
+                                                <span>Awaiting Courier Dispatch</span>
                                             </span>
                                         @endif
                                     </td>

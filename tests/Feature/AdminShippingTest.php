@@ -74,7 +74,7 @@ class AdminShippingTest extends TestCase
 
         $response = $this->actingAs($this->adminUser)->get(route('admin.shipping.index'));
         $response->assertStatus(200);
-        $response->assertSee('Logistics &amp; OneStall Cargo Oversight', false);
+        $response->assertSee('Logistics &amp; Shipping Oversight', false);
         $response->assertSee('Courier Fallback Priority Chain');
         $response->assertSee('Recent Cargo Consignments');
         $response->assertSee('SHP-99101');

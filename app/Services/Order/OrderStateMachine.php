@@ -30,10 +30,11 @@ class OrderStateMachine
         'placed' => ['store_accepted', 'rejected', 'cancelled'],
         'store_accepted' => ['packing', 'cancelled', 'rejected'],
         'packing' => ['ready', 'cancelled'],
-        'ready' => ['rider_assigned', 'picked_up', 'cancelled'],
-        'rider_assigned' => ['accepted', 'picked_up', 'ready', 'cancelled'],
-        'accepted' => ['picked_up', 'ready', 'cancelled'],
-        'picked_up' => ['out_for_delivery', 'cancelled'],
+        'ready' => ['picked_up', 'in_transit', 'out_for_delivery', 'cancelled'],
+        'rider_assigned' => ['accepted', 'picked_up', 'in_transit', 'out_for_delivery', 'ready', 'cancelled'],
+        'accepted' => ['picked_up', 'in_transit', 'out_for_delivery', 'ready', 'cancelled'],
+        'picked_up' => ['in_transit', 'out_for_delivery', 'delivered', 'cancelled'],
+        'in_transit' => ['out_for_delivery', 'delivered', 'cancelled'],
         'out_for_delivery' => ['delivered', 'cancelled', 'delivery_failed'],
         'delivery_failed' => ['returned_to_store', 'out_for_delivery', 'cancelled'],
         'returned_to_store' => [],
@@ -194,31 +195,12 @@ class OrderStateMachine
                 'changed_by' => $userId ?? Auth::id(),
             ]);
 
-            // 2. Handle cancellation stock release & rider capacity release
+            // 2. Handle cancellation stock release
             if ($toStatus === 'cancelled' && $fo->order) {
                 $this->inventoryService->releaseForOrder(
                     $fo->order->order_number,
                     "Fulfilment package #{$fo->fulfilment_order_number} cancelled"
                 );
-
-                if ($fo->deliveryAssignment) {
-                    $assignment = $fo->deliveryAssignment;
-                    $stVal = is_object($assignment->status) ? $assignment->status->value : (string) $assignment->status;
-                    if (in_array($stVal, ['assigned', 'accepted', 'picked_up'], true)) {
-                        $assignment->status = \App\Enums\DeliveryAssignmentStatus::CANCELLED;
-                        $assignment->notes = ($assignment->notes ? $assignment->notes . ' | ' : '') . "Package cancelled: {$note}";
-                        $assignment->save();
-
-                        if ($assignment->deliveryPartner) {
-                            $partner = $assignment->deliveryPartner;
-                            $partner->active_orders_count = max(0, $partner->active_orders_count - 1);
-                            if ($partner->active_orders_count === 0) {
-                                $partner->status = 'available';
-                            }
-                            $partner->save();
-                        }
-                    }
-                }
             }
 
             // 3. Handle quick order rejection with auto-reroute hook
@@ -233,36 +215,14 @@ class OrderStateMachine
                 $this->commissionService->recordReversal($fo, (float) $fo->total_amount, $note ?: 'Package refunded');
             }
 
-            // 5. Auto-trigger ALLZONE Cargo shipment for standard delivery
-            if ($toStatus === 'ready_to_ship' && $fo->fulfilment_type !== FulfilmentType::QUICK) {
-                \App\Jobs\Cargo\CreateShipmentJob::dispatch($fo);
-            }
-
-            // 5b. Quick commerce: Auto-dispatch nearest available rider when order is ready
-            if ($toStatus === 'ready' && $fo->fulfilment_type === FulfilmentType::QUICK) {
-                if ($fo->store?->quick_auto_assign_rider ?? true) {
+            // 5. Auto-trigger Shiprocket consignment for ready orders
+            if (in_array($toStatus, ['ready_to_ship', 'ready'])) {
+                if (!$fo->shipment) {
                     try {
-                        app(\App\Services\QuickCommerce\QuickCommerceService::class)->autoAssignRider($fo);
+                        \App\Jobs\Cargo\CreateShipmentJob::dispatch($fo);
                     } catch (\Throwable $e) {
-                        Log::warning("Quick commerce auto rider assignment notice for FO #{$fo->id}: {$e->getMessage()}");
+                        Log::error("Failed to auto-dispatch Shiprocket shipment for FO #{$fo->id}: " . $e->getMessage());
                     }
-                }
-            }
-
-            // 5c. Quick commerce: Free delivery partner if delivered
-            if ($toStatus === 'delivered' && $fo->deliveryAssignment) {
-                $assignment = $fo->deliveryAssignment;
-                $assignment->status = \App\Enums\DeliveryAssignmentStatus::DELIVERED;
-                $assignment->delivered_at = now();
-                $assignment->save();
-
-                if ($assignment->deliveryPartner) {
-                    $partner = $assignment->deliveryPartner;
-                    $partner->active_orders_count = max(0, $partner->active_orders_count - 1);
-                    if ($partner->active_orders_count === 0) {
-                        $partner->status = 'available';
-                    }
-                    $partner->save();
                 }
             }
 
@@ -405,26 +365,6 @@ class OrderStateMachine
                         'note' => "Package cancelled: {$reason}",
                         'changed_by' => $userId ?? Auth::id(),
                     ]);
-
-                    // Release assigned delivery partner if any
-                    if ($fo->deliveryAssignment) {
-                        $assignment = $fo->deliveryAssignment;
-                        $stVal = is_object($assignment->status) ? $assignment->status->value : (string) $assignment->status;
-                        if (in_array($stVal, ['assigned', 'accepted', 'picked_up'], true)) {
-                            $assignment->status = \App\Enums\DeliveryAssignmentStatus::CANCELLED;
-                            $assignment->notes = ($assignment->notes ? $assignment->notes . ' | ' : '') . "Order cancelled: {$reason}";
-                            $assignment->save();
-
-                            if ($assignment->deliveryPartner) {
-                                $partner = $assignment->deliveryPartner;
-                                $partner->active_orders_count = max(0, $partner->active_orders_count - 1);
-                                if ($partner->active_orders_count === 0) {
-                                    $partner->status = 'available';
-                                }
-                                $partner->save();
-                            }
-                        }
-                    }
                 }
             }
 

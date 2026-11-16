@@ -6,7 +6,6 @@ namespace Database\Seeders;
 
 use App\Enums\CODRemittanceStatus;
 use App\Enums\CouponType;
-use App\Enums\DeliveryAssignmentStatus;
 use App\Enums\FulfilmentType;
 use App\Enums\InventoryLocationType;
 use App\Enums\MediaType;
@@ -39,8 +38,6 @@ use App\Models\Coupon;
 use App\Models\CouponUsage;
 use App\Models\Customer;
 use App\Models\CustomerAddress;
-use App\Models\DeliveryAssignment;
-use App\Models\DeliveryPartner;
 use App\Models\FulfilmentOrder;
 use App\Models\Inventory;
 use App\Models\InventoryLocation;
@@ -79,34 +76,7 @@ class DemoSeeder extends Seeder
      */
     public function run(): void
     {
-        // 1. Delivery Partners (Riders for quick commerce)
-        $riders = [];
-        for ($r = 1; $r <= 3; $r++) {
-            $riderUser = User::firstOrCreate(
-                ['email' => "rider{$r}@allzone.in"],
-                [
-                    'name' => "Rider {$r} Kumar",
-                    'phone' => "+91980000000{$r}",
-                    'password' => Hash::make('Password@123'),
-                    'status' => UserStatus::ACTIVE,
-                    'email_verified_at' => now(),
-                ]
-            );
-            $riderUser->assignRole('delivery_staff');
-
-            $riders[] = DeliveryPartner::firstOrCreate(
-                ['phone' => "+91980000000{$r}"],
-                [
-                    'user_id' => $riderUser->id,
-                    'name' => $riderUser->name,
-                    'vehicle' => 'Electric Scooter',
-                    'vehicle_number' => "KA-01-EQ-100{$r}",
-                    'is_active' => true,
-                    'current_lat' => 12.9352 + ($r * 0.005),
-                    'current_lng' => 77.6245 + ($r * 0.005),
-                ]
-            );
-        }
+        // 1. Core Platform Seed Data Initialized
 
         // 2. 5 Demo Sellers & Stores
         $sellerConfigs = [
@@ -575,7 +545,7 @@ class DemoSeeder extends Seeder
             $sellerPayable = $subtotal - $commissionAmt;
 
             $foStatus = $isQuick
-                ? ($orderStatus === OrderStatus::DELIVERED ? QuickFulfilmentStatus::DELIVERED->value : QuickFulfilmentStatus::RIDER_ASSIGNED->value)
+                ? ($orderStatus === OrderStatus::DELIVERED ? QuickFulfilmentStatus::DELIVERED->value : QuickFulfilmentStatus::OUT_FOR_DELIVERY->value)
                 : ($orderStatus === OrderStatus::DELIVERED ? StandardFulfilmentStatus::DELIVERED->value : StandardFulfilmentStatus::IN_TRANSIT->value);
 
             $fo = FulfilmentOrder::firstOrCreate(
@@ -688,25 +658,6 @@ class DemoSeeder extends Seeder
                 'created_at' => $orderTime,
                 'updated_at' => $orderTime,
             ]);
-
-            // Rider assignment for quick orders
-            if ($isQuick) {
-                $rider = $riders[$i % count($riders)];
-                DeliveryAssignment::firstOrCreate(
-                    ['fulfilment_order_id' => $fo->id],
-                    [
-                        'shipment_id' => $shp->id,
-                        'delivery_partner_id' => $rider->id,
-                        'status' => ($orderStatus === OrderStatus::DELIVERED) ? DeliveryAssignmentStatus::DELIVERED : DeliveryAssignmentStatus::ACCEPTED,
-                        'assigned_at' => $orderTime,
-                        'accepted_at' => $orderTime->copy()->addMinutes(2),
-                        'picked_up_at' => $orderTime->copy()->addMinutes(8),
-                        'delivered_at' => ($orderStatus === OrderStatus::DELIVERED) ? $orderTime->copy()->addMinutes(25) : null,
-                        'created_at' => $orderTime,
-                        'updated_at' => $orderTime,
-                    ]
-                );
-            }
         }
 
         // 6. Promotional Coupons

@@ -149,14 +149,16 @@ class NotificationService
         $user = $fo->order?->customer?->user;
         if (!$user) return;
 
-        $rider = $fo->deliveryAssignment?->deliveryPartner;
+        $shipment = $fo->shipment;
 
         $this->dispatch($user, 'out_for_delivery', [
             'order_number' => $fo->fulfilment_order_number,
-            'rider_name' => $rider?->name ?? 'Fleet Rider',
-            'eta' => '10-20 mins',
-            'action_url' => route('orders.live_tracking', $fo->order_id),
-            'action_text' => 'View Live Map & OTP',
+            'courier_name' => $shipment?->courier ?? 'Shiprocket Courier',
+            'rider_name' => $shipment?->courier ?? 'Delivery Executive',
+            'awb' => $shipment?->awb ?? '',
+            'eta' => 'Today',
+            'action_url' => route('orders.track', [$fo->order->order_number, $fo->fulfilment_order_number]),
+            'action_text' => 'Track Shipment',
         ]);
     }
 

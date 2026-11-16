@@ -225,8 +225,8 @@
                         label="Store Operating Instructions" 
                         name="sample_instructions"
                         rows="3"
-                        placeholder="Provide rider pickup directions, landmark, or gate entry notes..."
-                        helper="Instructions sent to quick commerce riders."
+                        placeholder="Provide courier pickup directions, landmark, or gate entry notes..."
+                        helper="Instructions sent to delivery couriers."
                     />
                 </div>
 

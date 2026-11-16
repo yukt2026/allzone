@@ -1155,7 +1155,6 @@
                         <li><a href="{{ route('seller.dashboard') }}" class="hover:text-white transition">Seller Hub & Portal</a></li>
                         <li><a href="{{ route('seller.store.edit') }}" class="hover:text-white transition">Launch Digital Storefront</a></li>
                         <li><a href="{{ route('seller.inventory.index') }}" class="hover:text-white transition">Omnichannel Inventory</a></li>
-                        <li><a href="{{ route('rider.dashboard') }}" class="hover:text-white transition">Rider Delivery Partner Hub</a></li>
                     </ul>
                 </div>
 

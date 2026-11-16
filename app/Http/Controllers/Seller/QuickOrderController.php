@@ -4,10 +4,9 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Seller;
 
-use App\Enums\DeliveryAssignmentStatus;
 use App\Enums\FulfilmentType;
 use App\Http\Controllers\Controller;
-use App\Models\DeliveryPartner;
+use App\Jobs\Cargo\CreateShipmentJob;
 use App\Models\FulfilmentOrder;
 use App\Models\Store;
 use App\Services\Order\OrderStateMachine;
@@ -43,16 +42,12 @@ class QuickOrderController extends Controller
         }
 
         $activeQuickOrders = FulfilmentOrder::query()
-            ->with(['order.customerAddress', 'items.variant.product', 'deliveryAssignment.deliveryPartner'])
+            ->with(['order.customerAddress', 'items.variant.product', 'shipment.tracking'])
             ->where('seller_id', $seller->id)
             ->where('fulfilment_type', FulfilmentType::QUICK)
             ->when($store, fn ($q) => $q->where('store_id', $store->id))
-            ->whereIn('status', ['placed', 'store_accepted', 'packing', 'ready', 'rider_assigned', 'picked_up', 'out_for_delivery'])
+            ->whereIn('status', ['placed', 'store_accepted', 'packing', 'ready', 'picked_up', 'in_transit', 'out_for_delivery'])
             ->latest('id')
-            ->get();
-
-        $availableRiders = DeliveryPartner::query()
-            ->where('is_active', true)
             ->get();
 
         $initialOrders = $activeQuickOrders->map(function ($fo) {
@@ -84,13 +79,12 @@ class QuickOrderController extends Controller
                 'total' => (float) $fo->total_amount,
                 'elapsed_seconds' => $elapsed,
                 'remaining_seconds' => $remaining,
-                'delivery_otp' => $fo->delivery_otp,
                 'customer_name' => $customerName,
                 'customer_address' => $customerAddress,
-                'rider' => $fo->deliveryAssignment?->deliveryPartner ? [
-                    'name' => $fo->deliveryAssignment->deliveryPartner->name,
-                    'phone' => $fo->deliveryAssignment->deliveryPartner->phone,
-                    'vehicle' => $fo->deliveryAssignment->deliveryPartner->vehicle,
+                'courier' => $fo->shipment ? [
+                    'name' => $fo->shipment->courier ?? 'Shiprocket Courier',
+                    'awb' => $fo->shipment->awb,
+                    'status' => $fo->shipment->status?->value ?? (string) $fo->shipment->status,
                 ] : null,
             ];
         });
@@ -99,7 +93,6 @@ class QuickOrderController extends Controller
             'store' => $store,
             'stores' => $stores,
             'initialOrders' => $initialOrders,
-            'availableRiders' => $availableRiders,
             'timeoutSeconds' => $store ? $store->effectiveQuickTimeout() : 120,
         ]);
     }
@@ -117,11 +110,11 @@ class QuickOrderController extends Controller
         $storeId = $request->query('store_id') ?: (session('seller_active_store_id') ?: session('active_store_id'));
 
         $orders = FulfilmentOrder::query()
-            ->with(['order.customerAddress', 'items.variant.product', 'deliveryAssignment.deliveryPartner'])
+            ->with(['order.customerAddress', 'items.variant.product', 'shipment.tracking'])
             ->where('seller_id', $seller->id)
             ->where('fulfilment_type', FulfilmentType::QUICK)
             ->when($storeId, fn ($q) => $q->where('store_id', (int) $storeId))
-            ->whereIn('status', ['placed', 'store_accepted', 'packing', 'ready', 'rider_assigned', 'picked_up', 'out_for_delivery'])
+            ->whereIn('status', ['placed', 'store_accepted', 'packing', 'ready', 'picked_up', 'in_transit', 'out_for_delivery'])
             ->latest('id')
             ->get()
             ->map(function ($fo) {
@@ -153,13 +146,12 @@ class QuickOrderController extends Controller
                     'total' => (float) $fo->total_amount,
                     'elapsed_seconds' => $elapsed,
                     'remaining_seconds' => $remaining,
-                    'delivery_otp' => $fo->delivery_otp,
                     'customer_name' => $customerName,
                     'customer_address' => $customerAddress,
-                    'rider' => $fo->deliveryAssignment?->deliveryPartner ? [
-                        'name' => $fo->deliveryAssignment->deliveryPartner->name,
-                        'phone' => $fo->deliveryAssignment->deliveryPartner->phone,
-                        'vehicle' => $fo->deliveryAssignment->deliveryPartner->vehicle,
+                    'courier' => $fo->shipment ? [
+                        'name' => $fo->shipment->courier ?? 'Shiprocket Courier',
+                        'awb' => $fo->shipment->awb,
+                        'status' => $fo->shipment->status?->value ?? (string) $fo->shipment->status,
                     ] : null,
                 ];
             });
@@ -264,7 +256,7 @@ class QuickOrderController extends Controller
     }
 
     /**
-     * Mark package packed and ready for pickup (auto triggers rider assignment).
+     * Mark package packed and ready for pickup (submits order to Shiprocket for courier assignment).
      */
     public function ready(Request $request, FulfilmentOrder $fulfilmentOrder): JsonResponse|RedirectResponse
     {
@@ -274,100 +266,31 @@ class QuickOrderController extends Controller
             $this->stateMachine->transitionFulfilmentOrder(
                 $fulfilmentOrder,
                 'ready',
-                'Order packed and ready for pickup',
+                'Order packed and ready for Shiprocket courier pickup',
                 Auth::id()
             );
 
-            // Attempt auto-assigning nearest delivery partner if not already dispatched during state transition
+            // Automatically submit eligible package to Shiprocket
             $fulfilmentOrder->refresh();
-            if ($fulfilmentOrder->status === 'ready' && !$fulfilmentOrder->deliveryAssignment) {
+            if (!$fulfilmentOrder->shipment) {
                 try {
-                    $this->quickService->autoAssignRider($fulfilmentOrder);
-                } catch (\Throwable $assignErr) {
-                    // If no rider is immediately available, order remains in 'ready' status for manual dispatch
+                    CreateShipmentJob::dispatch($fulfilmentOrder);
+                } catch (\Throwable $shipErr) {
+                    report($shipErr);
                 }
             }
 
             if ($request->wantsJson()) {
-                return response()->json(['success' => true, 'message' => 'Order marked ready for pickup!']);
+                return response()->json(['success' => true, 'message' => 'Order marked ready and submitted to Shiprocket!']);
             }
 
-            return back()->with('success', 'Order marked ready for pickup!');
+            return back()->with('success', 'Order marked ready and submitted to Shiprocket!');
         } catch (\Throwable $e) {
             if ($request->wantsJson()) {
                 return response()->json(['success' => false, 'error' => $e->getMessage()], 422);
             }
             return back()->with('error', $e->getMessage());
         }
-    }
-
-    /**
-     * Mark order handed over to rider (transitions to picked_up and out_for_delivery).
-     */
-    public function handover(Request $request, FulfilmentOrder $fulfilmentOrder): JsonResponse|RedirectResponse
-    {
-        $this->authorizeOrder($fulfilmentOrder);
-
-        try {
-            if ($this->stateMachine->canTransitionFulfilment($fulfilmentOrder, 'picked_up')) {
-                $this->stateMachine->transitionFulfilmentOrder(
-                    $fulfilmentOrder,
-                    'picked_up',
-                    'Package handed over to delivery rider at store counter',
-                    Auth::id()
-                );
-            }
-
-            if ($this->stateMachine->canTransitionFulfilment($fulfilmentOrder, 'out_for_delivery')) {
-                $this->stateMachine->transitionFulfilmentOrder(
-                    $fulfilmentOrder,
-                    'out_for_delivery',
-                    'Rider departed store towards customer doorstep',
-                    Auth::id()
-                );
-            }
-
-            if ($request->wantsJson()) {
-                return response()->json(['success' => true, 'message' => 'Order handed over to rider and en route!']);
-            }
-
-            return back()->with('success', 'Order handed over to rider and en route!');
-        } catch (\Throwable $e) {
-            if ($request->wantsJson()) {
-                return response()->json(['success' => false, 'error' => $e->getMessage()], 422);
-            }
-            return back()->with('error', $e->getMessage());
-        }
-    }
-
-    /**
-     * Assign delivery rider manually or trigger nearest auto-assignment.
-     */
-    public function assignRider(Request $request, FulfilmentOrder $fulfilmentOrder): JsonResponse|RedirectResponse
-    {
-        $this->authorizeOrder($fulfilmentOrder);
-
-        $partnerId = $request->input('delivery_partner_id');
-
-        if ($partnerId) {
-            $partner = DeliveryPartner::findOrFail($partnerId);
-            $this->quickService->assignPartnerToOrder($fulfilmentOrder, $partner, 'Manually assigned by store manager');
-        } else {
-            $assigned = $this->quickService->autoAssignRider($fulfilmentOrder);
-            if (!$assigned) {
-                $msg = 'No nearby active delivery partners available right now.';
-                if ($request->wantsJson()) {
-                    return response()->json(['success' => false, 'message' => $msg], 422);
-                }
-                return back()->with('error', $msg);
-            }
-        }
-
-        if ($request->wantsJson()) {
-            return response()->json(['success' => true, 'message' => 'Rider assigned successfully!']);
-        }
-
-        return back()->with('success', 'Rider assigned successfully!');
     }
 
     protected function authorizeOrder(FulfilmentOrder $fo): void
@@ -378,3 +301,4 @@ class QuickOrderController extends Controller
         }
     }
 }
+

@@ -6,7 +6,6 @@ namespace Tests\Feature;
 
 use App\Enums\CODRemittanceStatus;
 use App\Enums\CommissionRuleScope;
-use App\Enums\DeliveryAssignmentStatus;
 use App\Enums\FulfilmentType;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentMethod;
@@ -25,8 +24,6 @@ use App\Models\CodRemittance;
 use App\Models\CommissionEntry;
 use App\Models\CommissionRule;
 use App\Models\Customer;
-use App\Models\DeliveryAssignment;
-use App\Models\DeliveryPartner;
 use App\Models\FulfilmentOrder;
 use App\Models\InventoryLocation;
 use App\Models\NdrCase;
@@ -290,17 +287,17 @@ class OrdersPaymentsAndLogisticsTest extends TestCase
         $this->assertEquals(SettlementStatus::PAID, $settlement->status);
     }
 
-    public function test_logistics_shipments_tracking_and_delivery_assignments(): void
+    public function test_logistics_shipments_tracking_and_shiprocket_integration(): void
     {
         $fo = FulfilmentOrder::factory()->create();
 
-        // OneStall Cargo Shipment
+        // Shiprocket Shipment
         $shipment = Shipment::create([
             'fulfilment_order_id' => $fo->id,
             'shipment_number' => 'SHP-ONESTALL-001',
-            'provider' => 'onestall_cargo',
+            'provider' => 'shiprocket',
             'awb' => 'AWB9988776655',
-            'courier' => 'OneStall Cargo Ground',
+            'courier' => 'Shiprocket Express',
             'service' => 'Express',
             'status' => ShipmentStatus::PICKED_UP,
             'pickup_status' => 'picked_up',
@@ -322,24 +319,17 @@ class OrdersPaymentsAndLogisticsTest extends TestCase
         $this->assertCount(1, $shipment->tracking);
         $this->assertEquals('AWB9988776655', $shipment->awb);
 
-        // Hyper-local delivery partner assignment
-        $partner = DeliveryPartner::factory()->create([
-            'name' => 'Ramesh Kumar',
-            'phone' => '9876543210',
-            'is_active' => true,
-        ]);
-
-        $assignment = DeliveryAssignment::create([
-            'fulfilment_order_id' => $fo->id,
+        // Shiprocket in-transit tracking milestone
+        $inTransit = ShipmentTracking::create([
             'shipment_id' => $shipment->id,
-            'delivery_partner_id' => $partner->id,
-            'status' => DeliveryAssignmentStatus::ACCEPTED,
-            'assigned_at' => now()->subMinutes(10),
-            'accepted_at' => now()->subMinutes(5),
+            'status' => 'in_transit',
+            'location' => 'Bengaluru Central Distribution Hub',
+            'event_time' => now()->addHour(),
+            'raw' => ['courier' => 'Shiprocket Express', 'awb' => 'AWB9988776655'],
         ]);
 
-        $this->assertEquals(DeliveryAssignmentStatus::ACCEPTED, $assignment->status);
-        $this->assertEquals($partner->id, $assignment->deliveryPartner->id);
+        $this->assertCount(2, $shipment->fresh()->tracking);
+        $this->assertEquals('in_transit', $shipment->fresh()->tracking->first()->status);
     }
 
     public function test_returns_ndr_rto_and_cod_remittances(): void

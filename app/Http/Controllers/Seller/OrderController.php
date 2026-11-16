@@ -4,11 +4,8 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Seller;
 
-use App\Enums\DeliveryAssignmentStatus;
 use App\Enums\FulfilmentType;
 use App\Http\Controllers\Controller;
-use App\Models\DeliveryAssignment;
-use App\Models\DeliveryPartner;
 use App\Models\FulfilmentOrder;
 use App\Models\Store;
 use App\Models\StoreStaff;
@@ -125,23 +122,19 @@ class OrderController extends Controller
             'store',
             'inventoryLocation',
             'shipment.tracking',
-            'deliveryAssignment.deliveryPartner',
             'statusHistory.changedByUser',
         ]);
 
         $allowedNext = $this->stateMachine->getAllowedNextFulfilmentStatuses($fulfilmentOrder);
 
-        // Fetch eligible staff / riders for assignment
         $storeStaff = $fulfilmentOrder->store_id 
             ? StoreStaff::where('store_id', $fulfilmentOrder->store_id)->with('user')->get() 
             : collect();
-        $deliveryPartners = DeliveryPartner::where('is_active', true)->get();
 
         return view('seller.orders.show', [
             'fo' => $fulfilmentOrder,
             'allowedNext' => $allowedNext,
             'storeStaff' => $storeStaff,
-            'deliveryPartners' => $deliveryPartners,
         ]);
     }
 
@@ -175,46 +168,6 @@ class OrderController extends Controller
         } catch (\Throwable $e) {
             return back()->with('error', $e->getMessage());
         }
-    }
-
-    /**
-     * Assign delivery staff / rider to a Quick Commerce package.
-     */
-    public function assignStaff(Request $request, FulfilmentOrder $fulfilmentOrder): RedirectResponse
-    {
-        $seller = Auth::user()->seller;
-        if (!$seller || $fulfilmentOrder->seller_id !== $seller->id) {
-            abort(403, 'Unauthorized.');
-        }
-
-        $request->validate([
-            'delivery_partner_id' => 'nullable|exists:delivery_partners,id',
-            'staff_user_id' => 'nullable|exists:users,id',
-        ]);
-
-        $partnerId = $request->input('delivery_partner_id');
-
-        // Create or update DeliveryAssignment
-        DeliveryAssignment::updateOrCreate(
-            ['fulfilment_order_id' => $fulfilmentOrder->id],
-            [
-                'delivery_partner_id' => $partnerId,
-                'status' => DeliveryAssignmentStatus::ASSIGNED,
-                'assigned_at' => now(),
-            ]
-        );
-
-        // Transition status if allowed
-        if ($this->stateMachine->canTransitionFulfilment($fulfilmentOrder, 'rider_assigned')) {
-            $this->stateMachine->transitionFulfilmentOrder(
-                $fulfilmentOrder,
-                'rider_assigned',
-                "Assigned to delivery staff / partner ID #{$partnerId}",
-                Auth::id()
-            );
-        }
-
-        return back()->with('success', 'Rider / staff assigned to order successfully!');
     }
 
     /**

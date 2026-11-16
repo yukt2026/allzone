@@ -275,22 +275,6 @@ Route::middleware(['auth', 'role:super_admin|admin|support_admin'])->group(funct
         Route::post('/{fulfilmentOrder}/reroute', [\App\Http\Controllers\Admin\QuickCommerceOpsController::class, 'reroute'])->name('reroute');
     });
 
-    // Delivery Partners Fleet Management (Blueprint Section 11)
-    Route::prefix('delivery-partners')->name('delivery_partners.')->group(function () {
-        Route::get('/export', [\App\Http\Controllers\Admin\DeliveryPartnerController::class, 'export'])->name('export');
-        Route::get('/settlements', [\App\Http\Controllers\Admin\DeliveryPartnerController::class, 'settlements'])->name('settlements');
-        Route::post('/{deliveryPartner}/payout', [\App\Http\Controllers\Admin\DeliveryPartnerController::class, 'processPayout'])->name('payout');
-        Route::post('/{deliveryPartner}/documents/{document}/review', [\App\Http\Controllers\Admin\DeliveryPartnerController::class, 'reviewDocument'])->name('documents.review');
-        Route::get('/{deliveryPartner}/documents/{document}/view', [\App\Http\Controllers\Admin\DeliveryPartnerController::class, 'downloadDocument'])->name('documents.view');
-        Route::post('/{deliveryPartner}/approve', [\App\Http\Controllers\Admin\DeliveryPartnerController::class, 'approveRider'])->name('approve');
-        Route::post('/{deliveryPartner}/reject', [\App\Http\Controllers\Admin\DeliveryPartnerController::class, 'rejectRider'])->name('reject');
-        Route::post('/orders/{fulfilmentOrder}/assign', [\App\Http\Controllers\Admin\DeliveryPartnerController::class, 'assignOrder'])->name('assign_order');
-        Route::get('/', [\App\Http\Controllers\Admin\DeliveryPartnerController::class, 'index'])->name('index');
-        Route::post('/', [\App\Http\Controllers\Admin\DeliveryPartnerController::class, 'store'])->name('store');
-        Route::put('/{deliveryPartner}', [\App\Http\Controllers\Admin\DeliveryPartnerController::class, 'update'])->name('update');
-        Route::delete('/{deliveryPartner}', [\App\Http\Controllers\Admin\DeliveryPartnerController::class, 'destroy'])->name('destroy');
-        Route::post('/{deliveryPartner}/toggle', [\App\Http\Controllers\Admin\DeliveryPartnerController::class, 'toggleStatus'])->name('toggle');
-    });
 
     // Security & Operational Audit Trail
     Route::prefix('audit-logs')->name('audit-logs.')->group(function () {

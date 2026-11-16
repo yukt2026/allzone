@@ -76,31 +76,15 @@ class QuickCommerceController extends Controller
     }
 
     /**
-     * Live Customer Order Tracking Page (/orders/{order}/live-tracking).
+     * Live Customer Order Tracking Page (/orders/{order}/live-tracking) - Redirects to Shiprocket tracking.
      */
-    public function liveTracking(Request $request, Order $order): View
+    public function liveTracking(Request $request, Order $order): \Illuminate\Http\RedirectResponse
     {
-        // Must belong to authenticated customer or matching session
-        if (auth()->check()) {
-            if ($order->customer?->user_id !== auth()->id() && !auth()->user()->hasRole('admin')) {
-                abort(403, 'Unauthorized.');
-            }
+        $fo = $order->fulfilmentOrders()->first();
+        if ($fo) {
+            return redirect()->route('orders.track', [$order->order_number, $fo->fulfilment_order_number]);
         }
-
-        $order->load([
-            'fulfilmentOrders.store.location',
-            'fulfilmentOrders.deliveryAssignment.deliveryPartner',
-            'fulfilmentOrders.items',
-            'customerAddress',
-        ]);
-
-        $quickFulfilment = $order->fulfilmentOrders->firstWhere('fulfilment_type', \App\Enums\FulfilmentType::QUICK)
-            ?? $order->fulfilmentOrders->first();
-
-        return view('storefront.orders.live-tracking', [
-            'order' => $order,
-            'fulfilmentOrder' => $quickFulfilment,
-        ]);
+        return redirect()->route('orders.show', $order->order_number);
     }
 
     /**
@@ -109,9 +93,8 @@ class QuickCommerceController extends Controller
     public function liveLocationApi(Request $request, Order $order): JsonResponse
     {
         $quickFulfilment = $order->fulfilmentOrders()
-            ->with(['store.location', 'deliveryAssignment.deliveryPartner'])
-            ->where('fulfilment_type', \App\Enums\FulfilmentType::QUICK)
-            ->first() ?? $order->fulfilmentOrders()->with(['store.location', 'deliveryAssignment.deliveryPartner'])->first();
+            ->with(['store.location', 'shipment.tracking'])
+            ->first();
 
         if (!$quickFulfilment) {
             return response()->json(['error' => 'No active fulfilment package found'], 404);
@@ -119,15 +102,13 @@ class QuickCommerceController extends Controller
 
         $store = $quickFulfilment->store;
         $storeLoc = $store?->location;
-        $assignment = $quickFulfilment->deliveryAssignment;
-        $rider = $assignment?->deliveryPartner;
+        $shipment = $quickFulfilment->shipment;
         $address = $order->customerAddress;
 
         return response()->json([
             'order_id' => $order->id,
             'order_number' => $order->order_number,
             'package_status' => $quickFulfilment->status,
-            'delivery_otp' => $quickFulfilment->delivery_otp,
             'estimated_delivery_at' => $quickFulfilment->estimated_delivery_at?->toIso8601String(),
             'store' => [
                 'name' => $store?->name ?? (setting('name', 'ALLZONE') . ' Store Hub'),
@@ -140,15 +121,10 @@ class QuickCommerceController extends Controller
                 'lng' => $address?->lng ? (float) $address->lng : 77.6245,
                 'address' => $address?->line1 ?? '',
             ],
-            'rider' => $rider ? [
-                'id' => $rider->id,
-                'name' => $rider->name,
-                'phone' => $rider->phone,
-                'vehicle' => $rider->vehicle ?? 'Motorcycle',
-                'vehicle_number' => $rider->vehicle_number ?? 'KA-01-EQ-1234',
-                'lat' => $rider->current_lat ? (float) $rider->current_lat : (float) ($storeLoc?->lat ?? 12.9716),
-                'lng' => $rider->current_lng ? (float) $rider->current_lng : (float) ($storeLoc?->lng ?? 77.5946),
-                'assignment_status' => $assignment->status->value,
+            'courier' => $shipment ? [
+                'name' => $shipment->courier ?? 'Shiprocket Courier',
+                'awb' => $shipment->awb,
+                'status' => $shipment->status?->value ?? (string) $shipment->status,
             ] : null,
         ]);
     }

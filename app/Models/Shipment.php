@@ -48,11 +48,6 @@ class Shipment extends Model
         return $this->hasMany(ShipmentTracking::class)->orderBy('event_time', 'desc');
     }
 
-    public function deliveryAssignment(): HasOne
-    {
-        return $this->hasOne(DeliveryAssignment::class);
-    }
-
     public function ndrCases(): HasMany
     {
         return $this->hasMany(NdrCase::class);

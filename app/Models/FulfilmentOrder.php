@@ -105,15 +105,6 @@ class FulfilmentOrder extends Model
         return $this->hasOne(Shipment::class)->latestOfMany();
     }
 
-    public function deliveryAssignments(): HasMany
-    {
-        return $this->hasMany(DeliveryAssignment::class);
-    }
-
-    public function deliveryAssignment(): HasOne
-    {
-        return $this->hasOne(DeliveryAssignment::class)->latestOfMany();
-    }
 
     public function commissionEntry(): HasOne
     {

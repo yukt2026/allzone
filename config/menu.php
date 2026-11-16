@@ -98,13 +98,6 @@ return [
                     'badge_color' => 'amber',
                 ],
                 [
-                    'title' => 'Delivery Partners Fleet',
-                    'route' => 'admin.delivery_partners.index',
-                    'active' => 'admin.delivery_partners*',
-                    'icon' => 'truck',
-                    'badge' => null,
-                ],
-                [
                     'title' => 'Orders Central',
                     'route' => 'admin.orders.index',
                     'active' => 'admin.orders*',
@@ -305,12 +298,19 @@ return [
                     'badge_color' => 'amber',
                 ],
                 [
-                    'title' => 'Quick 15m Dispatch',
+                    'title' => 'Quick Dispatch',
                     'route' => 'seller.quick.live',
                     'active' => 'seller.quick*',
                     'icon' => 'bolt',
                     'badge' => '⚡ Live',
                     'badge_color' => 'amber',
+                ],
+                [
+                    'title' => 'Shipments & Logistics',
+                    'route' => 'seller.shipments.index',
+                    'active' => 'seller.shipments*',
+                    'icon' => 'truck',
+                    'badge' => null,
                 ],
                 [
                     'title' => 'Returns & RMA',

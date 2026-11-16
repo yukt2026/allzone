@@ -16,7 +16,7 @@ use App\Enums\StoreStatus;
 use App\Models\Category;
 use App\Models\Customer;
 use App\Models\CustomerAddress;
-use App\Models\DeliveryPartner;
+use Illuminate\Support\Facades\Queue;
 use App\Models\FulfilmentOrder;
 use App\Models\Inventory;
 use App\Models\InventoryLocation;
@@ -268,40 +268,21 @@ class SellerQuickOrdersTest extends TestCase
             ->post(route('seller.orders.ready', $fo));
 
         $response->assertRedirect();
-        $this->assertContains($fo->fresh()->status, ['ready', 'rider_assigned']);
+        $this->assertContains($fo->fresh()->status, ['ready', 'ready_to_ship']);
     }
 
-    public function test_seller_can_handover_order_to_rider(): void
+    public function test_seller_ready_triggers_shiprocket_courier_dispatch(): void
     {
-        [$order, $fo] = $this->createQuickOrder('ready');
+        [$order, $fo] = $this->createQuickOrder('packing');
 
-        $rider = DeliveryPartner::create([
-            'name' => 'Suresh Rider',
-            'phone' => '9988776655',
-            'vehicle' => 'Electric Scooter',
-            'vehicle_number' => 'KA-01-EQ-9876',
-            'is_active' => true,
-            'status' => 'busy',
-            'current_lat' => 12.9350,
-            'current_lng' => 77.6240,
-        ]);
+        Queue::fake();
 
-        // Assign rider
-        $this->actingAs($this->sellerUser)
-            ->post(route('seller.orders.assign_rider', $fo), [
-                'delivery_partner_id' => $rider->id,
-            ])
-            ->assertRedirect();
+        $response = $this->actingAs($this->sellerUser)
+            ->post(route('seller.orders.ready', $fo));
 
-        $this->assertEquals('rider_assigned', $fo->fresh()->status);
-
-        // Handover order to rider -> picked_up & out_for_delivery
-        $this->actingAs($this->sellerUser)
-            ->post(route('seller.orders.handover', $fo))
-            ->assertRedirect();
-
-        $this->assertEquals('out_for_delivery', $fo->fresh()->status);
-        $this->assertEquals(OrderStatus::OUT_FOR_DELIVERY, $order->fresh()->status);
+        $response->assertRedirect();
+        $this->assertEquals('ready', $fo->fresh()->status);
+        Queue::assertPushed(\App\Jobs\Cargo\CreateShipmentJob::class);
     }
 
     public function test_seller_can_reject_quick_order_triggering_reroute(): void

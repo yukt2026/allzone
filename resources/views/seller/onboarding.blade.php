@@ -746,7 +746,7 @@
         <div x-show="currentStep === 5" class="space-y-6">
             <div class="border-b border-slate-100 dark:border-slate-800 pb-4">
                 <h2 class="text-lg font-bold text-slate-900 dark:text-white">Step 5: Store Location & Quick Commerce Coordinates</h2>
-                <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Precise latitude/longitude coordinates power Blinkit-style 10-30 min rider dispatch and hyper-local customer discovery.</p>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Precise latitude/longitude coordinates power fast courier dispatch and hyper-local customer discovery.</p>
             </div>
 
             <form method="POST" action="{{ route('seller.onboarding.step5') }}" class="space-y-4">

@@ -483,7 +483,7 @@
                         </div>
                         <div class="flex items-center space-x-2">
                             <span class="text-emerald-600 font-bold">✓</span>
-                            <span>Live GPS Delivery Rider Tracking</span>
+                            <span>Live Shiprocket Shipment Tracking</span>
                         </div>
                         <div class="flex items-center space-x-2">
                             <span class="text-emerald-600 font-bold">✓</span>
@@ -665,7 +665,7 @@
                                 </div>
                                 <div>
                                     <span class="font-bold text-slate-900 text-xs block leading-tight">GPS Doorstep Pin</span>
-                                    <span class="text-[10px] text-slate-500 font-normal">Guides rider accurately to your building gate</span>
+                                    <span class="text-[10px] text-slate-500 font-normal">Guides delivery courier accurately to your building gate</span>
                                 </div>
                             </div>
                             <button type="button" @click="useCurrentGeo()" :disabled="detectingGps"

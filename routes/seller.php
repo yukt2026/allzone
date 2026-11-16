@@ -48,8 +48,6 @@ Route::middleware(['auth', 'seller.status'])->group(function () {
     Route::post('/orders/{fulfilmentOrder}/pack', [\App\Http\Controllers\Seller\QuickOrderController::class, 'pack'])->name('orders.pack');
     Route::post('/orders/{fulfilmentOrder}/ready', [\App\Http\Controllers\Seller\QuickOrderController::class, 'ready'])->name('orders.ready');
     Route::post('/orders/{fulfilmentOrder}/reject', [\App\Http\Controllers\Seller\QuickOrderController::class, 'reject'])->name('orders.reject');
-    Route::post('/orders/{fulfilmentOrder}/assign-rider', [\App\Http\Controllers\Seller\QuickOrderController::class, 'assignRider'])->name('orders.assign_rider');
-    Route::post('/orders/{fulfilmentOrder}/handover', [\App\Http\Controllers\Seller\QuickOrderController::class, 'handover'])->name('orders.handover');
     Route::get('/quick-orders', [\App\Http\Controllers\Seller\QuickOrderController::class, 'liveConsole'])->name('quick.live');
     Route::get('/quick-orders/api/pending', [\App\Http\Controllers\Seller\QuickOrderController::class, 'pendingOrdersApi'])->name('quick.orders_api');
     Route::post('/inventory/{inventory}/quick-restock', [DashboardController::class, 'quickRestock'])->name('inventory.quick_restock');
@@ -59,7 +57,6 @@ Route::middleware(['auth', 'seller.status'])->group(function () {
         Route::get('/', [\App\Http\Controllers\Seller\OrderController::class, 'index'])->name('index');
         Route::get('/{fulfilmentOrder}', [\App\Http\Controllers\Seller\OrderController::class, 'show'])->name('show');
         Route::post('/{fulfilmentOrder}/transition', [\App\Http\Controllers\Seller\OrderController::class, 'transition'])->name('transition');
-        Route::post('/{fulfilmentOrder}/assign-staff', [\App\Http\Controllers\Seller\OrderController::class, 'assignStaff'])->name('assign_staff');
         Route::get('/{fulfilmentOrder}/packing-slip', [\App\Http\Controllers\Seller\OrderController::class, 'packingSlip'])->name('packing_slip');
         Route::get('/{fulfilmentOrder}/invoice', [\App\Http\Controllers\Seller\OrderController::class, 'invoice'])->name('invoice');
         Route::get('/{fulfilmentOrder}/shipping-label', [\App\Http\Controllers\Seller\OrderController::class, 'shippingLabel'])->name('shipping_label');

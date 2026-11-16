@@ -89,7 +89,7 @@
             </div>
             <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Business Support Hours</h3>
             <p class="text-xs font-bold text-slate-900 leading-snug">{{ $businessHours }}</p>
-            <p class="text-[11px] text-slate-500">Express rider dispatch live</p>
+            <p class="text-[11px] text-slate-500">Fast courier dispatch</p>
         </div>
     </div>
 
@@ -191,9 +191,9 @@
                 </div>
 
                 <div class="p-4 rounded-2xl bg-white border border-slate-200/80 shadow-xs space-y-1.5">
-                    <h4 class="font-bold text-slate-900">Interested in becoming a merchant or rider?</h4>
+                    <h4 class="font-bold text-slate-900">Interested in becoming a merchant?</h4>
                     <p class="text-slate-600 leading-relaxed">
-                        Visit our <a href="{{ route('seller.dashboard') }}" class="text-indigo-600 font-bold hover:underline">Seller Hub</a> or <a href="{{ route('rider.dashboard') }}" class="text-indigo-600 font-bold hover:underline">Rider Delivery Partner Hub</a> to onboard within 24 hours.
+                        Visit our <a href="{{ route('seller.dashboard') }}" class="text-indigo-600 font-bold hover:underline">Seller Hub</a> to onboard your store and products within 24 hours.
                     </p>
                 </div>
             </div>

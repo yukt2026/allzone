@@ -30,48 +30,14 @@ Route::get('/', [HomeController::class, 'index'])->name('home');
 // Quick Commerce Discovery (Blueprint Section 11)
 Route::get('/quick', [\App\Http\Controllers\Storefront\QuickCommerceController::class, 'index'])->name('quick.index');
 Route::get('/api/v1/quick/nearby', [\App\Http\Controllers\Storefront\QuickCommerceController::class, 'nearbyStoresApi'])->name('quick.nearby_api');
-Route::get('/orders/{order}/live-tracking', [\App\Http\Controllers\Storefront\QuickCommerceController::class, 'liveTracking'])->name('orders.live_tracking');
-Route::get('/orders/{order}/live-location', [\App\Http\Controllers\Storefront\QuickCommerceController::class, 'liveLocationApi'])->name('orders.live_location');
-
-// Rider Mobile-Friendly Web Portal
-Route::prefix('rider')->name('rider.')->group(function () {
-    // Auth & Session
-    Route::get('/login', [\App\Http\Controllers\Rider\RiderController::class, 'loginForm'])->name('login');
-    Route::post('/login', [\App\Http\Controllers\Rider\RiderController::class, 'login'])->name('login.submit');
-    Route::get('/register', [\App\Http\Controllers\Rider\RiderController::class, 'registerForm'])->name('register');
-    Route::post('/register', [\App\Http\Controllers\Rider\RiderController::class, 'register'])->name('register.submit');
-    Route::post('/logout', [\App\Http\Controllers\Rider\RiderController::class, 'logout'])->name('logout');
-
-    // Dashboard & Duty
-    Route::get('/', [\App\Http\Controllers\Rider\RiderController::class, 'dashboard'])->name('dashboard');
-    Route::post('/toggle-duty', [\App\Http\Controllers\Rider\RiderController::class, 'toggleDuty'])->name('toggle_duty');
-
-    // Deliveries & Lifecycle
-    Route::get('/history', [\App\Http\Controllers\Rider\RiderController::class, 'history'])->name('history');
-    Route::get('/orders/{assignment}', [\App\Http\Controllers\Rider\RiderController::class, 'showAssignment'])->name('assignment');
-    Route::post('/orders/{assignment}/accept', [\App\Http\Controllers\Rider\RiderController::class, 'accept'])->name('accept');
-    Route::post('/orders/{assignment}/reject', [\App\Http\Controllers\Rider\RiderController::class, 'reject'])->name('reject');
-    Route::post('/orders/{assignment}/pickup', [\App\Http\Controllers\Rider\RiderController::class, 'pickup'])->name('pickup');
-    Route::post('/orders/{assignment}/deliver', [\App\Http\Controllers\Rider\RiderController::class, 'deliver'])->name('deliver');
-    Route::post('/orders/{assignment}/fail', [\App\Http\Controllers\Rider\RiderController::class, 'failDelivery'])->name('fail');
-    Route::post('/orders/{assignment}/return', [\App\Http\Controllers\Rider\RiderController::class, 'confirmReturn'])->name('return');
-
-    // Wallet, Profile & Support
-    Route::get('/wallet', [\App\Http\Controllers\Rider\RiderController::class, 'wallet'])->name('wallet');
-    Route::get('/kyc', [\App\Http\Controllers\Rider\RiderController::class, 'kyc'])->name('kyc');
-    Route::post('/kyc/upload', [\App\Http\Controllers\Rider\RiderController::class, 'uploadDocument'])->name('kyc.upload');
-    Route::get('/kyc/{document}/view', [\App\Http\Controllers\Rider\RiderController::class, 'viewDocument'])->name('kyc.view');
-    Route::delete('/kyc/{document}', [\App\Http\Controllers\Rider\RiderController::class, 'deleteDocument'])->name('kyc.delete');
-    Route::get('/profile', [\App\Http\Controllers\Rider\RiderController::class, 'profile'])->name('profile');
-    Route::put('/profile', [\App\Http\Controllers\Rider\RiderController::class, 'updateProfile'])->name('profile.update');
-    Route::post('/profile/avatar', [\App\Http\Controllers\Rider\RiderController::class, 'updateAvatar'])->name('profile.avatar');
-    Route::delete('/profile/avatar', [\App\Http\Controllers\Rider\RiderController::class, 'removeAvatar'])->name('profile.avatar.remove');
-    Route::put('/profile/password', [\App\Http\Controllers\Rider\RiderController::class, 'updatePassword'])->name('profile.password');
-    Route::get('/support', [\App\Http\Controllers\Rider\RiderController::class, 'support'])->name('support');
-
-    // Telemetry API
-    Route::post('/location', [\App\Http\Controllers\Rider\RiderController::class, 'updateLocation'])->name('location_api');
-});
+// Order Tracking Redirect for Legacy URLs
+Route::get('/orders/{order}/live-tracking', function (\App\Models\Order $order) {
+    $fo = $order->fulfilmentOrders()->first();
+    if ($fo) {
+        return redirect()->route('orders.track', [$order->order_number, $fo->fulfilment_order_number]);
+    }
+    return redirect()->route('orders.show', $order->order_number);
+})->name('orders.live_tracking');
 
 // Discovery Pages (Search, Categories, Brands, Stores, Product Details, CMS)
 Route::get('/search', [SearchController::class, 'index'])->name('search');
