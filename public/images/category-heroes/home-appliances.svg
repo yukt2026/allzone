@@ -1,0 +1,98 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 360" width="100%" height="100%" fill="none">
+    <defs>
+        <!-- Ambient back-glow -->
+        <radialGradient id="applianceGlow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#0284C7" stop-opacity="0.3"/>
+            <stop offset="60%" stop-color="#4F46E5" stop-opacity="0.15"/>
+            <stop offset="100%" stop-color="#0F172A" stop-opacity="0"/>
+        </radialGradient>
+        <!-- Ground shadow -->
+        <radialGradient id="applianceShadow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#020617" stop-opacity="0.85"/>
+            <stop offset="100%" stop-color="#020617" stop-opacity="0"/>
+        </radialGradient>
+        <!-- Titanium Body Gradient -->
+        <linearGradient id="applianceBody" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#F1F5F9"/>
+            <stop offset="25%" stop-color="#CBD5E1"/>
+            <stop offset="60%" stop-color="#E2E8F0"/>
+            <stop offset="100%" stop-color="#94A3B8"/>
+        </linearGradient>
+        <!-- Porthole Glass Ring -->
+        <radialGradient id="doorGlass" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#0284C7" stop-opacity="0.6"/>
+            <stop offset="50%" stop-color="#0F172A" stop-opacity="0.85"/>
+            <stop offset="100%" stop-color="#020617"/>
+        </radialGradient>
+        <filter id="applianceBlur" x="-20%" y="-20%" width="140%" height="140%">
+            <feGaussianBlur stdDeviation="14"/>
+        </filter>
+    </defs>
+
+    <!-- Background atmosphere glow -->
+    <ellipse cx="250" cy="170" rx="180" ry="120" fill="url(#applianceGlow)" filter="url(#applianceBlur)"/>
+    <!-- Pedestal shadow -->
+    <ellipse cx="250" cy="325" rx="180" ry="20" fill="url(#applianceShadow)"/>
+
+    <!-- Front Load Washing Machine (Main Unit) -->
+    <g transform="translate(85, 30)">
+        <!-- Outer Shell -->
+        <rect x="0" y="0" width="200" height="260" rx="16" fill="#334155"/>
+        <rect x="2" y="2" width="196" height="256" rx="14" fill="url(#applianceBody)"/>
+
+        <!-- Control Console Panel (Top) -->
+        <rect x="2" y="2" width="196" height="52" rx="14" fill="#0F172A"/>
+
+        <!-- Detergent Drawer (Top Left) -->
+        <rect x="14" y="12" width="46" height="32" rx="4" fill="#1E293B" stroke="#475569" stroke-width="1"/>
+        <rect x="20" y="24" width="34" height="4" rx="2" fill="#64748B"/>
+
+        <!-- Rotary Control Dial (Top Center) -->
+        <circle cx="100" cy="28" r="16" fill="#1E293B" stroke="#38BDF8" stroke-width="2"/>
+        <circle cx="100" cy="28" r="10" fill="#334155"/>
+        <line x1="100" y1="28" x2="100" y2="18" stroke="#38BDF8" stroke-width="2" stroke-linecap="round"/>
+
+        <!-- Digital Smart Display (Top Right) -->
+        <g transform="translate(132, 12)">
+            <rect x="0" y="0" width="54" height="32" rx="4" fill="#020617" stroke="#38BDF8" stroke-width="0.8"/>
+            <text x="27" y="16" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-size="11" font-weight="900" fill="#38BDF8" text-anchor="middle">0:45</text>
+            <text x="27" y="26" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-size="6" font-weight="700" fill="#10B981" text-anchor="middle">1400 RPM &bull; AI</text>
+        </g>
+
+        <!-- Front Glass Porthole Door -->
+        <circle cx="100" cy="155" r="75" fill="#1E293B" stroke="#64748B" stroke-width="3"/>
+        <circle cx="100" cy="155" r="68" fill="#0F172A" stroke="#38BDF8" stroke-width="1.5"/>
+        <circle cx="100" cy="155" r="54" fill="url(#doorGlass)"/>
+
+        <!-- Drum Vane / Whirl Pattern inside Porthole -->
+        <path d="M100 120 C125 135, 125 175, 100 190" stroke="#38BDF8" stroke-width="2" fill="none" opacity="0.6"/>
+        <path d="M80 145 C100 140, 115 160, 110 180" stroke="#67E8F9" stroke-width="1.8" fill="none" opacity="0.5"/>
+
+        <!-- Door Handle Ring -->
+        <rect x="165" y="145" width="8" height="22" rx="4" fill="#94A3B8"/>
+
+        <!-- Bottom Service Flap / Filter -->
+        <rect x="14" y="240" width="30" height="14" rx="3" fill="#94A3B8" opacity="0.5"/>
+    </g>
+
+    <!-- Companion Microwave Oven (Resting Right Side) -->
+    <g transform="translate(295, 75)">
+        <rect x="0" y="0" width="145" height="110" rx="10" fill="#1E293B" stroke="#475569" stroke-width="1.5"/>
+        <!-- Window -->
+        <rect x="10" y="12" width="85" height="86" rx="6" fill="#020617" stroke="#334155" stroke-width="1"/>
+        <line x1="18" y1="20" x2="87" y2="88" stroke="#38BDF8" stroke-width="1" opacity="0.3"/>
+        <!-- Control Panel -->
+        <rect x="102" y="12" width="33" height="86" rx="4" fill="#0F172A"/>
+        <rect x="106" y="18" width="25" height="12" rx="2" fill="#020617"/>
+        <text x="118.5" y="27" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-size="7" font-weight="900" fill="#38BDF8" text-anchor="middle">12:00</text>
+        <circle cx="118.5" cy="50" r="7" fill="#334155"/>
+        <rect x="108" y="70" width="21" height="8" rx="2" fill="#10B981" opacity="0.8"/>
+        <text x="118.5" y="76" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-size="5" font-weight="800" fill="#FFFFFF" text-anchor="middle">START</text>
+    </g>
+
+    <!-- Floating Badge: AI Inverter Motor -->
+    <g transform="translate(305, 235)">
+        <rect x="0" y="0" width="140" height="30" rx="15" fill="#0B1329" fill-opacity="0.9" stroke="#0284C7" stroke-width="1.2"/>
+        <text x="16" y="19" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-size="10" font-weight="800" fill="#38BDF8">⚡ 10-Yr Motor Warranty</text>
+    </g>
+</svg>

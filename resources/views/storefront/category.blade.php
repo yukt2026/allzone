@@ -15,30 +15,103 @@
         @endforeach
     </nav>
 
-    <!-- SEO Category Header Banner Block -->
-    <div class="p-6 rounded-3xl bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white shadow-xl relative overflow-hidden">
-        <div class="max-w-3xl space-y-2 relative z-10">
-            <div class="flex items-center space-x-2">
-                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-white/20 text-white backdrop-blur-md">
-                    CATEGORY SHOWCASE
-                </span>
-                @if($category->is_quick_eligible)
-                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-400 text-slate-950 shadow-sm">
-                        ⚡ 10-30 MIN DELIVERY ELIGIBLE
-                    </span>
-                @endif
+    @php
+        $categoryVisualMap = [
+            'mobiles-smartphones' => 'images/category-heroes/mobiles-smartphones.svg',
+            'refrigerators-freezers' => 'images/category-heroes/refrigerators-freezers.svg',
+            'televisions' => 'images/category-heroes/televisions.svg',
+            'air-conditioners' => 'images/category-heroes/air-conditioners.svg',
+            'laptops-computers' => 'images/category-heroes/laptops-computers.svg',
+            'audio-headphones' => 'images/category-heroes/audio-headphones.svg',
+            'home-appliances' => 'images/category-heroes/home-appliances.svg',
+            'computer-accessories' => 'images/category-heroes/computer-accessories.svg',
+        ];
+
+        $heroVisualPath = $categoryVisualMap[$category->slug] ?? null;
+        if ($heroVisualPath && file_exists(public_path($heroVisualPath))) {
+            $heroVisualUrl = asset($heroVisualPath);
+        } elseif (!empty($category->image) && file_exists(public_path('storage/' . $category->image))) {
+            $heroVisualUrl = asset('storage/' . $category->image);
+        } elseif ($products->isNotEmpty() && $products->first()->primary_image_url) {
+            $heroVisualUrl = $products->first()->primary_image_url;
+        } else {
+            $heroVisualUrl = asset('images/category-heroes/default.svg');
+        }
+    @endphp
+
+    <!-- Premium Category Hero Banner Component -->
+    <div class="relative rounded-2xl bg-slate-950 text-white border border-slate-800/80 shadow-md shadow-slate-950/20 overflow-hidden"
+         style="background: linear-gradient(135deg, #060D1D 0%, #0B152B 50%, #081022 100%);">
+        <!-- Ambient Decorative Lighting Effects -->
+        <div class="absolute -right-16 -top-16 w-72 h-72 rounded-full bg-indigo-600/15 blur-3xl pointer-events-none" aria-hidden="true"></div>
+        <div class="absolute right-1/4 -bottom-20 w-80 h-80 rounded-full bg-blue-600/10 blur-3xl pointer-events-none" aria-hidden="true"></div>
+        <div class="absolute -left-16 -bottom-16 w-56 h-56 rounded-full bg-indigo-900/20 blur-2xl pointer-events-none" aria-hidden="true"></div>
+
+        <div class="relative z-10 p-4 sm:p-6 lg:p-8">
+            <div class="flex items-center justify-between gap-4 lg:gap-8">
+                <!-- Left Section: Category label, heading, description, trust row, CTA -->
+                <div class="flex-1 min-w-0 space-y-2.5 sm:space-y-3.5">
+                    <!-- Badges Row -->
+                    <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                        <span class="inline-flex items-center px-2 sm:px-2.5 py-0.5 rounded-md text-[10px] sm:text-[11px] font-bold uppercase tracking-wider bg-indigo-500/15 text-indigo-300 border border-indigo-500/30">
+                            Electronics Store
+                        </span>
+                        @if($category->is_quick_eligible)
+                            <span class="inline-flex items-center space-x-1 px-2 sm:px-2.5 py-0.5 rounded-md text-[10px] sm:text-[11px] font-bold uppercase tracking-wider bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+                                <span class="text-amber-400">⚡</span>
+                                <span>10–30 Min Express Delivery</span>
+                            </span>
+                        @else
+                            <span class="inline-flex items-center space-x-1 px-2 sm:px-2.5 py-0.5 rounded-md text-[10px] sm:text-[11px] font-bold uppercase tracking-wider bg-blue-500/15 text-blue-300 border border-blue-500/30">
+                                <svg class="w-2.5 h-2.5 sm:w-3 sm:h-3 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                                <span>Genuine Brand Warranty</span>
+                            </span>
+                        @endif
+                    </div>
+
+                    <!-- Category Heading -->
+                    <h1 class="text-xl sm:text-3xl lg:text-4xl font-extrabold text-white tracking-tight leading-snug sm:leading-tight">
+                        {{ $category->name }}
+                    </h1>
+
+                    <!-- Category Description -->
+                    <p class="text-xs sm:text-sm text-slate-300 font-normal leading-relaxed line-clamp-2 sm:line-clamp-none max-w-2xl">
+                        {{ $category->meta_description ?: $category->description ?: ('Explore verified ' . $category->name . ' with 100% genuine brand warranty, local store inventory, and certified doorstep installation on ALLZONE.') }}
+                    </p>
+
+                    <!-- Trust Indicators & Quick CTA (Desktop/Tablet) -->
+                    <div class="hidden sm:flex flex-wrap items-center gap-x-5 gap-y-2 pt-1 text-xs text-slate-300">
+                        <div class="flex items-center space-x-1.5">
+                            <svg class="w-3.5 h-3.5 text-indigo-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                            <span class="font-medium">100% Genuine</span>
+                        </div>
+                        <div class="flex items-center space-x-1.5">
+                            <svg class="w-3.5 h-3.5 text-blue-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                            <span class="font-medium">Brand Warranty</span>
+                        </div>
+                        <div class="flex items-center space-x-1.5">
+                            <svg class="w-3.5 h-3.5 text-cyan-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/></svg>
+                            <span class="font-medium">Express Dispatch</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Section: Large Attractive Electronics Product Visual -->
+                <div class="w-24 h-24 sm:w-44 sm:h-36 md:w-64 md:h-48 lg:w-80 lg:h-56 flex-shrink-0 flex items-center justify-center relative">
+                    <img src="{{ $heroVisualUrl }}" 
+                         alt="{{ $category->name }}" 
+                         class="max-w-full max-h-full object-contain filter drop-shadow-[0_10px_20px_rgba(0,0,0,0.45)] transition-transform duration-500 hover:scale-105 pointer-events-none select-none"
+                         loading="eager"
+                         onerror="this.onerror=null; this.src='{{ asset('images/category-heroes/default.svg') }}';">
+                </div>
             </div>
 
-            <h1 class="text-2xl sm:text-4xl font-black text-white tracking-tight">{{ $category->name }}</h1>
-            <p class="text-xs sm:text-sm text-slate-300 leading-relaxed">
-                {{ $category->meta_description ?: $category->description ?: ('Browse our full selection of ' . $category->name . ' sourced directly from verified local stores and national brands with guaranteed quality and lightning fast delivery.') }}
-            </p>
-
-            <!-- Subcategories Horizontal Pills -->
+            <!-- Subcategories Horizontal Pills (if available) -->
             @if($category->children && $category->children->isNotEmpty())
-                <div class="pt-3 flex flex-wrap gap-2">
+                <div class="pt-3 mt-3 border-t border-slate-800/80 flex flex-wrap items-center gap-1.5 sm:gap-2">
+                    <span class="text-[11px] font-bold text-slate-400 mr-1 hidden sm:inline">Subcategories:</span>
                     @foreach($category->children as $child)
-                        <a href="{{ route('category.show', $child->slug) }}" class="inline-flex items-center px-3 py-1 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-semibold backdrop-blur-sm transition">
+                        <a href="{{ route('category.show', $child->slug) }}" class="inline-flex items-center px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-white text-[11px] sm:text-xs font-semibold backdrop-blur-sm border border-white/10 transition">
                             <span>{{ $child->name }}</span>
                         </a>
                     @endforeach

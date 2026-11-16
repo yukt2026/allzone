@@ -1,0 +1,93 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 360" width="100%" height="100%" fill="none">
+    <defs>
+        <!-- TV ambient back-glow -->
+        <radialGradient id="tvGlow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#6366F1" stop-opacity="0.35"/>
+            <stop offset="60%" stop-color="#3B82F6" stop-opacity="0.15"/>
+            <stop offset="100%" stop-color="#0F172A" stop-opacity="0"/>
+        </radialGradient>
+        <!-- Pedestal shadow -->
+        <radialGradient id="tvGroundShadow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#020617" stop-opacity="0.85"/>
+            <stop offset="100%" stop-color="#020617" stop-opacity="0"/>
+        </radialGradient>
+        <!-- 4K Cinematic screen artwork -->
+        <linearGradient id="tvScreen" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#0F172A"/>
+            <stop offset="30%" stop-color="#1E1B4B"/>
+            <stop offset="65%" stop-color="#4F46E5"/>
+            <stop offset="85%" stop-color="#06B6D4"/>
+            <stop offset="100%" stop-color="#F43F5E"/>
+        </linearGradient>
+        <!-- Metallic stand -->
+        <linearGradient id="metalStand" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#94A3B8"/>
+            <stop offset="50%" stop-color="#F8FAFC"/>
+            <stop offset="100%" stop-color="#475569"/>
+        </linearGradient>
+        <filter id="tvBlur" x="-20%" y="-20%" width="140%" height="140%">
+            <feGaussianBlur stdDeviation="15"/>
+        </filter>
+    </defs>
+
+    <!-- Ambient glow behind TV -->
+    <ellipse cx="250" cy="165" rx="190" ry="120" fill="url(#tvGlow)" filter="url(#tvBlur)"/>
+    <!-- Ground shadow -->
+    <ellipse cx="250" cy="315" rx="180" ry="18" fill="url(#tvGroundShadow)"/>
+
+    <!-- Main TV Screen Group -->
+    <g transform="translate(65, 40)">
+        <!-- Outer Slim Titanium Bezel -->
+        <rect x="0" y="0" width="370" height="225" rx="8" fill="#1E293B" stroke="#64748B" stroke-width="2"/>
+        <!-- Inner Black Display Border -->
+        <rect x="3" y="3" width="364" height="219" rx="6" fill="#020617"/>
+
+        <!-- Cinematic OLED Display Image -->
+        <rect x="5" y="5" width="360" height="215" rx="4" fill="url(#tvScreen)"/>
+
+        <!-- Cinematic Landscape Graphic Elements inside Screen -->
+        <!-- Neon Sun / Horizon Glow -->
+        <circle cx="180" cy="115" r="45" fill="#F43F5E" opacity="0.6" filter="url(#tvBlur)"/>
+        <circle cx="180" cy="115" r="28" fill="#FDE047" opacity="0.8"/>
+        <!-- Mountains silhouette in distance -->
+        <path d="M5 160 L60 110 L130 150 L200 95 L270 145 L330 115 L365 155 L365 220 L5 220 Z" fill="#0B1329" opacity="0.75"/>
+        <path d="M5 180 L80 140 L160 175 L240 130 L310 165 L365 140 L365 220 L5 220 Z" fill="#020617"/>
+
+        <!-- Screen Water Reflection -->
+        <ellipse cx="180" cy="190" rx="90" ry="12" fill="#38BDF8" opacity="0.3" filter="url(#tvBlur)"/>
+
+        <!-- Diagonal Glass Sheen Reflection -->
+        <path d="M10 5 L220 5 L365 160 L365 210 L140 5 Z" fill="#FFFFFF" fill-opacity="0.07"/>
+
+        <!-- HDR & OLED Micro Watermark on Screen -->
+        <g transform="translate(18, 16)">
+            <rect x="0" y="0" width="48" height="18" rx="4" fill="#000000" fill-opacity="0.5" stroke="#FFFFFF" stroke-opacity="0.2" stroke-width="0.8"/>
+            <text x="24" y="12.5" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-size="8.5" font-weight="900" fill="#FFFFFF" text-anchor="middle" letter-spacing="0.5">4K OLED</text>
+        </g>
+        <g transform="translate(305, 16)">
+            <text x="0" y="12" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-size="8" font-weight="800" fill="#E2E8F0" opacity="0.85">DOLBY VISION</text>
+        </g>
+
+        <!-- TV Brand Logo in Bottom Bezel -->
+        <circle cx="185" cy="223" r="1.5" fill="#38BDF8"/>
+
+        <!-- Ambient LED strip underneath TV frame -->
+        <rect x="70" y="226" width="230" height="2" fill="#38BDF8" opacity="0.7" filter="url(#tvBlur)"/>
+
+        <!-- Metallic Desktop Stand Legs -->
+        <g transform="translate(0, 226)">
+            <!-- Left Leg -->
+            <polygon points="55,0 45,35 65,35 62,0" fill="url(#metalStand)"/>
+            <polygon points="40,35 70,35 65,39 35,39" fill="#334155"/>
+            <!-- Right Leg -->
+            <polygon points="315,0 305,35 325,35 322,0" fill="url(#metalStand)"/>
+            <polygon points="300,35 330,35 325,39 295,39" fill="#334155"/>
+        </g>
+    </g>
+
+    <!-- Floating Badge: Google TV & 120Hz -->
+    <g transform="translate(300, 240)">
+        <rect x="0" y="0" width="135" height="30" rx="15" fill="#0F172A" fill-opacity="0.9" stroke="#6366F1" stroke-width="1.2"/>
+        <text x="16" y="19" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-size="10" font-weight="800" fill="#A5B4FC">✨ 120Hz Smart Cinema</text>
+    </g>
+</svg>

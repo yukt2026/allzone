@@ -1,0 +1,117 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 360" width="100%" height="100%" fill="none">
+    <defs>
+        <!-- Cool breeze back-glow -->
+        <radialGradient id="acGlow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#06B6D4" stop-opacity="0.3"/>
+            <stop offset="50%" stop-color="#0284C7" stop-opacity="0.15"/>
+            <stop offset="100%" stop-color="#0F172A" stop-opacity="0"/>
+        </radialGradient>
+        <!-- Ground shadow -->
+        <radialGradient id="acGroundShadow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#020617" stop-opacity="0.75"/>
+            <stop offset="100%" stop-color="#020617" stop-opacity="0"/>
+        </radialGradient>
+        <!-- AC Body Gradient -->
+        <linearGradient id="acBody" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="#FFFFFF"/>
+            <stop offset="60%" stop-color="#F1F5F9"/>
+            <stop offset="90%" stop-color="#E2E8F0"/>
+            <stop offset="100%" stop-color="#CBD5E1"/>
+        </linearGradient>
+        <!-- Chrome Accent Trim -->
+        <linearGradient id="acChrome" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#CBD5E1"/>
+            <stop offset="30%" stop-color="#FFFFFF"/>
+            <stop offset="70%" stop-color="#94A3B8"/>
+            <stop offset="100%" stop-color="#38BDF8"/>
+        </linearGradient>
+        <!-- Breeze Wave Gradient -->
+        <linearGradient id="breeze" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#38BDF8" stop-opacity="0.8"/>
+            <stop offset="50%" stop-color="#06B6D4" stop-opacity="0.5"/>
+            <stop offset="100%" stop-color="#A5F3FC" stop-opacity="0"/>
+        </linearGradient>
+        <filter id="acBlur" x="-20%" y="-20%" width="140%" height="140%">
+            <feGaussianBlur stdDeviation="12"/>
+        </filter>
+    </defs>
+
+    <!-- Cool ambient glow -->
+    <ellipse cx="250" cy="150" rx="180" ry="110" fill="url(#acGlow)" filter="url(#acBlur)"/>
+    <!-- Pedestal shadow -->
+    <ellipse cx="250" cy="320" rx="170" ry="20" fill="url(#acGroundShadow)"/>
+
+    <!-- AC Indoor Unit Group -->
+    <g transform="translate(60, 50)">
+        <!-- Aerodynamic Shadow under unit -->
+        <rect x="15" y="110" width="350" height="20" rx="10" fill="#020617" opacity="0.4" filter="url(#acBlur)"/>
+
+        <!-- Main AC Chassis (Sleek Rounded Bevel) -->
+        <rect x="0" y="0" width="380" height="115" rx="18" fill="#94A3B8"/>
+        <rect x="2" y="2" width="376" height="110" rx="16" fill="url(#acBody)"/>
+
+        <!-- Top intake grille lines -->
+        <g stroke="#CBD5E1" stroke-width="1.5" opacity="0.6">
+            <line x1="30" y1="12" x2="350" y2="12"/>
+            <line x1="30" y1="18" x2="350" y2="18"/>
+            <line x1="30" y1="24" x2="350" y2="24"/>
+        </g>
+
+        <!-- Chrome Trim Accent Band -->
+        <rect x="2" y="86" width="376" height="5" fill="url(#acChrome)"/>
+
+        <!-- Bottom Air Discharge Louver (Horizontal Flap) -->
+        <rect x="12" y="93" width="356" height="16" rx="5" fill="#E2E8F0" stroke="#CBD5E1" stroke-width="1"/>
+        <line x1="20" y1="101" x2="360" y2="101" stroke="#94A3B8" stroke-width="1.5"/>
+
+        <!-- Hidden LED Temperature Display (Center-Right) -->
+        <g transform="translate(290, 42)">
+            <!-- Display glow -->
+            <rect x="0" y="0" width="58" height="34" rx="8" fill="#0B1329" stroke="#38BDF8" stroke-width="1"/>
+            <text x="10" y="24" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-size="20" font-weight="900" fill="#38BDF8" letter-spacing="-0.5">24<tspan font-size="12" font-weight="700">°</tspan></text>
+            <circle cx="48" cy="14" r="2.5" fill="#10B981"/>
+            <path d="M44 24 Q48 20 52 24" stroke="#38BDF8" stroke-width="1.5" fill="none"/>
+        </g>
+
+        <!-- Brand Name & Technology Text -->
+        <g transform="translate(30, 52)">
+            <text x="0" y="10" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-size="11" font-weight="900" fill="#334155" letter-spacing="1">ALLZONE INVERTER</text>
+            <text x="0" y="22" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-size="7.5" font-weight="700" fill="#64748B">DUAL ROTARY COMPRESSOR</text>
+        </g>
+
+        <!-- 5-Star BEE Energy Star Rating Label -->
+        <g transform="translate(190, 40)">
+            <rect x="0" y="0" width="42" height="36" rx="4" fill="#15803D" stroke="#22C55E" stroke-width="1"/>
+            <text x="21" y="11" font-family="sans-serif" font-size="5" font-weight="900" fill="#FFFFFF" text-anchor="middle">5 STAR</text>
+            <text x="21" y="24" font-family="sans-serif" font-size="12" font-weight="900" fill="#FDE047" text-anchor="middle">★★★★★</text>
+            <text x="21" y="32" font-family="sans-serif" font-size="4.5" font-weight="800" fill="#DCFCE7" text-anchor="middle">SAVER</text>
+        </g>
+    </g>
+
+    <!-- Cooling Breeze Flow Waves emanating from the Louver -->
+    <g transform="translate(100, 175)" opacity="0.85">
+        <path d="M0 0 Q60 50 140 30 T280 60" stroke="url(#breeze)" stroke-width="4" stroke-linecap="round" fill="none"/>
+        <path d="M20 20 Q80 70 160 50 T300 80" stroke="url(#breeze)" stroke-width="3" stroke-linecap="round" fill="none"/>
+        <path d="M-10 40 Q50 90 130 70 T270 100" stroke="url(#breeze)" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+
+        <!-- Snowflake icons floating in breeze -->
+        <g transform="translate(60, 45) scale(0.8)" stroke="#38BDF8" stroke-width="1.8" stroke-linecap="round">
+            <line x1="0" y1="-10" x2="0" y2="10"/>
+            <line x1="-10" y1="0" x2="10" y2="0"/>
+            <line x1="-7" y1="-7" x2="7" y2="7"/>
+            <line x1="-7" y1="7" x2="7" y2="-7"/>
+        </g>
+        <g transform="translate(190, 65) scale(0.65)" stroke="#67E8F9" stroke-width="1.8" stroke-linecap="round">
+            <line x1="0" y1="-10" x2="0" y2="10"/>
+            <line x1="-10" y1="0" x2="10" y2="0"/>
+            <line x1="-7" y1="-7" x2="7" y2="7"/>
+            <line x1="-7" y1="7" x2="7" y2="-7"/>
+        </g>
+    </g>
+
+    <!-- Floating Badge: Instant 4-Way Cooling -->
+    <g transform="translate(305, 235)">
+        <rect x="0" y="0" width="135" height="30" rx="15" fill="#0B1329" fill-opacity="0.9" stroke="#06B6D4" stroke-width="1.2"/>
+        <text x="16" y="19" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-size="10" font-weight="800" fill="#67E8F9">⚡ Rapid 60s Cooling</text>
+    </g>
+</svg>

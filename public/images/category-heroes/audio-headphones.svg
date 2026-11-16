@@ -1,0 +1,89 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 360" width="100%" height="100%" fill="none">
+    <defs>
+        <!-- Ambient audio glow -->
+        <radialGradient id="audioGlow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#8B5CF6" stop-opacity="0.35"/>
+            <stop offset="50%" stop-color="#3B82F6" stop-opacity="0.15"/>
+            <stop offset="100%" stop-color="#0F172A" stop-opacity="0"/>
+        </radialGradient>
+        <!-- Ground shadow -->
+        <radialGradient id="audioShadow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#020617" stop-opacity="0.85"/>
+            <stop offset="100%" stop-color="#020617" stop-opacity="0"/>
+        </radialGradient>
+        <!-- Headband metallic gradient -->
+        <linearGradient id="headbandMetal" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#475569"/>
+            <stop offset="25%" stop-color="#94A3B8"/>
+            <stop offset="50%" stop-color="#CBD5E1"/>
+            <stop offset="75%" stop-color="#64748B"/>
+            <stop offset="100%" stop-color="#334155"/>
+        </linearGradient>
+        <!-- Earcup metallic body -->
+        <linearGradient id="earcupGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#1E293B"/>
+            <stop offset="50%" stop-color="#0F172A"/>
+            <stop offset="100%" stop-color="#020617"/>
+        </linearGradient>
+        <filter id="audioBlur" x="-20%" y="-20%" width="140%" height="140%">
+            <feGaussianBlur stdDeviation="14"/>
+        </filter>
+    </defs>
+
+    <!-- Background atmosphere glow -->
+    <ellipse cx="250" cy="170" rx="180" ry="120" fill="url(#audioGlow)" filter="url(#audioBlur)"/>
+    <!-- Pedestal shadow -->
+    <ellipse cx="250" cy="315" rx="170" ry="18" fill="url(#audioShadow)"/>
+
+    <!-- Over-Ear Studio Headphones -->
+    <g transform="translate(130, 35)">
+        <!-- Headband Arch (outer steel band) -->
+        <path d="M40 180 C40 40, 200 40, 200 180" stroke="url(#headbandMetal)" stroke-width="12" fill="none" stroke-linecap="round"/>
+        <!-- Soft Inner Cushion Pad -->
+        <path d="M55 160 C55 60, 185 60, 185 160" stroke="#0F172A" stroke-width="18" fill="none" stroke-linecap="round"/>
+        <path d="M58 155 C58 65, 182 65, 182 155" stroke="#1E293B" stroke-width="14" fill="none" stroke-linecap="round"/>
+
+        <!-- Left Earcup Mount & Yoke -->
+        <g transform="translate(20, 150)">
+            <!-- Metal Yoke -->
+            <path d="M12 0 V40 C12 60, 50 60, 50 40 V0" stroke="url(#headbandMetal)" stroke-width="6" fill="none"/>
+            <!-- Ergonomic Tilt Ear Cushion -->
+            <ellipse cx="30" cy="55" rx="28" ry="46" fill="#020617"/>
+            <ellipse cx="30" cy="55" rx="24" ry="42" fill="#1E293B" stroke="#334155" stroke-width="2"/>
+            <!-- Outer Cup Shell -->
+            <ellipse cx="24" cy="55" rx="20" ry="38" fill="url(#earcupGrad)" stroke="#64748B" stroke-width="1.5"/>
+            <!-- Metallic Acoustic Ring & Mesh -->
+            <ellipse cx="24" cy="55" rx="12" ry="24" fill="#0F172A" stroke="#8B5CF6" stroke-width="1.5"/>
+            <circle cx="24" cy="55" r="4" fill="#38BDF8"/>
+        </g>
+
+        <!-- Right Earcup Mount & Yoke -->
+        <g transform="translate(160, 150)">
+            <path d="M12 0 V40 C12 60, 50 60, 50 40 V0" stroke="url(#headbandMetal)" stroke-width="6" fill="none"/>
+            <ellipse cx="30" cy="55" rx="28" ry="46" fill="#020617"/>
+            <ellipse cx="30" cy="55" rx="24" ry="42" fill="#1E293B" stroke="#334155" stroke-width="2"/>
+            <ellipse cx="36" cy="55" rx="20" ry="38" fill="url(#earcupGrad)" stroke="#64748B" stroke-width="1.5"/>
+            <ellipse cx="36" cy="55" rx="12" ry="24" fill="#0F172A" stroke="#8B5CF6" stroke-width="1.5"/>
+            <circle cx="36" cy="55" r="4" fill="#38BDF8"/>
+        </g>
+
+        <!-- True Wireless Earbuds Case (Resting on floor beside headphones) -->
+        <g transform="translate(150, 205)">
+            <!-- Case body -->
+            <rect x="0" y="0" width="70" height="48" rx="20" fill="#0F172A" stroke="#64748B" stroke-width="2"/>
+            <rect x="3" y="16" width="64" height="2" fill="#334155"/>
+            <!-- Charging status LED -->
+            <circle cx="35" cy="26" r="2" fill="#10B981"/>
+            <!-- Left Earbud popping up -->
+            <circle cx="22" cy="10" r="7" fill="#1E293B" stroke="#8B5CF6" stroke-width="1.5"/>
+            <!-- Right Earbud popping up -->
+            <circle cx="48" cy="10" r="7" fill="#1E293B" stroke="#8B5CF6" stroke-width="1.5"/>
+        </g>
+    </g>
+
+    <!-- Floating Badge: Spatial Audio & 40dB ANC -->
+    <g transform="translate(305, 235)">
+        <rect x="0" y="0" width="140" height="30" rx="15" fill="#0B1329" fill-opacity="0.9" stroke="#8B5CF6" stroke-width="1.2"/>
+        <text x="16" y="19" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-size="10" font-weight="800" fill="#C4B5FD">🎧 40dB Hybrid ANC</text>
+    </g>
+</svg>

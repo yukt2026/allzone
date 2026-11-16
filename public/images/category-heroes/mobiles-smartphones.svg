@@ -1,0 +1,149 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 360" width="100%" height="100%" fill="none">
+    <defs>
+        <!-- Ambient back-glow -->
+        <radialGradient id="phoneGlow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#4F46E5" stop-opacity="0.35"/>
+            <stop offset="60%" stop-color="#2563EB" stop-opacity="0.15"/>
+            <stop offset="100%" stop-color="#0F172A" stop-opacity="0"/>
+        </radialGradient>
+        <!-- Ground contact shadow -->
+        <radialGradient id="groundShadow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#020617" stop-opacity="0.75"/>
+            <stop offset="100%" stop-color="#020617" stop-opacity="0"/>
+        </radialGradient>
+        <!-- Screen gradient -->
+        <linearGradient id="screenGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#312E81"/>
+            <stop offset="35%" stop-color="#4F46E5"/>
+            <stop offset="70%" stop-color="#06B6D4"/>
+            <stop offset="100%" stop-color="#9333EA"/>
+        </linearGradient>
+        <!-- Titanium frame gradient -->
+        <linearGradient id="titaniumFrame" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#94A3B8"/>
+            <stop offset="25%" stop-color="#475569"/>
+            <stop offset="50%" stop-color="#CBD5E1"/>
+            <stop offset="75%" stop-color="#334155"/>
+            <stop offset="100%" stop-color="#64748B"/>
+        </linearGradient>
+        <!-- Back glass gradient -->
+        <linearGradient id="backGlass" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#1E293B"/>
+            <stop offset="50%" stop-color="#0F172A"/>
+            <stop offset="100%" stop-color="#020617"/>
+        </linearGradient>
+        <!-- Glass sheen -->
+        <linearGradient id="sheen" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.25"/>
+            <stop offset="40%" stop-color="#FFFFFF" stop-opacity="0.05"/>
+            <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0"/>
+        </linearGradient>
+        <!-- Lens gradient -->
+        <radialGradient id="lens" cx="40%" cy="40%" r="60%">
+            <stop offset="0%" stop-color="#38BDF8"/>
+            <stop offset="40%" stop-color="#0284C7"/>
+            <stop offset="75%" stop-color="#0F172A"/>
+            <stop offset="100%" stop-color="#020617"/>
+        </radialGradient>
+        <filter id="softBlur" x="-20%" y="-20%" width="140%" height="140%">
+            <feGaussianBlur stdDeviation="12"/>
+        </filter>
+    </defs>
+
+    <!-- Background atmosphere glow -->
+    <ellipse cx="260" cy="180" rx="180" ry="130" fill="url(#phoneGlow)" filter="url(#softBlur)"/>
+    <!-- Pedestal shadow -->
+    <ellipse cx="260" cy="325" rx="190" ry="22" fill="url(#groundShadow)"/>
+
+    <!-- Rear Phone (Tilted Back View) -->
+    <g transform="translate(250, 45) rotate(10)">
+        <!-- Outer Frame -->
+        <rect x="0" y="0" width="135" height="265" rx="28" fill="url(#titaniumFrame)"/>
+        <!-- Back Panel -->
+        <rect x="3" y="3" width="129" height="259" rx="25" fill="url(#backGlass)"/>
+        <!-- Subtle back shimmer -->
+        <path d="M5 5 L130 180 L130 260 L5 80 Z" fill="url(#sheen)" opacity="0.4"/>
+        <!-- Camera Island -->
+        <rect x="12" y="14" width="56" height="66" rx="16" fill="#1E293B" stroke="#475569" stroke-width="1.5"/>
+        <!-- Top Lens -->
+        <circle cx="28" cy="31" r="11" fill="#334155" stroke="#64748B" stroke-width="1.5"/>
+        <circle cx="28" cy="31" r="8" fill="url(#lens)"/>
+        <circle cx="26" cy="29" r="2.5" fill="#FFFFFF" opacity="0.7"/>
+        <!-- Bottom Lens -->
+        <circle cx="28" cy="59" r="11" fill="#334155" stroke="#64748B" stroke-width="1.5"/>
+        <circle cx="28" cy="59" r="8" fill="url(#lens)"/>
+        <circle cx="26" cy="57" r="2.5" fill="#FFFFFF" opacity="0.7"/>
+        <!-- Right Lens -->
+        <circle cx="51" cy="45" r="9" fill="#334155" stroke="#64748B" stroke-width="1.5"/>
+        <circle cx="51" cy="45" r="6.5" fill="url(#lens)"/>
+        <circle cx="49" cy="43" r="2" fill="#FFFFFF" opacity="0.7"/>
+        <!-- Flash & Sensor -->
+        <circle cx="51" cy="24" r="3.5" fill="#FDE047" opacity="0.85"/>
+        <circle cx="51" cy="66" r="2" fill="#06B6D4"/>
+        <!-- 5G subtle badge -->
+        <text x="68" y="240" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-size="10" font-weight="800" fill="#64748B" letter-spacing="1">5G FLAGSHIP</text>
+    </g>
+
+    <!-- Front Phone (Primary Hero Front View) -->
+    <g transform="translate(115, 30)">
+        <!-- Outer Titanium Bezel -->
+        <rect x="0" y="0" width="144" height="280" rx="30" fill="url(#titaniumFrame)"/>
+        <!-- Inner Black Border -->
+        <rect x="3" y="3" width="138" height="274" rx="27" fill="#020617"/>
+        <!-- Vibrant Display Screen -->
+        <rect x="6" y="6" width="132" height="268" rx="24" fill="url(#screenGrad)"/>
+
+        <!-- Display Artwork Details -->
+        <!-- Ambient Waves in Screen -->
+        <path d="M6 140 Q40 100 80 140 T138 120 L138 274 L6 274 Z" fill="#4338CA" opacity="0.4"/>
+        <circle cx="100" cy="70" r="45" fill="#EC4899" opacity="0.3" filter="url(#softBlur)"/>
+        <circle cx="40" cy="200" r="40" fill="#06B6D4" opacity="0.35" filter="url(#softBlur)"/>
+
+        <!-- Screen Glass Reflection Streak -->
+        <path d="M12 6 L138 170 L138 220 L12 56 Z" fill="url(#sheen)"/>
+
+        <!-- Dynamic Island / Speaker Pill -->
+        <rect x="48" y="14" width="48" height="12" rx="6" fill="#000000"/>
+        <circle cx="84" cy="20" r="2" fill="#1E3A8A"/>
+
+        <!-- Status Bar -->
+        <text x="22" y="22" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-size="7.5" font-weight="700" fill="#FFFFFF">9:41</text>
+        <g transform="translate(108, 16)">
+            <!-- Signal / Battery icon -->
+            <rect x="0" y="2" width="2" height="5" fill="#FFFFFF"/>
+            <rect x="3" y="1" width="2" height="6" fill="#FFFFFF"/>
+            <rect x="6" y="0" width="2" height="7" fill="#FFFFFF"/>
+            <rect x="11" y="1" width="10" height="5" rx="1.5" stroke="#FFFFFF" stroke-width="0.8" fill="none"/>
+            <rect x="12.5" y="2.2" width="6" height="2.6" fill="#10B981"/>
+        </g>
+
+        <!-- Lock Screen / Home Widget Preview -->
+        <g transform="translate(18, 55)">
+            <text x="54" y="20" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-size="28" font-weight="800" fill="#FFFFFF" text-anchor="middle" letter-spacing="-0.5">09:41</text>
+            <text x="54" y="34" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-size="8" font-weight="600" fill="#E0E7FF" text-anchor="middle">Tuesday, September 16</text>
+        </g>
+
+        <!-- App Icons Grid Preview -->
+        <g transform="translate(18, 160)">
+            <rect x="4" y="0" width="22" height="22" rx="6" fill="#2563EB"/>
+            <rect x="32" y="0" width="22" height="22" rx="6" fill="#10B981"/>
+            <rect x="60" y="0" width="22" height="22" rx="6" fill="#F59E0B"/>
+            <rect x="88" y="0" width="22" height="22" rx="6" fill="#8B5CF6"/>
+            
+            <rect x="4" y="30" width="22" height="22" rx="6" fill="#EC4899"/>
+            <rect x="32" y="30" width="22" height="22" rx="6" fill="#06B6D4"/>
+            <rect x="60" y="30" width="22" height="22" rx="6" fill="#6366F1"/>
+            <rect x="88" y="30" width="22" height="22" rx="6" fill="#3B82F6"/>
+        </g>
+
+        <!-- Bottom Home Indicator Bar -->
+        <rect x="48" y="266" width="48" height="3" rx="1.5" fill="#FFFFFF" opacity="0.8"/>
+    </g>
+
+    <!-- Floating Badge: 5G Ultra Speed / AMOLED -->
+    <g transform="translate(325, 230)">
+        <rect x="0" y="0" width="105" height="28" rx="14" fill="#0F172A" fill-opacity="0.9" stroke="#38BDF8" stroke-width="1.2"/>
+        <circle cx="14" cy="14" r="5" fill="#38BDF8"/>
+        <text x="26" y="18" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-size="9.5" font-weight="800" fill="#FFFFFF">120Hz AMOLED</text>
+    </g>
+</svg>

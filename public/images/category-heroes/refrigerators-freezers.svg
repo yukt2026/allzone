@@ -1,0 +1,119 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 360" width="100%" height="100%" fill="none">
+    <defs>
+        <!-- Cool ambient blue back-glow -->
+        <radialGradient id="fridgeGlow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#0284C7" stop-opacity="0.3"/>
+            <stop offset="60%" stop-color="#1E3A8A" stop-opacity="0.15"/>
+            <stop offset="100%" stop-color="#0F172A" stop-opacity="0"/>
+        </radialGradient>
+        <!-- Ground contact shadow -->
+        <radialGradient id="fridgeGroundShadow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#020617" stop-opacity="0.8"/>
+            <stop offset="100%" stop-color="#020617" stop-opacity="0"/>
+        </radialGradient>
+        <!-- Brushed steel body -->
+        <linearGradient id="brushedSteel" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#E2E8F0"/>
+            <stop offset="20%" stop-color="#CBD5E1"/>
+            <stop offset="45%" stop-color="#F1F5F9"/>
+            <stop offset="70%" stop-color="#94A3B8"/>
+            <stop offset="100%" stop-color="#64748B"/>
+        </linearGradient>
+        <!-- Dark side panel (3D perspective) -->
+        <linearGradient id="sidePanel" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#475569"/>
+            <stop offset="100%" stop-color="#1E293B"/>
+        </linearGradient>
+        <!-- Chrome handle accent -->
+        <linearGradient id="chrome" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#FFFFFF"/>
+            <stop offset="50%" stop-color="#94A3B8"/>
+            <stop offset="100%" stop-color="#475569"/>
+        </linearGradient>
+        <!-- Glass shine -->
+        <linearGradient id="fridgeSheen" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.3"/>
+            <stop offset="50%" stop-color="#FFFFFF" stop-opacity="0.05"/>
+            <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0"/>
+        </linearGradient>
+        <filter id="fridgeBlur" x="-20%" y="-20%" width="140%" height="140%">
+            <feGaussianBlur stdDeviation="14"/>
+        </filter>
+    </defs>
+
+    <!-- Cool ambient glow -->
+    <ellipse cx="250" cy="170" rx="170" ry="120" fill="url(#fridgeGlow)" filter="url(#fridgeBlur)"/>
+    <!-- Pedestal shadow -->
+    <ellipse cx="250" cy="330" rx="170" ry="20" fill="url(#fridgeGroundShadow)"/>
+
+    <!-- Refrigerator Group with 3D slant -->
+    <g transform="translate(145, 20)">
+        <!-- 3D Right Side Depth Panel -->
+        <path d="M170 12 L210 32 L210 300 L170 286 Z" fill="url(#sidePanel)"/>
+
+        <!-- Main Front Body Shell -->
+        <rect x="0" y="8" width="170" height="280" rx="14" fill="#334155"/>
+        <rect x="2" y="10" width="166" height="276" rx="12" fill="url(#brushedSteel)"/>
+
+        <!-- Top Door (Freezer Compartment) -->
+        <rect x="4" y="12" width="162" height="100" rx="10" fill="url(#brushedSteel)"/>
+        <!-- Door split seam -->
+        <line x1="2" y1="114" x2="168" y2="114" stroke="#475569" stroke-width="3"/>
+        <line x1="2" y1="116" x2="168" y2="116" stroke="#0F172A" stroke-width="2"/>
+
+        <!-- Bottom Door (Fresh Food Compartment) -->
+        <rect x="4" y="118" width="162" height="166" rx="10" fill="url(#brushedSteel)"/>
+
+        <!-- Metallic Sheen diagonally across both doors -->
+        <path d="M12 12 L166 180 L166 280 L12 112 Z" fill="url(#fridgeSheen)"/>
+
+        <!-- Top Door: Digital Smart LED Panel -->
+        <g transform="translate(18, 30)">
+            <rect x="0" y="0" width="62" height="42" rx="6" fill="#0B1329" stroke="#38BDF8" stroke-width="1.2"/>
+            <text x="8" y="15" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-size="7" font-weight="700" fill="#38BDF8">FREEZER</text>
+            <text x="8" y="32" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-size="16" font-weight="900" fill="#FFFFFF">-18°<tspan font-size="9" fill="#7DD3FC">C</tspan></text>
+            <circle cx="50" cy="14" r="3" fill="#10B981"/>
+            <path d="M46 28 Q50 25 54 28" stroke="#38BDF8" stroke-width="1.2" fill="none"/>
+        </g>
+
+        <!-- Brand Badge -->
+        <rect x="18" y="86" width="38" height="8" rx="2" fill="#64748B" opacity="0.6"/>
+        <text x="37" y="93" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-size="6" font-weight="800" fill="#FFFFFF" text-anchor="middle" letter-spacing="1">INVERTER</text>
+
+        <!-- Recessed Handle (Freezer) -->
+        <rect x="8" y="100" width="150" height="7" rx="3" fill="#334155"/>
+        <rect x="10" y="102" width="146" height="3" rx="1" fill="#0F172A"/>
+
+        <!-- Water / Ice Dispenser (Bottom Door) -->
+        <g transform="translate(18, 134)">
+            <rect x="0" y="0" width="46" height="64" rx="6" fill="#1E293B" stroke="#64748B" stroke-width="1"/>
+            <rect x="6" y="8" width="34" height="40" rx="4" fill="#0F172A"/>
+            <!-- Dispenser paddle & LED light -->
+            <path d="M23 12 V32" stroke="#38BDF8" stroke-width="2" stroke-linecap="round"/>
+            <circle cx="23" cy="12" r="2" fill="#38BDF8"/>
+            <text x="23" y="42" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-size="5.5" font-weight="700" fill="#7DD3FC" text-anchor="middle">WATER &amp; ICE</text>
+        </g>
+
+        <!-- Recessed Handle (Bottom Main Door) -->
+        <rect x="8" y="120" width="150" height="7" rx="3" fill="#334155"/>
+        <rect x="10" y="122" width="146" height="3" rx="1" fill="#0F172A"/>
+
+        <!-- 5-Star Rating Label -->
+        <g transform="translate(112, 30)">
+            <rect x="0" y="0" width="38" height="48" rx="4" fill="#15803D" stroke="#22C55E" stroke-width="1"/>
+            <text x="19" y="12" font-family="sans-serif" font-size="6" font-weight="900" fill="#FFFFFF" text-anchor="middle">POWER SAVINGS</text>
+            <text x="19" y="26" font-family="sans-serif" font-size="14" font-weight="900" fill="#FDE047" text-anchor="middle">5★</text>
+            <text x="19" y="38" font-family="sans-serif" font-size="5" font-weight="800" fill="#DCFCE7" text-anchor="middle">ELECTRICITY</text>
+        </g>
+
+        <!-- Bottom Base Feet -->
+        <rect x="14" y="288" width="22" height="8" rx="3" fill="#1E293B"/>
+        <rect x="134" y="288" width="22" height="8" rx="3" fill="#1E293B"/>
+    </g>
+
+    <!-- Floating Feature Pill -->
+    <g transform="translate(305, 230)">
+        <rect x="0" y="0" width="140" height="32" rx="16" fill="#0B1329" fill-opacity="0.9" stroke="#0284C7" stroke-width="1.2"/>
+        <text x="16" y="20" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-size="10.5" font-weight="800" fill="#38BDF8">❄️ Multi Air Flow 360°</text>
+    </g>
+</svg>
