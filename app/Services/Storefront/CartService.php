@@ -488,7 +488,7 @@ class CartService
                     'formatted_mrp' => format_currency($mrp),
                     'quantity' => $item->quantity,
                     'is_out_of_stock' => $isOutOfStock,
-                    'seller_name' => $seller?->business_name ?? (setting('name', 'ALLZONE') . ' Partner'),
+                    'seller_name' => 'ALLZONE Verified Partner',
                 ];
                 continue;
             }
@@ -539,7 +539,7 @@ class CartService
                 'available_stock' => $availableStock,
                 'is_quick_capable' => (bool) ($product?->is_quick_capable ?? false),
                 'seller_id' => $seller?->id,
-                'seller_name' => $seller?->business_name ?? 'Seller',
+                'seller_name' => 'ALLZONE Verified Partner',
             ];
         }
 
@@ -644,7 +644,7 @@ class CartService
         foreach ($bySeller as $sellerId => $items) {
             $sellerId = (int) $sellerId;
             $first = $items->first();
-            $sellerName = $first['seller_name'] ?? (setting('name', 'ALLZONE') . ' Seller');
+            $sellerName = 'ALLZONE Assured';
 
             // Check if all products in group are quick capable
             $allQuick = $items->every(fn ($item) => !empty($item['is_quick_capable']));
@@ -678,18 +678,27 @@ class CartService
     {
         if ($variant && $variant->relationLoaded('media') && $variant->media->isNotEmpty()) {
             $path = $variant->media->first()->path;
-            return (str_starts_with($path, 'http://') || str_starts_with($path, 'https://'))
-                ? $path
-                : asset('storage/' . $path);
+            $url = image_url($path);
+            if ($url) {
+                return $url;
+            }
+        }
+
+        if ($product instanceof \App\Models\Product) {
+            $pUrl = $product->primaryImageUrl();
+            if ($pUrl) {
+                return $pUrl;
+            }
         }
 
         if ($product && method_exists($product, 'relationLoaded') && $product->relationLoaded('media') && $product->media->isNotEmpty()) {
             $path = $product->media->first()->path;
-            return (str_starts_with($path, 'http://') || str_starts_with($path, 'https://'))
-                ? $path
-                : asset('storage/' . $path);
+            $url = image_url($path);
+            if ($url) {
+                return $url;
+            }
         }
 
-        return null;
+        return "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' width='100' height='100'><rect width='100' height='100' rx='12' fill='%23f1f5f9'/><text x='50' y='55' font-family='sans-serif' font-size='10' font-weight='800' fill='%232563eb' text-anchor='middle'>ALLZONE</text></svg>";
     }
 }

@@ -161,14 +161,14 @@
                             <!-- Group Header: Seller Name + Delivery Mode & ETA -->
                             <div class="p-4 sm:p-5 bg-slate-50/70 border-b border-slate-200/80 flex flex-wrap items-center justify-between gap-3">
                                 <div class="flex items-center space-x-2.5">
-                                    <div class="w-8 h-8 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center font-extrabold text-xs">
-                                        🏪
+                                    <div class="w-8 h-8 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center font-extrabold text-xs">
+                                        ⚡
                                     </div>
                                     <div>
                                         <div class="text-xs font-bold text-slate-900 flex items-center space-x-2">
-                                            <span>Sold by: <strong>{{ $group['seller_name'] }}</strong></span>
+                                            <span>Fulfilled by: <strong>{{ setting('name', 'ALLZONE') }} Assured</strong></span>
                                         </div>
-                                        <div class="text-[11px] text-slate-500">Fulfilled from local store / hub</div>
+                                        <div class="text-[11px] text-slate-500">Express delivery via Shiprocket with brand warranty</div>
                                     </div>
                                 </div>
 
@@ -291,7 +291,7 @@
 
                             <!-- Group Subtotal Footer -->
                             <div class="p-3.5 bg-slate-50 border-t border-slate-100 flex items-center justify-between text-xs text-slate-600 font-medium">
-                                <span>Subtotal from this seller ({{ count($group['items']) }} item{{ count($group['items']) > 1 ? 's' : '' }}):</span>
+                                <span>Package Subtotal ({{ count($group['items']) }} item{{ count($group['items']) > 1 ? 's' : '' }}):</span>
                                 <span class="font-extrabold text-slate-900">{{ $group['formatted_subtotal'] }}</span>
                             </div>
                         </div>
@@ -325,7 +325,7 @@
                                             <a href="{{ $saved['slug'] ? route('product.show', $saved['slug']) : '#' }}" class="text-xs font-bold text-slate-900 hover:text-indigo-600 line-clamp-1">
                                                 {{ $saved['title'] }}
                                             </a>
-                                            <div class="text-[10px] text-slate-500">{{ $saved['variant_name'] }} • {{ $saved['seller_name'] }}</div>
+                                            <div class="text-[10px] text-slate-500">{{ $saved['variant_name'] }} • {{ setting('name', 'ALLZONE') }} Verified</div>
                                             <div class="text-xs font-black text-slate-900">{{ $saved['formatted_price'] }}</div>
 
                                             <div class="pt-2 flex items-center space-x-2 text-[11px]">

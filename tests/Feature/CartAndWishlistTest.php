@@ -419,7 +419,7 @@ class CartAndWishlistTest extends TestCase
         $cartPage->assertStatus(200)
             ->assertSee('Shopping Cart')
             ->assertSee('Fresh Farm Whole Milk 1L')
-            ->assertSee('Fast Mart Superstore');
+            ->assertSee('ALLZONE Assured');
 
         // Test JSON API endpoint /api/storefront/cart/summary
         $apiSummary = $this->getJson(route('storefront.cart.summary'));
@@ -479,5 +479,55 @@ class CartAndWishlistTest extends TestCase
         $sharePage->assertStatus(200)
             ->assertSee('Wishlist shared by')
             ->assertSee('Handmade Kashmiri Pashmina Shawl');
+    }
+
+    public function test_cart_drawer_mobile_responsive_structure_and_payload(): void
+    {
+        $this->actingAs($this->customerUser);
+
+        // Add 2 distinct items to cart
+        $this->post(route('cart.add'), [
+            'variant_id' => $this->variant1->id,
+            'quantity' => 2,
+        ]);
+        $this->post(route('cart.add'), [
+            'variant_id' => $this->variant2->id,
+            'quantity' => 1,
+        ]);
+
+        // 1. Verify JSON summary endpoint returns correct data
+        $summaryRes = $this->getJson(route('storefront.cart.summary'));
+        $summaryRes->assertStatus(200)
+            ->assertJsonPath('status', 'success')
+            ->assertJsonPath('cart.item_count', 3);
+
+        $items = $summaryRes->json('cart.items');
+        $this->assertCount(2, $items);
+        foreach ($items as $item) {
+            $this->assertNotEmpty($item['image_url']);
+            $this->assertNotEmpty($item['title']);
+            $this->assertGreaterThan(0, $item['price']);
+            $this->assertNotEmpty($item['formatted_price']);
+        }
+
+        // 2. Verify drawer HTML elements and mobile responsive classes in storefront layout
+        $homePage = $this->get(route('home'));
+        $homePage->assertStatus(200)
+            // Mobile offset fix (pl-0 on mobile, pl-10 on desktop)
+            ->assertSee('pl-0 sm:pl-10 pointer-events-none w-full sm:w-auto justify-end', false)
+            // Full width on mobile, max-w-md on desktop
+            ->assertSee('w-full sm:w-[420px] max-w-full sm:max-w-md', false)
+            // Full viewport height with dynamic viewport support
+            ->assertSee('h-full h-[100dvh]', false)
+            // Scrollable independent items container
+            ->assertSee('flex-1 min-h-0 overflow-y-auto overscroll-contain', false)
+            // Controlled text wrapping on product titles
+            ->assertSee('line-clamp-2 leading-snug break-words', false)
+            // Product image object-fit contain
+            ->assertSee('object-contain', false)
+            // Sticky footer with safe-area padding and Grand Total
+            ->assertSee('pb-[calc(1rem+env(safe-area-inset-bottom,0px))]', false)
+            ->assertSee('Grand Total')
+            ->assertSee('View Cart &amp; Checkout', false);
     }
 }

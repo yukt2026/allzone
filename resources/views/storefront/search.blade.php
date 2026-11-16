@@ -19,19 +19,15 @@
                 </p>
             </div>
 
-            <!-- Tabs: Products / Stores / Brands -->
+            <!-- Tabs: Products / Brands -->
             <div class="flex items-center p-1 bg-slate-100 rounded-2xl border border-slate-200 self-stretch sm:self-auto text-xs font-bold overflow-x-auto no-scrollbar">
                 <a href="{{ request()->fullUrlWithQuery(['tab' => 'products', 'page' => 1]) }}"
-                   class="flex-1 sm:flex-none text-center px-3 sm:px-4 py-2 rounded-xl transition whitespace-nowrap {{ $tab === 'products' ? 'bg-white text-indigo-700 shadow-sm' : 'text-slate-600 hover:text-slate-900' }}">
-                    Products ({{ $tab === 'products' ? $results->total() : '•' }})
-                </a>
-                <a href="{{ request()->fullUrlWithQuery(['tab' => 'stores', 'page' => 1]) }}"
-                   class="flex-1 sm:flex-none text-center px-3 sm:px-4 py-2 rounded-xl transition whitespace-nowrap {{ $tab === 'stores' ? 'bg-white text-indigo-700 shadow-sm' : 'text-slate-600 hover:text-slate-900' }}">
-                    Stores ({{ $tab === 'stores' ? $results->total() : '•' }})
+                   class="flex-1 sm:flex-none text-center px-3 sm:px-4 py-2 rounded-xl transition whitespace-nowrap {{ $tab !== 'brands' ? 'bg-white text-blue-700 shadow-sm' : 'text-slate-600 hover:text-slate-900' }}">
+                    Products ({{ $tab !== 'brands' ? $results->total() : '•' }})
                 </a>
                 <a href="{{ request()->fullUrlWithQuery(['tab' => 'brands', 'page' => 1]) }}"
-                   class="flex-1 sm:flex-none text-center px-3 sm:px-4 py-2 rounded-xl transition whitespace-nowrap {{ $tab === 'brands' ? 'bg-white text-indigo-700 shadow-sm' : 'text-slate-600 hover:text-slate-900' }}">
-                    Brands ({{ $tab === 'brands' ? $results->total() : '•' }})
+                   class="flex-1 sm:flex-none text-center px-3 sm:px-4 py-2 rounded-xl transition whitespace-nowrap {{ $tab === 'brands' ? 'bg-white text-blue-700 shadow-sm' : 'text-slate-600 hover:text-slate-900' }}">
+                    Official Brands ({{ $tab === 'brands' ? $results->total() : '•' }})
                 </a>
             </div>
         </div>
@@ -268,7 +264,7 @@
             <!-- Tab 1: Products Grid -->
             @if($tab === 'products')
                 @if($results->isNotEmpty())
-                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
                         @foreach($results as $product)
                             <x-product-card :product="$product" />
                         @endforeach
@@ -292,65 +288,10 @@
                 @endif
             @endif
 
-            <!-- Tab 2: Stores Directory -->
-            @if($tab === 'stores')
-                @if($results->isNotEmpty())
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                        @foreach($results as $store)
-                            <div class="group bg-white rounded-3xl border border-slate-200/80 hover:border-indigo-400 hover:shadow-lg transition overflow-hidden flex flex-col justify-between">
-                                <div class="h-28 bg-gradient-to-r from-slate-800 to-indigo-950 relative overflow-hidden">
-                                    @if($store->banner)
-                                        <img src="{{ asset('storage/' . $store->banner) }}" alt="{{ $store->name }}" loading="lazy" class="w-full h-full object-cover">
-                                    @endif
-                                    <div class="absolute inset-0 bg-gradient-to-t from-slate-950/80 to-transparent"></div>
-                                    <div class="absolute top-2.5 left-2.5 right-2.5 flex items-center justify-between">
-                                        <span class="px-2 py-0.5 rounded-full text-[10px] font-black {{ $store->isOpenNow() ? 'bg-emerald-500 text-white' : 'bg-slate-700 text-slate-300' }}">
-                                            {{ $store->isOpenNow() ? 'Open Now' : 'Closed' }}
-                                        </span>
-                                        @if(isset($store->distance_km))
-                                            <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-white/90 text-slate-900">
-                                                📍 {{ number_format((float) $store->distance_km, 1) }} km
-                                            </span>
-                                        @endif
-                                    </div>
-                                </div>
-                                <div class="p-4 flex-1 flex flex-col justify-between space-y-3">
-                                    <div>
-                                        <h4 class="text-sm font-extrabold text-slate-900 group-hover:text-indigo-600 transition truncate">{{ $store->name }}</h4>
-                                        <p class="text-xs text-slate-500 line-clamp-2 mt-0.5">{{ $store->description ?: ('Authorized neighbourhood store on ' . setting('name', 'ALLZONE') . ' Network') }}</p>
-                                        <div class="flex items-center space-x-1.5 text-[10px] font-bold text-slate-600 mt-2">
-                                            @if($store->accepts_quick_commerce)
-                                                <span class="text-amber-600">⚡ 15-30m Delivery</span>
-                                            @endif
-                                            @if($store->accepts_pickup)
-                                                <span class="text-indigo-600">&bull; 🛍️ Store Pickup</span>
-                                            @endif
-                                        </div>
-                                    </div>
-                                    <div class="pt-3 border-t border-slate-100 flex items-center justify-between">
-                                        <span class="text-[11px] text-slate-400">{{ $store->location?->city ?? 'Bengaluru' }}</span>
-                                        <a href="{{ route('store.show', $store->slug) }}" class="px-3.5 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-600 text-indigo-700 hover:text-white font-bold text-xs transition">
-                                            Visit Store &rarr;
-                                        </a>
-                                    </div>
-                                </div>
-                            </div>
-                        @endforeach
-                    </div>
-                    <div class="pt-6">
-                        {{ $results->links() }}
-                    </div>
-                @else
-                    <div class="p-12 text-center bg-white rounded-3xl border border-slate-200">
-                        <p class="text-sm font-bold text-slate-800">No stores found matching your search</p>
-                    </div>
-                @endif
-            @endif
-
-            <!-- Tab 3: Brands Grid -->
+            <!-- Tab 2: Brands Grid -->
             @if($tab === 'brands')
                 @if($results->isNotEmpty())
-                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
                         @foreach($results as $brand)
                             <a href="{{ route('brand.show', $brand->slug) }}" class="p-4 rounded-3xl bg-white border border-slate-200 hover:border-indigo-400 hover:shadow-md transition text-center flex flex-col items-center justify-between">
                                 <div class="w-16 h-16 rounded-2xl bg-slate-50 flex items-center justify-center p-2 mb-2 overflow-hidden">

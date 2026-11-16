@@ -301,43 +301,77 @@
                     </button>
 
                     <!-- Account Menu -->
-                    <div class="relative" x-data="{ open: false }" @click.outside="open = false">
+                    <div class="relative" x-data="{ open: false }" @click.outside="open = false" @keydown.escape.window="open = false">
                         @auth
-                            <button @click="open = !open" type="button" class="flex items-center space-x-1 sm:space-x-2 p-1 sm:p-1.5 rounded-xl border border-slate-200 hover:bg-slate-50 transition" title="Account">
-                                <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-indigo-600 text-white font-bold text-xs flex items-center justify-center">
-                                    {{ substr(auth()->user()->name, 0, 1) }}
+                            <button @click="open = !open" type="button" class="flex items-center space-x-1 sm:space-x-2 p-1 sm:p-1.5 rounded-xl border border-slate-200 hover:bg-slate-50 transition cursor-pointer select-none" title="Account" :aria-expanded="open.toString()">
+                                <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-blue-600 text-white font-black text-xs flex items-center justify-center shadow-xs">
+                                    {{ strtoupper(substr(auth()->user()->name, 0, 1)) }}
                                 </div>
-                                <span class="hidden lg:inline text-xs font-bold text-slate-800 max-w-[100px] truncate">
+                                <span class="hidden lg:inline text-xs font-bold text-slate-800 max-w-[110px] truncate">
                                     {{ auth()->user()->name }}
                                 </span>
-                                <svg class="hidden sm:block w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                                <svg class="hidden sm:block w-3.5 h-3.5 text-slate-400 transition-transform duration-200" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
                             </button>
 
-                            <div x-show="open" x-transition class="absolute right-0 mt-2 w-56 rounded-2xl bg-white shadow-2xl border border-slate-200 py-2 z-50 text-xs divide-y divide-slate-100">
-                                <div class="px-4 py-2.5">
-                                    <p class="font-bold text-slate-900">{{ auth()->user()->name }}</p>
-                                    <p class="text-[11px] text-slate-500 truncate">{{ auth()->user()->email ?? auth()->user()->phone }}</p>
+                            <div x-show="open" 
+                                 x-transition:enter="transition ease-out duration-150"
+                                 x-transition:enter-start="opacity-0 scale-95"
+                                 x-transition:enter-end="opacity-100 scale-100"
+                                 x-transition:leave="transition ease-in duration-100"
+                                 x-transition:leave-start="opacity-100 scale-100"
+                                 x-transition:leave-end="opacity-0 scale-95"
+                                 class="absolute right-0 mt-2 w-60 rounded-2xl bg-white shadow-xl border border-slate-200/90 py-2 z-50 text-xs divide-y divide-slate-100"
+                                 style="display: none;">
+                                <div class="px-4 py-2.5 flex items-center space-x-3">
+                                    <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 font-black text-xs flex items-center justify-center shrink-0">
+                                        {{ strtoupper(substr(auth()->user()->name, 0, 1)) }}
+                                    </div>
+                                    <div class="min-w-0">
+                                        <p class="font-extrabold text-slate-900 truncate">{{ auth()->user()->name }}</p>
+                                        <p class="text-[11px] text-slate-400 truncate">{{ auth()->user()->email ?? auth()->user()->phone }}</p>
+                                    </div>
                                 </div>
                                 <div class="py-1">
-                                    <a href="{{ route('customer.profile') }}" class="block px-4 py-2 text-indigo-600 hover:bg-indigo-50 font-bold">My Profile &amp; Addresses</a>
-                                    <a href="{{ route('orders.index') }}" class="block px-4 py-2 text-slate-700 hover:bg-slate-50 font-medium">My Orders</a>
-                                    <a href="{{ route('wishlist.index') }}" class="block px-4 py-2 text-slate-700 hover:bg-slate-50 font-medium">My Wishlist</a>
-                                    <a href="{{ route('notifications.index') }}" class="block px-4 py-2 text-slate-700 hover:bg-slate-50 font-medium">Notifications &amp; Preferences</a>
+                                    <a href="{{ route('customer.profile') }}" class="flex items-center space-x-2.5 px-4 py-2 text-slate-700 hover:text-blue-600 hover:bg-blue-50/50 font-bold transition">
+                                        <span>👤</span>
+                                        <span>My Profile &amp; Addresses</span>
+                                    </a>
+                                    <a href="{{ route('orders.index') }}" class="flex items-center space-x-2.5 px-4 py-2 text-slate-700 hover:text-blue-600 hover:bg-blue-50/50 font-bold transition">
+                                        <span>📦</span>
+                                        <span>My Orders</span>
+                                    </a>
+                                    <a href="{{ route('wishlist.index') }}" class="flex items-center space-x-2.5 px-4 py-2 text-slate-700 hover:text-blue-600 hover:bg-blue-50/50 font-bold transition">
+                                        <span>❤️</span>
+                                        <span>My Wishlist</span>
+                                    </a>
+                                    <a href="{{ route('notifications.index') }}" class="flex items-center space-x-2.5 px-4 py-2 text-slate-700 hover:text-blue-600 hover:bg-blue-50/50 font-bold transition">
+                                        <span>🔔</span>
+                                        <span>Notifications</span>
+                                    </a>
                                 </div>
                                 @if(auth()->user()->hasRole('seller_owner') || auth()->user()->seller)
                                     <div class="py-1">
-                                        <a href="{{ route('seller.dashboard') }}" class="block px-4 py-2 text-amber-600 hover:bg-amber-50 font-semibold">Seller Central &rarr;</a>
+                                        <a href="{{ route('seller.dashboard') }}" class="flex items-center space-x-2 px-4 py-2 text-amber-600 hover:bg-amber-50 font-bold">
+                                            <span>🏪</span>
+                                            <span>Seller Central &rarr;</span>
+                                        </a>
                                     </div>
                                 @endif
                                 @if(auth()->user()->hasRole('super_admin') || auth()->user()->hasRole('admin'))
                                     <div class="py-1">
-                                        <a href="{{ route('admin.dashboard') }}" class="block px-4 py-2 text-indigo-600 hover:bg-indigo-50 font-semibold">Admin Panel &rarr;</a>
+                                        <a href="{{ route('admin.dashboard') }}" class="flex items-center space-x-2 px-4 py-2 text-blue-600 hover:bg-blue-50 font-bold">
+                                            <span>⚙️</span>
+                                            <span>Admin Panel &rarr;</span>
+                                        </a>
                                     </div>
                                 @endif
                                 <div class="py-1">
                                     <form method="POST" action="{{ route('logout') }}">
                                         @csrf
-                                        <button type="submit" class="w-full text-left px-4 py-2 text-rose-600 hover:bg-rose-50 font-medium">Sign Out</button>
+                                        <button type="submit" class="w-full text-left flex items-center space-x-2.5 px-4 py-2 text-rose-600 hover:bg-rose-50 font-bold transition cursor-pointer">
+                                            <span>🚪</span>
+                                            <span>Sign Out</span>
+                                        </button>
                                     </form>
                                 </div>
                             </div>
@@ -353,29 +387,8 @@
 
             </div>
 
-            <!-- Mobile Location Bar (sm:hidden) -->
-            <div class="sm:hidden pb-1 px-1">
-                <button type="button"
-                        @click="$store.location.modalOpen = true"
-                        class="w-full flex items-center justify-between px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-200 text-left active:scale-[0.99] transition">
-                    <div class="flex items-center space-x-2 min-w-0">
-                        <span class="text-xs text-rose-600 flex-shrink-0">📍</span>
-                        <div class="flex items-center space-x-1.5 min-w-0 text-xs">
-                            <span class="text-[10px] font-semibold text-slate-500 uppercase flex-shrink-0">Deliver to:</span>
-                            <span class="font-extrabold text-slate-900 truncate" x-text="$store.location.current.address_label || 'Select Location'">
-                                {{ $location['address_label'] ?? (setting('default_city', 'Bengaluru') . ' ' . setting('default_pincode', '560001')) }}
-                            </span>
-                        </div>
-                    </div>
-                    <span class="text-[10px] font-bold text-indigo-600 uppercase flex items-center space-x-0.5 flex-shrink-0 ml-1">
-                        <span>Change</span>
-                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
-                    </span>
-                </button>
-            </div>
-
             <!-- Mobile Omnisearch Row with Suggestions (sm:hidden) -->
-            <div class="pb-2.5 sm:hidden relative" @click.outside="searchFocused = false">
+            <div class="pb-2 sm:hidden relative" @click.outside="searchFocused = false">
                 <form action="{{ route('search') }}" method="GET" class="relative">
                     <div class="flex items-center bg-slate-100 rounded-xl border border-slate-200 focus-within:border-blue-600 focus-within:bg-white focus-within:shadow-md transition">
                         <div class="pl-2.5 text-slate-400">
@@ -471,21 +484,17 @@
                     <!-- Quick Category Pills -->
                     <div class="flex items-center space-x-5 overflow-x-auto no-scrollbar font-semibold text-slate-600">
                         <a href="{{ route('category.show', 'refrigerators-freezers') }}" class="text-blue-600 hover:text-blue-800 flex items-center space-x-1 flex-shrink-0 font-bold">
-                            <span>❄️ Cooling by SK Refrigeration</span>
+                            <span>❄️ Cooling Solutions</span>
                         </a>
                         <a href="{{ route('category.show', 'mobiles-smartphones') }}" class="hover:text-blue-600 flex-shrink-0">Smartphones</a>
                         <a href="{{ route('category.show', 'televisions') }}" class="hover:text-blue-600 flex-shrink-0">Smart TVs</a>
+                        <a href="{{ route('category.show', 'air-conditioners') }}" class="hover:text-blue-600 flex-shrink-0">Air Conditioners</a>
                         <a href="{{ route('category.show', 'laptops-computers') }}" class="hover:text-blue-600 flex-shrink-0">Laptops</a>
                         <a href="{{ route('category.show', 'audio-headphones') }}" class="hover:text-blue-600 flex-shrink-0">Audio</a>
+                        <a href="{{ route('category.show', 'home-appliances') }}" class="hover:text-blue-600 flex-shrink-0">Appliances</a>
+                        <a href="{{ route('category.show', 'computer-accessories') }}" class="hover:text-blue-600 flex-shrink-0">Accessories</a>
                         <a href="{{ route('search', ['sort' => 'discount_desc']) }}" class="hover:text-rose-600 flex-shrink-0">Top Deals</a>
                         <a href="{{ route('search', ['tab' => 'brands']) }}" class="hover:text-blue-600 flex-shrink-0">Brands</a>
-                        @if($categoriesList->isNotEmpty())
-                            @foreach($categoriesList->take(5) as $topNavCat)
-                                <a href="{{ route('category.show', $topNavCat->slug) }}" class="hover:text-blue-600 flex-shrink-0 whitespace-nowrap">
-                                    {{ $topNavCat->name }}
-                                </a>
-                            @endforeach
-                        @endif
                     </div>
 
                     <!-- Customer Support Hotline -->
@@ -521,7 +530,7 @@
              @click="$store.cart.open = false"
              class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm transition-opacity"></div>
 
-        <div class="fixed inset-y-0 right-0 max-w-full flex pl-10">
+        <div class="fixed inset-y-0 right-0 max-w-full flex pl-0 sm:pl-10 pointer-events-none w-full sm:w-auto justify-end">
             <div x-show="$store.cart.open"
                  x-transition:enter="transform transition ease-in-out duration-300 sm:duration-400"
                  x-transition:enter-start="translate-x-full"
@@ -529,75 +538,81 @@
                  x-transition:leave="transform transition ease-in-out duration-300 sm:duration-400"
                  x-transition:leave-start="translate-x-0"
                  x-transition:leave-end="translate-x-full"
-                 class="w-screen max-w-md bg-white shadow-2xl flex flex-col">
+                 class="pointer-events-auto w-full sm:w-[420px] max-w-full sm:max-w-md bg-white shadow-2xl flex flex-col h-full h-[100dvh] overflow-hidden">
 
-                <!-- Drawer Header -->
-                <div class="p-4 sm:p-5 border-b border-slate-200 flex items-center justify-between bg-slate-50">
-                    <div class="flex items-center space-x-2">
-                        <div class="w-8 h-8 rounded-lg bg-emerald-600 text-white flex items-center justify-center font-bold">
+                <!-- Drawer Header (Fixed at top) -->
+                <div class="flex-shrink-0 p-3.5 sm:p-4 border-b border-slate-200 flex items-center justify-between bg-slate-50">
+                    <div class="flex items-center space-x-2.5 min-w-0">
+                        <div class="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold flex-shrink-0 shadow-sm shadow-emerald-500/20">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
                         </div>
-                        <div>
-                            <h2 class="text-sm font-extrabold text-slate-900" id="slide-over-title">Your Cart</h2>
-                            <p class="text-[11px] text-slate-500"><span x-text="$store.cart.itemCount">0</span> items selected</p>
+                        <div class="min-w-0">
+                            <h2 class="text-sm font-black text-slate-900 truncate" id="slide-over-title">Your Cart</h2>
+                            <p class="text-[11px] text-slate-500 font-medium truncate"><span x-text="$store.cart.itemCount">0</span> items selected</p>
                         </div>
                     </div>
-                    <button type="button" @click="$store.cart.open = false" class="p-2 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-200/50">
+                    <button type="button"
+                            @click="$store.cart.open = false"
+                            class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-slate-700 active:text-slate-900 rounded-xl hover:bg-slate-200/60 active:bg-slate-300/60 transition flex-shrink-0"
+                            aria-label="Close cart drawer">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                     </button>
                 </div>
 
-                <!-- Free Shipping Progress Indicator -->
-                <div class="p-3 bg-emerald-50 border-b border-emerald-100">
-                    <div class="flex items-center justify-between text-xs font-semibold text-emerald-900 mb-1.5">
+                <!-- Free Shipping Progress Indicator (Fixed below header) -->
+                <div class="flex-shrink-0 p-3 bg-emerald-50/90 border-b border-emerald-100">
+                    <div class="flex items-center justify-between text-xs font-semibold text-emerald-950 mb-1.5 gap-2">
                         <template x-if="$store.cart.freeQualified">
-                            <span class="flex items-center space-x-1">
+                            <span class="flex items-center space-x-1.5 truncate">
                                 <span>🎉</span>
-                                <span><strong>Congratulations!</strong> You unlocked FREE Delivery!</span>
+                                <span class="truncate font-bold">You unlocked <strong>FREE Delivery!</strong></span>
                             </span>
                         </template>
                         <template x-if="!$store.cart.freeQualified">
-                            <span>Add <strong x-text="$store.cart.freeRemaining ? '₹' + $store.cart.freeRemaining : ''"></strong> more for <strong>FREE Delivery</strong></span>
+                            <span class="truncate">Add <strong class="text-emerald-700" x-text="$store.cart.freeRemaining ? '₹' + $store.cart.freeRemaining : ''"></strong> more for <strong>FREE Delivery</strong></span>
                         </template>
-                        <span class="text-[10px] font-bold" x-text="$store.cart.progressPercent + '%'"></span>
+                        <span class="text-[10px] font-black text-emerald-800 flex-shrink-0" x-text="$store.cart.progressPercent + '%'"></span>
                     </div>
-                    <div class="w-full bg-emerald-200/60 rounded-full h-1.5 overflow-hidden">
+                    <div class="w-full bg-emerald-200/70 rounded-full h-1.5 overflow-hidden">
                         <div class="bg-emerald-600 h-1.5 rounded-full transition-all duration-300" :style="'width: ' + $store.cart.progressPercent + '%'"></div>
                     </div>
                 </div>
 
-                <!-- Cart Items List / Scrollable Container -->
-                <div class="flex-1 overflow-y-auto p-4 sm:p-5 divide-y divide-slate-100">
+                <!-- Cart Items List / Independently Scrollable Container -->
+                <div class="flex-1 min-h-0 overflow-y-auto overscroll-contain p-3 sm:p-4 divide-y divide-slate-100">
                     <!-- Empty State -->
                     <template x-if="$store.cart.items.length === 0">
-                        <div class="h-full flex flex-col items-center justify-center text-center py-16">
-                            <div class="w-20 h-20 rounded-full bg-slate-100 flex items-center justify-center text-slate-300 mb-4">
-                                <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
+                        <div class="h-full flex flex-col items-center justify-center text-center py-12 px-4">
+                            <div class="w-16 h-16 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-500 mb-3 shadow-inner">
+                                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
                             </div>
-                            <h3 class="text-base font-bold text-slate-900">Your cart is empty</h3>
-                            <p class="text-xs text-slate-500 max-w-xs mt-1">Explore fresh grocery deals, nearby local shops and national products.</p>
-                            <button type="button" @click="$store.cart.open = false" class="mt-6 px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md">
-                                Start Shopping
-                            </button>
+                            <h3 class="text-sm font-black text-slate-900">Your cart is empty</h3>
+                            <p class="text-xs text-slate-500 max-w-xs mt-1">Explore exclusive electronics, smartphones, and top tech deals.</p>
+                            <a href="{{ route('search') }}"
+                               @click="$store.cart.open = false"
+                               class="mt-5 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white font-bold text-xs shadow-md shadow-indigo-600/20 transition inline-block">
+                                Explore Electronics
+                            </a>
                         </div>
                     </template>
 
                     <!-- Items List -->
                     <template x-for="item in $store.cart.items" :key="item.id">
-                        <div class="py-3 flex items-center justify-between gap-3">
-                            <div class="w-14 h-14 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center overflow-hidden flex-shrink-0">
-                                <template x-if="item.image_url">
-                                    <img :src="item.image_url" class="w-full h-full object-contain p-1" />
-                                </template>
-                                <template x-if="!item.image_url">
-                                    <span class="text-xs text-slate-300 font-bold">1S</span>
-                                </template>
+                        <div class="py-3 sm:py-3.5 flex items-center justify-between gap-2.5 sm:gap-3">
+                            <!-- Product Image -->
+                            <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center justify-center overflow-hidden flex-shrink-0 relative">
+                                <img :src="item.image_url || 'data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 100 100\' width=\'100\' height=\'100\'><rect width=\'100\' height=\'100\' rx=\'12\' fill=\'%23f1f5f9\'/><text x=\'50\' y=\'55\' font-family=\'sans-serif\' font-size=\'10\' font-weight=\'800\' fill=\'%232563eb\' text-anchor=\'middle\'>ALLZONE</text></svg>'"
+                                     :alt="item.title || 'Product'"
+                                     class="w-full h-full object-contain p-1"
+                                     loading="lazy"
+                                     onerror="this.onerror=null; this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 100 100\' width=\'100\' height=\'100\'><rect width=\'100\' height=\'100\' rx=\'12\' fill=\'%23f1f5f9\'/><text x=\'50\' y=\'55\' font-family=\'sans-serif\' font-size=\'10\' font-weight=\'800\' fill=\'%232563eb\' text-anchor=\'middle\'>ALLZONE</text></svg>';" />
                             </div>
 
-                            <div class="flex-1 min-w-0">
-                                <h4 class="text-xs font-bold text-slate-900 truncate" x-text="item.title"></h4>
-                                <div class="text-[11px] text-slate-500" x-text="item.variant_name"></div>
-                                <div class="flex items-center space-x-1 mt-0.5">
+                            <!-- Product Information with controlled text wrapping -->
+                            <div class="flex-1 min-w-0 pr-1">
+                                <h4 class="text-xs font-bold text-slate-900 line-clamp-2 leading-snug break-words" x-text="item.title"></h4>
+                                <div class="text-[11px] text-slate-500 font-medium truncate mt-0.5" x-show="item.variant_name && item.variant_name !== 'Standard'" x-text="item.variant_name"></div>
+                                <div class="flex items-baseline space-x-1.5 mt-1 flex-wrap">
                                     <span class="text-xs font-black text-slate-900" x-text="item.formatted_price"></span>
                                     <template x-if="item.mrp > item.price">
                                         <span class="text-[10px] text-slate-400 line-through" x-text="item.formatted_mrp"></span>
@@ -605,35 +620,72 @@
                                 </div>
                             </div>
 
-                            <!-- Stepper & Delete -->
-                            <div class="flex flex-col items-end space-y-1 flex-shrink-0">
-                                <div class="inline-flex items-center rounded-xl bg-indigo-50 border border-indigo-200 overflow-hidden text-indigo-700">
-                                    <button type="button" @click="$store.cart.updateQuantity(item.id, item.quantity - 1)" class="px-2 py-1 hover:bg-indigo-200 font-black text-xs">-</button>
-                                    <span class="px-2 text-xs font-extrabold" x-text="item.quantity"></span>
-                                    <button type="button" @click="$store.cart.updateQuantity(item.id, item.quantity + 1)" class="px-2 py-1 hover:bg-indigo-200 font-black text-xs">+</button>
+                            <!-- Stepper & Remove Button -->
+                            <div class="flex flex-col items-end justify-between flex-shrink-0 space-y-1.5">
+                                <div class="inline-flex items-center rounded-lg bg-indigo-50 border border-indigo-200 overflow-hidden text-indigo-700 shadow-xs">
+                                    <button type="button"
+                                            @click="$store.cart.updateQuantity(item.id, item.quantity - 1)"
+                                            class="w-7 h-7 flex items-center justify-center hover:bg-indigo-100 active:bg-indigo-200 font-black text-xs transition"
+                                            aria-label="Decrease quantity">-</button>
+                                    <span class="w-6 text-center text-xs font-black text-slate-900" x-text="item.quantity"></span>
+                                    <button type="button"
+                                            @click="$store.cart.updateQuantity(item.id, item.quantity + 1)"
+                                            class="w-7 h-7 flex items-center justify-center hover:bg-indigo-100 active:bg-indigo-200 font-black text-xs transition"
+                                            aria-label="Increase quantity">+</button>
                                 </div>
-                                <button type="button" @click="$store.cart.removeItem(item.id)" class="text-[10px] text-rose-500 hover:text-rose-700">Remove</button>
+                                <button type="button"
+                                        @click="$store.cart.removeItem(item.id)"
+                                        class="text-[11px] font-semibold text-rose-500 hover:text-rose-700 active:text-rose-800 transition py-0.5 px-1 rounded flex items-center space-x-0.5">
+                                    <span>Remove</span>
+                                </button>
                             </div>
                         </div>
                     </template>
                 </div>
 
-                <!-- Drawer Footer Summary -->
-                <div x-show="$store.cart.items.length > 0" class="p-4 sm:p-5 border-t border-slate-200 bg-slate-50 space-y-3">
+                <!-- Drawer Footer Summary (Sticky/Fixed at bottom, safe-area padded) -->
+                <div x-show="$store.cart.items.length > 0"
+                     class="flex-shrink-0 p-3.5 sm:p-5 border-t border-slate-200 bg-white sm:bg-slate-50 space-y-3 pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
                     <div class="space-y-1.5 text-xs">
+                        <!-- Subtotal -->
                         <div class="flex items-center justify-between text-slate-600">
-                            <span>Subtotal</span>
-                            <span class="font-bold text-slate-900" x-text="$store.cart.formattedSubtotal">₹0.00</span>
+                            <span class="font-medium">Subtotal</span>
+                            <span class="font-extrabold text-slate-900" x-text="$store.cart.formattedSubtotal">₹0.00</span>
                         </div>
+
+                        <!-- Discount (if applicable) -->
+                        <template x-if="($store.cart.couponDiscount && $store.cart.couponDiscount > 0) || ($store.cart.productDiscount && $store.cart.productDiscount > 0)">
+                            <div class="flex items-center justify-between text-emerald-600 font-medium">
+                                <span class="flex items-center space-x-1">
+                                    <span>Discount</span>
+                                    <template x-if="$store.cart.couponCode">
+                                        <span class="text-[10px] font-bold px-1.5 py-0.2 rounded bg-emerald-100 text-emerald-800" x-text="'(' + $store.cart.couponCode + ')'"></span>
+                                    </template>
+                                </span>
+                                <span class="font-extrabold" x-text="'-' + ($store.cart.formattedCouponDiscount && $store.cart.formattedCouponDiscount !== '₹0.00' ? $store.cart.formattedCouponDiscount : $store.cart.formattedProductDiscount)"></span>
+                            </div>
+                        </template>
+
+                        <!-- Delivery Fee -->
                         <div class="flex items-center justify-between text-slate-600">
-                            <span>Delivery Fee</span>
-                            <span :class="$store.cart.freeQualified ? 'text-emerald-600 font-bold' : 'font-bold text-slate-900'" x-text="$store.cart.freeQualified ? 'FREE' : '{{ format_currency(setting('base_delivery_fee', 40)) }}'"></span>
+                            <span class="font-medium">Delivery Fee</span>
+                            <span :class="$store.cart.freeQualified ? 'text-emerald-600 font-extrabold' : 'font-extrabold text-slate-900'"
+                                  x-text="$store.cart.freeQualified ? 'FREE' : ($store.cart.formattedDeliveryFee || '{{ format_currency(setting('base_delivery_fee', 40)) }}')">
+                            </span>
+                        </div>
+
+                        <!-- Grand Total -->
+                        <div class="pt-2 border-t border-slate-200 flex items-center justify-between text-sm">
+                            <span class="font-black text-slate-900">Grand Total</span>
+                            <span class="font-black text-indigo-700 text-base" x-text="$store.cart.formattedTotalPayable || $store.cart.formattedSubtotal">₹0.00</span>
                         </div>
                     </div>
 
-                    <a href="{{ route('cart.index') }}" class="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-extrabold text-sm flex items-center justify-between shadow-lg shadow-emerald-500/20 active:scale-95 transition">
-                        <span>View Cart & Checkout</span>
-                        <span x-text="$store.cart.formattedSubtotal">₹0.00</span>
+                    <!-- Primary Checkout CTA Button -->
+                    <a href="{{ route('cart.index') }}"
+                       class="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 active:from-emerald-800 active:to-teal-800 text-white font-extrabold text-sm flex items-center justify-between shadow-lg shadow-emerald-600/20 active:scale-[0.98] transition min-h-[48px]">
+                        <span class="tracking-tight">View Cart &amp; Checkout</span>
+                        <span class="font-black text-base ml-2 flex-shrink-0" x-text="$store.cart.formattedTotalPayable || $store.cart.formattedSubtotal">₹0.00</span>
                     </a>
                 </div>
 
@@ -797,11 +849,11 @@
                 <div class="p-4 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white flex items-center justify-between flex-shrink-0 shadow-sm">
                     <div class="flex items-center space-x-3 min-w-0">
                         @auth
-                            <div class="w-10 h-10 rounded-xl bg-indigo-600 text-white font-extrabold text-sm flex items-center justify-center shadow-md flex-shrink-0">
-                                {{ substr(auth()->user()->name, 0, 1) }}
+                            <div class="w-10 h-10 rounded-xl bg-blue-600 text-white font-black text-sm flex items-center justify-center shadow-md flex-shrink-0">
+                                {{ strtoupper(substr(auth()->user()->name, 0, 1)) }}
                             </div>
                             <div class="min-w-0">
-                                <p class="text-[10px] text-indigo-300 font-medium uppercase tracking-wider">Hello,</p>
+                                <p class="text-[10px] text-blue-300 font-medium uppercase tracking-wider">Hello,</p>
                                 <h3 class="font-extrabold text-sm text-white truncate">{{ auth()->user()->name }}</h3>
                             </div>
                         @else
@@ -839,9 +891,9 @@
                         <span class="text-[10px] font-bold text-slate-800">Quick 15m</span>
                     </a>
                     --}}
-                    <a href="{{ route('stores.index') }}" @click="mobileCategoryOpen = false" class="p-2 rounded-xl bg-white border border-slate-200/80 hover:border-emerald-300 hover:bg-emerald-50/40 text-slate-700 transition flex flex-col items-center">
-                        <span class="text-base mb-0.5">🏪</span>
-                        <span class="text-[10px] font-bold text-slate-800">Stores</span>
+                    <a href="{{ route('search') }}" @click="mobileCategoryOpen = false" class="p-2 rounded-xl bg-white border border-slate-200/80 hover:border-blue-300 hover:bg-blue-50/40 text-slate-700 transition flex flex-col items-center">
+                        <span class="text-base mb-0.5">⚡</span>
+                        <span class="text-[10px] font-bold text-slate-800">Explore</span>
                     </a>
                 </div>
 
@@ -857,29 +909,28 @@
                 <div class="flex-1 overflow-y-auto p-3 space-y-2">
                     @php
                         $categoryIcons = [
-                            'groceries' => '🛒',
-                            'grocery' => '🛒',
-                            'fruits' => '🍎',
-                            'vegetables' => '🥬',
-                            'dairy' => '🥛',
-                            'snacks' => '🍪',
-                            'beverages' => '🧃',
-                            'personal' => '🧴',
-                            'hygiene' => '🧼',
-                            'beauty' => '💄',
-                            'electronics' => '📱',
-                            'gadgets' => '⚡',
+                            'refrigerator' => '❄️',
+                            'freezer' => '❄️',
+                            'cooling' => '❄️',
+                            'mobile' => '📱',
+                            'smartphone' => '📱',
+                            'phone' => '📱',
+                            'television' => '📺',
+                            'tv' => '📺',
+                            'air-conditioner' => '💨',
+                            'ac' => '💨',
+                            'conditioner' => '💨',
+                            'laptop' => '💻',
+                            'computer' => '💻',
+                            'audio' => '🎧',
+                            'headphone' => '🎧',
+                            'earphone' => '🎧',
+                            'speaker' => '🔊',
+                            'appliance' => '🔌',
                             'home' => '🏠',
-                            'kitchen' => '🍳',
-                            'fashion' => '👕',
-                            'clothing' => '👗',
-                            'baby' => '🍼',
-                            'pharmacy' => '💊',
-                            'medicines' => '💊',
-                            'meat' => '🍗',
-                            'fish' => '🐟',
-                            'bakery' => '🍞',
-                            'stationery' => '📚',
+                            'accessory' => '🖱️',
+                            'gadget' => '⚡',
+                            'watch' => '⌚',
                         ];
                     @endphp
 
@@ -1028,10 +1079,10 @@
                 <span class="text-[10px] mt-0.5">Categories</span>
             </button>
 
-            <!-- Stores -->
-            <a href="{{ route('stores.index') }}" class="flex flex-col items-center py-1 text-slate-600 hover:text-indigo-600">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
-                <span class="text-[10px] mt-0.5">Stores</span>
+            <!-- Explore -->
+            <a href="{{ route('search') }}" class="flex flex-col items-center py-1 text-slate-600 hover:text-blue-600">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                <span class="text-[10px] mt-0.5">Explore</span>
             </a>
 
             <!-- Cart Trigger -->
@@ -1048,16 +1099,16 @@
 
             <!-- Account -->
             @auth
-                <a href="{{ route('customer.profile') }}" class="flex flex-col items-center py-1 text-slate-600 hover:text-indigo-600">
-                    <div class="w-5 h-5 rounded-full bg-indigo-600 text-white text-[10px] font-bold flex items-center justify-center">
-                        {{ substr(auth()->user()->name, 0, 1) }}
+                <a href="{{ route('customer.profile') }}" class="flex flex-col items-center py-1 text-slate-600 hover:text-blue-600">
+                    <div class="w-5 h-5 rounded-full bg-blue-600 text-white text-[10px] font-black flex items-center justify-center">
+                        {{ strtoupper(substr(auth()->user()->name, 0, 1)) }}
                     </div>
-                    <span class="text-[10px] mt-0.5">Account</span>
+                    <span class="text-[10px] mt-0.5 font-bold">Account</span>
                 </a>
             @else
-                <a href="{{ route('login') }}" class="flex flex-col items-center py-1 text-slate-600 hover:text-indigo-600">
+                <a href="{{ route('login') }}" class="flex flex-col items-center py-1 text-slate-600 hover:text-blue-600">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
-                    <span class="text-[10px] mt-0.5">Sign In</span>
+                    <span class="text-[10px] mt-0.5 font-medium">Sign In</span>
                 </a>
             @endauth
         </div>
@@ -1065,54 +1116,54 @@
     @endif
 
     <!-- Footer -->
-    <footer class="bg-slate-900 text-slate-400 py-16 border-t border-slate-800 mt-16 text-xs">
+    <footer class="bg-slate-900 text-slate-400 py-10 sm:py-14 border-t border-slate-800 mt-10 sm:mt-14 text-xs">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
             <!-- Trust Badges Strip -->
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-6 pb-12 border-b border-slate-800">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 pb-8 sm:pb-10 border-b border-slate-800">
                 <div class="flex items-center space-x-3">
-                    <div class="w-10 h-10 rounded-xl bg-amber-400/10 text-amber-400 flex items-center justify-center text-lg flex-shrink-0">
+                    <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center text-lg flex-shrink-0">
                         ⚡
                     </div>
                     <div>
-                        <h4 class="font-bold text-white text-xs">10-30 Min Delivery</h4>
-                        <p class="text-[11px] text-slate-500">From verified local neighbourhood stores</p>
+                        <h4 class="font-bold text-white text-xs">Express Dispatch</h4>
+                        <p class="text-[11px] text-slate-400">Tracked courier via Shiprocket</p>
                     </div>
                 </div>
 
                 <div class="flex items-center space-x-3">
-                    <div class="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center text-lg flex-shrink-0">
+                    <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center text-lg flex-shrink-0">
                         🛡️
                     </div>
                     <div>
                         <h4 class="font-bold text-white text-xs">100% Genuine</h4>
-                        <p class="text-[11px] text-slate-500">Direct from brand authorized sellers</p>
+                        <p class="text-[11px] text-slate-400">Official manufacturer warranty</p>
                     </div>
                 </div>
 
                 <div class="flex items-center space-x-3">
-                    <div class="w-10 h-10 rounded-xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center text-lg flex-shrink-0">
+                    <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center text-lg flex-shrink-0">
                         🔒
                     </div>
                     <div>
                         <h4 class="font-bold text-white text-xs">Secure Payments</h4>
-                        <p class="text-[11px] text-slate-500">UPI, Cards, NetBanking & COD</p>
+                        <p class="text-[11px] text-slate-400">Razorpay UPI, Cards & COD</p>
                     </div>
                 </div>
 
                 <div class="flex items-center space-x-3">
-                    <div class="w-10 h-10 rounded-xl bg-rose-500/10 text-rose-400 flex items-center justify-center text-lg flex-shrink-0">
+                    <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-rose-500/10 text-rose-400 flex items-center justify-center text-lg flex-shrink-0">
                         🔄
                     </div>
                     <div>
-                        <h4 class="font-bold text-white text-xs">Easy 7-Day Returns</h4>
-                        <p class="text-[11px] text-slate-500">Hassle-free doorstep pickup & refunds</p>
+                        <h4 class="font-bold text-white text-xs">7-Day Replacement</h4>
+                        <p class="text-[11px] text-slate-400">Easy replacement & refunds</p>
                     </div>
                 </div>
             </div>
 
             <!-- Footer Columns -->
-            <div class="grid grid-cols-1 md:grid-cols-5 gap-8 py-12">
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-6 sm:gap-8 py-8 sm:py-10">
                 <!-- Brand Info -->
                 <div class="md:col-span-2 space-y-4">
                     <div class="flex items-center space-x-2 text-white font-black text-xl">
@@ -1141,7 +1192,7 @@
                     <h5 class="text-xs font-bold uppercase tracking-wider text-white mb-4">Platform Modes</h5>
                     <ul class="space-y-2 text-xs">
                         {{-- <li><a href="{{ route('quick.index') }}" class="hover:text-white transition">⚡ Quick Commerce (10-30m)</a></li> --}}
-                        <li><a href="{{ route('stores.index') }}" class="hover:text-white transition">🏪 Physical Stores Directory</a></li>
+                        <li><a href="{{ route('search') }}" class="hover:text-white transition">⚡ All Electronics Catalog</a></li>
                         <li><a href="{{ route('search', ['sort' => 'discount_desc']) }}" class="hover:text-white transition">🔥 Marketplace Deals</a></li>
                         <li><a href="{{ route('search', ['tab' => 'brands']) }}" class="hover:text-white transition">✓ Verified Brand Stores</a></li>
                         <li><a href="{{ route('seller.dashboard') }}" class="hover:text-white transition">📦 Cargo Freight Logistics</a></li>

@@ -23,7 +23,7 @@
             </div>
 
             <p class="text-xs text-slate-600 max-w-lg mx-auto">
-                We've received your order and notified the sellers. Your items have been automatically routed into {{ count($order->fulfilmentOrders) }} package{{ count($order->fulfilmentOrders) > 1 ? 's' : '' }} for quickest delivery.
+                We've received your order and initiated fulfillment. Your items have been automatically routed into {{ count($order->fulfilmentOrders) }} package{{ count($order->fulfilmentOrders) > 1 ? 's' : '' }} for quickest delivery.
             </p>
 
             <!-- Order Timeline -->
@@ -72,10 +72,7 @@
                                     Package: {{ $fo->fulfilment_order_number }}
                                 </div>
                                 <div class="text-[11px] text-slate-500">
-                                    Seller: <strong>{{ $fo->seller?->business_name ?? (setting('name', 'ALLZONE') . ' Seller') }}</strong>
-                                    @if ($fo->store)
-                                        • Store: {{ $fo->store->name }}
-                                    @endif
+                                    Fulfilled by: <strong>ALLZONE Assured</strong> • Dispatched via Shiprocket Express
                                 </div>
                             </div>
                         </div>

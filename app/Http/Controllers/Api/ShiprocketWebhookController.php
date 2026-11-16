@@ -230,6 +230,31 @@ class ShiprocketWebhookController extends Controller
 
                     if ($allDelivered) {
                         $order->status = \App\Enums\OrderStatus::DELIVERED;
+
+                        $methodStr = strtolower((string) ($order->payment_method?->value ?? $order->payment_method));
+                        $pStatusStr = strtolower((string) ($order->payment_status?->value ?? $order->payment_status));
+
+                        if (in_array($methodStr, ['cod', 'cash_on_delivery'], true) && in_array($pStatusStr, ['pending', 'cod_pending'], true)) {
+                            $order->payment_status = \App\Enums\PaymentStatus::PAID;
+
+                            $existingPayment = $order->payments()->first();
+                            if ($existingPayment) {
+                                $existingPayment->status = \App\Enums\PaymentStatus::PAID;
+                                $existingPayment->verified_at = now();
+                                $existingPayment->save();
+                            } else {
+                                $order->payments()->create([
+                                    'gateway' => 'cod',
+                                    'method' => 'cod',
+                                    'amount' => $order->grand_total,
+                                    'currency' => 'INR',
+                                    'status' => \App\Enums\PaymentStatus::PAID,
+                                    'verified_at' => now(),
+                                    'gateway_payment_id' => 'COD-COLLECTED-' . $order->order_number,
+                                ]);
+                            }
+                        }
+
                         $order->save();
 
                         OrderStatusHistory::create([

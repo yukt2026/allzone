@@ -65,7 +65,7 @@
                     </div>
                     <div class="flex-1 min-w-0">
                         <div class="text-[10px] uppercase font-bold text-indigo-600 tracking-wider">
-                            {{ $item->fulfilmentOrder?->seller?->business_name ?? (setting('name', 'ALLZONE') . ' Direct') }}
+                            {{ setting('name', 'ALLZONE') }} Assured Replacement &amp; Returns
                         </div>
                         <h2 class="text-sm font-black text-slate-900 truncate mt-0.5">{{ $item->title }}</h2>
                         <div class="text-xs text-slate-500 mt-0.5">

@@ -272,7 +272,7 @@ class SeoService
             $sku = (string) ($firstVariant->sku ?? $sku);
         }
 
-        $sellerName = $product->seller?->business_name ?? setting('name', 'ALLZONE');
+        $sellerName = setting('name', 'ALLZONE') . ' Assured';
 
         $schema = [
             '@context' => 'https://schema.org',

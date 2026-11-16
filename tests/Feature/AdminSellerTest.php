@@ -122,7 +122,7 @@ class AdminSellerTest extends TestCase
 
         $response->assertStatus(200);
         $this->assertStringContainsString('text/csv', (string) $response->headers->get('Content-Type'));
-        $this->assertStringContainsString('attachment; filename="onestall_sellers_export_', (string) $response->headers->get('Content-Disposition'));
+        $this->assertStringContainsString('attachment; filename="allzone_sellers_export_', (string) $response->headers->get('Content-Disposition'));
 
         $content = $response->streamedContent();
         $this->assertStringContainsString('Business Name', $content);

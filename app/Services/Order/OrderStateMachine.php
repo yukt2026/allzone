@@ -268,6 +268,35 @@ class OrderStateMachine
 
         return DB::transaction(function () use ($order, $fromStatus, $toStatus, $targetEnum, $note, $userId) {
             $order->status = $targetEnum;
+
+            // Automatically reconcile payment status when order is delivered
+            if ($targetEnum === OrderStatus::DELIVERED) {
+                $methodStr = strtolower((string) ($order->payment_method?->value ?? $order->payment_method));
+                $pStatusStr = strtolower((string) ($order->payment_status?->value ?? $order->payment_status));
+
+                // If COD order is delivered, cash was collected at doorstep -> payment is PAID
+                if (in_array($methodStr, ['cod', 'cash_on_delivery'], true) && in_array($pStatusStr, ['pending', 'cod_pending'], true)) {
+                    $order->payment_status = PaymentStatus::PAID;
+
+                    $existingPayment = $order->payments()->first();
+                    if ($existingPayment) {
+                        $existingPayment->status = PaymentStatus::PAID;
+                        $existingPayment->verified_at = now();
+                        $existingPayment->save();
+                    } else {
+                        $order->payments()->create([
+                            'gateway' => 'cod',
+                            'method' => 'cod',
+                            'amount' => $order->grand_total,
+                            'currency' => 'INR',
+                            'status' => PaymentStatus::PAID,
+                            'verified_at' => now(),
+                            'gateway_payment_id' => 'COD-COLLECTED-' . $order->order_number,
+                        ]);
+                    }
+                }
+            }
+
             $order->save();
 
             OrderStatusHistory::create([

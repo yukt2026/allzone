@@ -728,35 +728,11 @@ class PaymentGatewayTest extends TestCase
         $this->assertEquals(PaymentStatus::PAID, $order->payment_status);
     }
 
-    public function test_cashfree_driver_resolves_and_creates_order_payload(): void
+    public function test_cashfree_driver_is_unsupported_enforcing_razorpay_only(): void
     {
-        $driver = $this->gatewayManager->driver('cashfree');
-        $this->assertInstanceOf(CashfreeGateway::class, $driver);
-        $this->assertEquals('cashfree', $driver->getIdentifier());
-
-        $order = $this->createTestOrder(400.00);
-
-        $payment = Payment::create([
-            'order_id' => $order->id,
-            'gateway' => 'cashfree',
-            'amount' => 400.00,
-            'currency' => 'INR',
-            'status' => PaymentStatus::PENDING,
-        ]);
-
-        Http::fake([
-            'https://sandbox.cashfree.com/pg/orders' => Http::response([
-                'order_id' => $order->order_number,
-                'order_amount' => 400.00,
-                'order_currency' => 'INR',
-                'payment_session_id' => 'session_mock_cf_123',
-            ], 200),
-        ]);
-
-        $result = $driver->createOrder($order, $payment);
-
-        $this->assertEquals($order->order_number, $result['gateway_order_id']);
-        $this->assertEquals(400.00, $result['amount']);
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Unsupported payment gateway driver: [cashfree].');
+        $this->gatewayManager->driver('cashfree');
     }
 
     public function test_sensitive_card_details_are_sanitized_in_gateway_responses(): void

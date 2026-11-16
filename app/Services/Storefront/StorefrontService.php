@@ -279,7 +279,10 @@ class StorefrontService
             $products = Product::active()
                 ->where(function ($q) use ($term) {
                     $q->where('title', 'like', "%{$term}%")
-                        ->orWhere('description', 'like', "%{$term}%");
+                        ->orWhere('description', 'like', "%{$term}%")
+                        ->orWhereHas('brand', fn ($bq) => $bq->where('name', 'like', "%{$term}%"))
+                        ->orWhereHas('category', fn ($cq) => $cq->where('name', 'like', "%{$term}%"))
+                        ->orWhereHas('variants', fn ($vq) => $vq->where('sku', 'like', "%{$term}%")->orWhere('title', 'like', "%{$term}%"));
                 })
                 ->with(['media', 'defaultVariant', 'variants', 'brand', 'category'])
                 ->take(6)

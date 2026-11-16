@@ -171,7 +171,7 @@ class ProductDetailController extends Controller
                     : 'https://schema.org/OutOfStock',
                 'seller' => [
                     '@type' => 'Organization',
-                    'name' => $product->seller?->business_name ?? (setting('name', 'ALLZONE') . ' Seller'),
+                    'name' => setting('name', 'ALLZONE') . ' Assured',
                 ],
             ],
             'aggregateRating' => [

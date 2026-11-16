@@ -416,7 +416,7 @@ class SinglePageCheckoutTest extends TestCase
 
         // 1. Parent Order assertions
         $this->assertNotNull($order->id);
-        $this->assertStringStartsWith('OS-', $order->order_number);
+        $this->assertStringStartsWith('AZ-', $order->order_number);
         $this->assertEquals(990.00, (float) $order->subtotal);
         $this->assertEquals(0.00, (float) $order->delivery_fee);
         $this->assertEquals(990.00, (float) $order->total);
@@ -612,6 +612,6 @@ class SinglePageCheckoutTest extends TestCase
             ->assertSee($order->order_number)
             ->assertSee('Order Confirmed')
             ->assertSee('Organic Cow Milk 1L')
-            ->assertSee('Speedy Mart Hyperlocal');
+            ->assertSee('ALLZONE Assured');
     }
 }

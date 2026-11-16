@@ -164,17 +164,15 @@ class DiscoveryPagesTest extends TestCase
         $response->assertSee('Amul Gold Full Cream Milk 1L');
         $response->assertSee('Filters');
         $response->assertSee('Products (');
-        $response->assertSee('Stores (');
-        $response->assertSee('Brands (');
+        $response->assertSee('Official Brands (');
     }
 
     public function test_search_page_switches_tabs_to_stores_and_brands(): void
     {
-        // Stores Tab
+        // Stores tab defaults to products on unified marketplace
         $resStore = $this->get(route('search', ['q' => 'Indiranagar', 'tab' => 'stores']));
         $resStore->assertStatus(200);
-        $resStore->assertSee('Indiranagar SuperStore');
-        $resStore->assertSee('Visit Store');
+        $resStore->assertSee('Products (');
 
         // Brands Tab
         $resBrand = $this->get(route('search', ['q' => 'Amul', 'tab' => 'brands']));
@@ -220,11 +218,8 @@ class DiscoveryPagesTest extends TestCase
     {
         $response = $this->get(route('stores.index', ['radius_km' => 25]));
 
-        $response->assertStatus(200);
-        $response->assertSee('Nearby Stores');
-        $response->assertSee('Indiranagar SuperStore');
-        $response->assertSee('12th Main, HAL 2nd Stage, Indiranagar');
-        $response->assertSee('Enter Storefront');
+        // Public stores directory redirects to unified catalog search
+        $response->assertRedirect(route('search', ['radius_km' => 25]));
     }
 
     public function test_product_detail_page_renders_with_variants_and_schema(): void

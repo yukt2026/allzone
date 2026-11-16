@@ -9,6 +9,7 @@ use App\Enums\ReviewStatus;
 use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Product;
+use App\Models\Review;
 use App\Services\Storefront\StorefrontService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -153,7 +154,8 @@ class StorefrontApiController extends ApiController
                     ->orWhere('description', 'like', "%{$search}%")
                     ->orWhereHas('brand', fn ($bq) => $bq->where('name', 'like', "%{$search}%"))
                     ->orWhereHas('category', fn ($cq) => $cq->where('name', 'like', "%{$search}%"))
-                    ->orWhereHas('variants', fn ($vq) => $vq->where('sku', 'like', "%{$search}%"));
+                    ->orWhereHas('variants', fn ($vq) => $vq->where('sku', 'like', "%{$search}%")->orWhere('title', 'like', "%{$search}%"))
+                    ->orWhereHas('specifications', fn ($sq) => $sq->where('value', 'like', "%{$search}%"));
             });
         }
 
@@ -176,14 +178,14 @@ class StorefrontApiController extends ApiController
             $query->where('is_quick_capable', true);
         }
 
-        // Price range
-        if ($request->filled('min_price')) {
-            $minPrice = (float) $request->input('min_price');
-            $query->whereHas('variants', fn ($q) => $q->where('selling_price', '>=', $minPrice));
+        // Price range (supporting both min_price/price_min and max_price/price_max)
+        $minPrice = $request->input('min_price') ?? $request->input('price_min');
+        if ($minPrice !== null && is_numeric($minPrice)) {
+            $query->whereHas('variants', fn ($q) => $q->where('selling_price', '>=', (float) $minPrice));
         }
-        if ($request->filled('max_price')) {
-            $maxPrice = (float) $request->input('max_price');
-            $query->whereHas('variants', fn ($q) => $q->where('selling_price', '<=', $maxPrice));
+        $maxPrice = $request->input('max_price') ?? $request->input('price_max');
+        if ($maxPrice !== null && is_numeric($maxPrice)) {
+            $query->whereHas('variants', fn ($q) => $q->where('selling_price', '<=', (float) $maxPrice));
         }
 
         // In Stock only
@@ -196,13 +198,25 @@ class StorefrontApiController extends ApiController
         // Sorting
         $sort = (string) $request->input('sort', 'latest');
         match ($sort) {
-            'price_low' => $query->join('product_variants', function ($j) {
+            'price_low', 'price_asc' => $query->join('product_variants', function ($j) {
                 $j->on('products.id', '=', 'product_variants.product_id')->where('product_variants.is_default', true);
             })->orderBy('product_variants.selling_price', 'asc')->select('products.*'),
-            'price_high' => $query->join('product_variants', function ($j) {
+            'price_high', 'price_desc' => $query->join('product_variants', function ($j) {
                 $j->on('products.id', '=', 'product_variants.product_id')->where('product_variants.is_default', true);
             })->orderBy('product_variants.selling_price', 'desc')->select('products.*'),
-            'rating' => $query->orderByDesc('id'),
+            'discount', 'discount_desc' => $query->orderBy(
+                \App\Models\ProductVariant::selectRaw('((mrp - selling_price) / CASE WHEN mrp > 0 THEN mrp ELSE 1 END)')
+                    ->whereColumn('product_variants.product_id', 'products.id')
+                    ->orderByRaw('((mrp - selling_price) / CASE WHEN mrp > 0 THEN mrp ELSE 1 END) desc')
+                    ->limit(1),
+                'desc'
+            ),
+            'rating', 'rating_desc' => $query->orderBy(
+                Review::selectRaw('coalesce(avg(rating), 0)')
+                    ->whereColumn('reviews.product_id', 'products.id')
+                    ->where('status', 'approved'),
+                'desc'
+            )->orderByDesc('products.id'),
             default => $query->latest('products.id'),
         };
 
@@ -329,12 +343,12 @@ class StorefrontApiController extends ApiController
                     'slug' => $product->category->parent->slug,
                 ] : null,
             ] : null,
-            'seller' => $product->seller ? [
-                'id' => $product->seller->id,
-                'business_name' => $product->seller->business_name,
-                'city' => $product->seller->city,
-                'state' => $product->seller->state,
-            ] : null,
+            'seller' => [
+                'name' => 'ALLZONE Verified Partner',
+                'fulfilled_by' => setting('name', 'ALLZONE'),
+                'is_verified' => true,
+                'badge' => 'ALLZONE Assured',
+            ],
             'gallery' => $gallery,
             'variants' => $variants,
             'specifications' => $specs,
@@ -383,7 +397,7 @@ class StorefrontApiController extends ApiController
             'is_quick_capable' => (bool) $product->is_quick_capable,
             'in_stock' => $inStock,
             'default_variant_id' => $variant?->id,
-            'brand_name' => $product->brand?->name ?? $product->seller?->business_name ?? setting('name', 'ALLZONE'),
+            'brand_name' => $product->brand?->name ?? setting('name', 'ALLZONE'),
             'category_name' => $product->category?->name,
         ];
     }

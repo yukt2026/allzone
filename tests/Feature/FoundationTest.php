@@ -24,7 +24,7 @@ class FoundationTest extends TestCase
     {
         $response = $this->get('/');
         $response->assertStatus(200);
-        $response->assertSee('OneStall');
+        $response->assertSee(setting('name', 'ALLZONE'));
     }
 
     /**
@@ -66,7 +66,7 @@ class FoundationTest extends TestCase
 
         $response = $this->actingAs($admin)->get('/admin/ui-kit');
         $response->assertStatus(200);
-        $response->assertSee('OneStall Design System', false);
+        $response->assertSee('Design System', false);
     }
 
     /**

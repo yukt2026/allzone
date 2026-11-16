@@ -19,42 +19,11 @@ class QuickCommerceController extends Controller
     ) {}
 
     /**
-     * Quick Commerce Discovery Portal (/quick).
+     * Quick Commerce Discovery Portal (/quick) - Unified to Electronics Catalog.
      */
-    public function index(Request $request): View
+    public function index(Request $request): \Illuminate\Http\RedirectResponse
     {
-        $lat = (float) $request->session()->get('user_lat', setting('default_lat', 12.9716));
-        $lng = (float) $request->session()->get('user_lng', setting('default_lng', 77.5946));
-
-        if ($request->has('lat') && $request->has('lng')) {
-            $lat = (float) $request->query('lat');
-            $lng = (float) $request->query('lng');
-            $request->session()->put('user_lat', $lat);
-            $request->session()->put('user_lng', $lng);
-        }
-
-        $categorySlug = $request->query('category');
-        $search = $request->query('q');
-
-        $nearbyStores = $this->quickService->getNearbyQuickStores($lat, $lng);
-        $products = $this->quickService->getQuickEligibleProducts($lat, $lng, $categorySlug, $search);
-
-        $categories = Category::query()
-            ->where('is_active', true)
-            ->whereNull('parent_id')
-            ->with(['children' => fn ($q) => $q->where('is_active', true)])
-            ->take(8)
-            ->get();
-
-        return view('storefront.quick.index', [
-            'lat' => $lat,
-            'lng' => $lng,
-            'nearbyStores' => $nearbyStores,
-            'products' => $products,
-            'categories' => $categories,
-            'selectedCategory' => $categorySlug,
-            'searchQuery' => $search,
-        ]);
+        return redirect()->route('search');
     }
 
     /**
@@ -111,7 +80,7 @@ class QuickCommerceController extends Controller
             'package_status' => $quickFulfilment->status,
             'estimated_delivery_at' => $quickFulfilment->estimated_delivery_at?->toIso8601String(),
             'store' => [
-                'name' => $store?->name ?? (setting('name', 'ALLZONE') . ' Store Hub'),
+                'name' => setting('name', 'ALLZONE') . ' Fulfillment Hub',
                 'lat' => $storeLoc?->lat ? (float) $storeLoc->lat : 12.9716,
                 'lng' => $storeLoc?->lng ? (float) $storeLoc->lng : 77.5946,
                 'address' => $storeLoc?->address ?? '',

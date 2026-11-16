@@ -413,43 +413,40 @@
                 </div>
             </div>
 
-            <!-- Seller / Store Info Card -->
-            @if($product->seller)
-                @php
-                    $sellerStore = $product->seller->stores->first();
-                @endphp
-                <div class="p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl bg-white border border-slate-200/80 shadow-xs flex items-center justify-between gap-3">
-                    <div class="flex items-center space-x-2.5 sm:space-x-3 min-w-0">
-                        <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-black text-base sm:text-lg shrink-0">
-                            🏪
-                        </div>
-                        <div class="min-w-0">
-                            <span class="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Sold & Fulfilled By</span>
-                            <h4 class="text-xs sm:text-sm font-extrabold text-slate-900 truncate">
-                                {{ $sellerStore?->name ?? $product->seller->business_name }}
-                            </h4>
-                            <div class="flex items-center space-x-1.5 text-[10px] sm:text-[11px] text-slate-500 truncate">
-                                <span class="text-amber-600 font-bold">★ {{ number_format($sellerStore?->rating_avg ?? 4.8, 1) }}</span>
-                                <span>&bull;</span>
-                                <span class="truncate">{{ $sellerStore?->location?->city ?? 'Verified Merchant' }}</span>
-                            </div>
+            <!-- Unified ALLZONE Assured & Fulfillment Card -->
+            <div class="p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl bg-white border border-slate-200/90 shadow-xs flex items-center justify-between gap-3">
+                <div class="flex items-center space-x-2.5 sm:space-x-3 min-w-0">
+                    <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center font-black text-base sm:text-lg shrink-0 border border-blue-100">
+                        🛡️
+                    </div>
+                    <div class="min-w-0">
+                        <span class="text-[9px] sm:text-[10px] font-extrabold text-blue-600 uppercase tracking-wider block">Unified Marketplace Guarantee</span>
+                        <h4 class="text-xs sm:text-sm font-black text-slate-900 truncate">
+                            Fulfilled by {{ setting('name', 'ALLZONE') }} Assured
+                        </h4>
+                        <div class="flex items-center space-x-1.5 text-[10px] sm:text-[11px] text-slate-500 truncate">
+                            <span class="text-emerald-600 font-bold">✓ 100% Genuine</span>
+                            <span>&bull;</span>
+                            <span class="truncate">Brand Warranty</span>
+                            <span>&bull;</span>
+                            <span class="truncate">Shiprocket Express</span>
                         </div>
                     </div>
-
-                    @if($sellerStore)
-                        <a href="{{ route('store.show', $sellerStore->slug) }}" class="px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl bg-indigo-50 hover:bg-indigo-600 text-indigo-700 hover:text-white font-bold text-[11px] sm:text-xs transition shrink-0 whitespace-nowrap">
-                            Visit Store &rarr;
-                        </a>
-                    @endif
                 </div>
-            @endif
+
+                <div class="text-right shrink-0">
+                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-black bg-blue-50 text-blue-700 border border-blue-200">
+                        AZ Assured
+                    </span>
+                </div>
+            </div>
 
             <!-- Multivendor / Other Sellers Buy-Box -->
             @if($otherSellers->isNotEmpty())
                 <div class="p-4 sm:p-5 rounded-2xl sm:rounded-3xl bg-white border border-slate-200/80 shadow-xs space-y-3">
                     <div class="flex items-center justify-between">
                         <h4 class="text-xs font-bold uppercase tracking-wider text-slate-900">
-                            Other Sellers Offering This Product
+                            More Buying Options on ALLZONE
                         </h4>
                         <span class="text-[11px] text-slate-400">{{ $otherSellers->count() }} offers</span>
                     </div>
@@ -458,13 +455,13 @@
                         @foreach($otherSellers as $os)
                             <div class="py-2.5 flex items-center justify-between gap-2 text-xs">
                                 <div>
-                                    <span class="font-bold text-slate-900">{{ $os->seller?->business_name ?? 'Marketplace Vendor' }}</span>
-                                    <div class="text-[10px] text-slate-400">Standard Delivery in 2-3 days</div>
+                                    <span class="font-bold text-slate-900">{{ setting('name', 'ALLZONE') }} Verified Partner</span>
+                                    <div class="text-[10px] text-slate-400">Shiprocket Express Delivery (2-3 days)</div>
                                 </div>
                                 <div class="text-right">
                                     <span class="font-black text-slate-900">{{ format_currency($os->effective_price) }}</span>
                                     <div>
-                                        <a href="{{ route('product.show', $os->slug) }}" class="text-[10px] font-bold text-indigo-600 hover:underline">View Offer</a>
+                                        <a href="{{ route('product.show', $os->slug) }}" class="text-[10px] font-bold text-blue-600 hover:underline">View Offer</a>
                                     </div>
                                 </div>
                             </div>
@@ -634,12 +631,12 @@
                                     <span>{{ $ans->answer }}</span>
                                 </div>
                                 <div class="text-[10px] text-slate-400">
-                                    Answered by {{ $ans->user?->name ?? (setting('name', 'ALLZONE') . ' Seller') }} &bull; {{ $ans->created_at->format('M d, Y') }}
+                                    Answered by {{ $ans->user?->name ?? (setting('name', 'ALLZONE') . ' Electronics Expert') }} &bull; {{ $ans->created_at->format('M d, Y') }}
                                 </div>
                             </div>
                         @endforeach
                     @else
-                        <div class="pl-4 sm:pl-5 text-slate-400 text-[11px] italic">No answers yet. The seller will answer shortly.</div>
+                        <div class="pl-4 sm:pl-5 text-slate-400 text-[11px] italic">No answers yet. Our electronics support team will answer shortly.</div>
                     @endif
                 </div>
             @empty

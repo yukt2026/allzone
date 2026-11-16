@@ -172,25 +172,25 @@ class SellerProductTest extends TestCase
     {
         // 1. Save as Draft
         $draftPayload = [
-            'title' => 'Organic Fresh Paneer 200g',
+            'title' => 'Wireless Fast Charger Pad 15W',
             'category_id' => $this->category->id,
             'brand_id' => $this->brand->id,
             'product_type' => 'simple',
-            'short_desc' => 'Fresh buffalo milk paneer made daily.',
-            'description' => '<p>Soft, fresh, and protein-packed paneer.</p>',
-            'tax_percent' => 5.00,
-            'return_window_days' => 2,
+            'short_desc' => 'High speed Qi certified wireless fast charging pad.',
+            'description' => '<p>Universal compatibility with fast heat dissipation.</p>',
+            'tax_percent' => 18.00,
+            'return_window_days' => 7,
             'is_returnable' => '1',
             'is_cod_allowed' => '1',
             'is_quick_capable' => '1',
             'submit_action' => 'save_draft',
-            'simple_sku' => 'PANEER-200G',
-            'simple_mrp' => 120.00,
-            'simple_selling_price' => 110.00,
+            'simple_sku' => 'CHARGER-15W',
+            'simple_mrp' => 1499.00,
+            'simple_selling_price' => 999.00,
             'simple_stock' => 40,
             'simple_weight_grams' => 200,
             'specifications' => [
-                ['group' => 'General', 'key' => 'Shelf Life', 'value' => '7 Days'],
+                ['group' => 'General', 'key' => 'Power Output', 'value' => '15W'],
             ],
         ];
 
@@ -200,7 +200,7 @@ class SellerProductTest extends TestCase
         $response->assertRedirect(route('seller.products.index'));
         $response->assertSessionHas('success');
 
-        $draftProduct = Product::where('title', 'Organic Fresh Paneer 200g')->first();
+        $draftProduct = Product::where('title', 'Wireless Fast Charger Pad 15W')->first();
         $this->assertNotNull($draftProduct);
         $this->assertEquals(ProductStatus::DRAFT, $draftProduct->status);
         $this->assertEquals($this->seller->id, $draftProduct->seller_id);
@@ -208,8 +208,8 @@ class SellerProductTest extends TestCase
 
         $variant = $draftProduct->variants()->first();
         $this->assertNotNull($variant);
-        $this->assertEquals('PANEER-200G', $variant->sku);
-        $this->assertEquals(110.00, (float) $variant->selling_price);
+        $this->assertEquals('CHARGER-15W', $variant->sku);
+        $this->assertEquals(999.00, (float) $variant->selling_price);
 
         // Check Inventory record created
         $inventory = Inventory::where('variant_id', $variant->id)->first();
@@ -219,8 +219,8 @@ class SellerProductTest extends TestCase
 
         // 2. Submit for Review
         $reviewPayload = array_merge($draftPayload, [
-            'title' => 'Pure Desi Cow Ghee 500ml',
-            'simple_sku' => 'GHEE-500ML',
+            'title' => 'Smart Power Bank 10000mAh',
+            'simple_sku' => 'PB-10000MAH',
             'submit_action' => 'submit_review',
         ]);
 
@@ -229,7 +229,7 @@ class SellerProductTest extends TestCase
 
         $response2->assertRedirect(route('seller.products.index'));
 
-        $reviewProduct = Product::where('title', 'Pure Desi Cow Ghee 500ml')->first();
+        $reviewProduct = Product::where('title', 'Smart Power Bank 10000mAh')->first();
         $this->assertNotNull($reviewProduct);
         $this->assertEquals(ProductStatus::PENDING_REVIEW, $reviewProduct->status);
     }
@@ -237,7 +237,7 @@ class SellerProductTest extends TestCase
     public function test_seller_can_create_variable_product_with_generated_variants(): void
     {
         $variablePayload = [
-            'title' => 'Organic Honey Jar',
+            'title' => 'Smart Temperature Control Mug',
             'category_id' => $this->category->id,
             'brand_id' => $this->brand->id,
             'product_type' => 'variable',
@@ -249,23 +249,23 @@ class SellerProductTest extends TestCase
             'submit_action' => 'save_draft',
             'variants' => [
                 [
-                    'name' => 'Organic Honey - 250g',
-                    'sku' => 'HONEY-250G',
-                    'mrp' => 200.00,
-                    'selling_price' => 180.00,
+                    'name' => 'Smart Mug - Matte Black',
+                    'sku' => 'SMUG-BLK',
+                    'mrp' => 2000.00,
+                    'selling_price' => 1800.00,
                     'stock' => 25,
                     'weight_grams' => 250,
-                    'attributes' => ['Size' => '250g'],
+                    'attributes' => ['Color' => 'Black'],
                     'is_active' => '1',
                 ],
                 [
-                    'name' => 'Organic Honey - 500g',
-                    'sku' => 'HONEY-500G',
-                    'mrp' => 380.00,
-                    'selling_price' => 350.00,
+                    'name' => 'Smart Mug - Frost White',
+                    'sku' => 'SMUG-WHT',
+                    'mrp' => 2000.00,
+                    'selling_price' => 1800.00,
                     'stock' => 15,
-                    'weight_grams' => 500,
-                    'attributes' => ['Size' => '500g'],
+                    'weight_grams' => 250,
+                    'attributes' => ['Color' => 'White'],
                     'is_active' => '1',
                 ],
             ],
@@ -276,17 +276,17 @@ class SellerProductTest extends TestCase
 
         $response->assertRedirect(route('seller.products.index'));
 
-        $product = Product::where('title', 'Organic Honey Jar')->first();
+        $product = Product::where('title', 'Smart Temperature Control Mug')->first();
         $this->assertNotNull($product);
         $this->assertEquals(ProductType::VARIABLE, $product->product_type);
         $this->assertCount(2, $product->variants);
 
-        $v1 = $product->variants()->where('sku', 'HONEY-250G')->first();
-        $v2 = $product->variants()->where('sku', 'HONEY-500G')->first();
+        $v1 = $product->variants()->where('sku', 'SMUG-BLK')->first();
+        $v2 = $product->variants()->where('sku', 'SMUG-WHT')->first();
         $this->assertNotNull($v1);
         $this->assertNotNull($v2);
-        $this->assertEquals(180.00, (float) $v1->selling_price);
-        $this->assertEquals(350.00, (float) $v2->selling_price);
+        $this->assertEquals(1800.00, (float) $v1->selling_price);
+        $this->assertEquals(1800.00, (float) $v2->selling_price);
 
         // Verify inventory entries
         $this->assertEquals(25, Inventory::where('variant_id', $v1->id)->value('quantity_on_hand'));
@@ -319,35 +319,35 @@ class SellerProductTest extends TestCase
         $product = Product::factory()->create([
             'seller_id' => $this->seller->id,
             'category_id' => $this->category->id,
-            'title' => 'Approved Herbal Tea',
+            'title' => 'Approved Wireless Earphones',
             'status' => ProductStatus::ACTIVE,
             'product_type' => ProductType::SIMPLE,
-            'tax_percent' => 5.00,
+            'tax_percent' => 18.00,
             'return_window_days' => 7,
         ]);
 
         $variant = ProductVariant::factory()->create([
             'product_id' => $product->id,
-            'sku' => 'TEA-001',
-            'mrp' => 150.00,
-            'selling_price' => 130.00,
+            'sku' => 'EAR-001',
+            'mrp' => 1500.00,
+            'selling_price' => 1300.00,
             'is_default' => true,
         ]);
 
         // 1. Non-sensitive update (updating dimensions/weight) -> stays ACTIVE
         $nonSensitivePayload = [
-            'title' => 'Approved Herbal Tea',
+            'title' => 'Approved Wireless Earphones',
             'category_id' => $this->category->id,
             'brand_id' => $product->brand_id,
             'product_type' => 'simple',
-            'tax_percent' => 5.00,
+            'tax_percent' => 18.00,
             'return_window_days' => 7,
             'is_returnable' => '1',
             'hsn_code' => $product->hsn_code,
             'description' => $product->description,
-            'simple_sku' => 'TEA-001',
-            'simple_mrp' => 150.00,
-            'simple_selling_price' => 130.00,
+            'simple_sku' => 'EAR-001',
+            'simple_mrp' => 1500.00,
+            'simple_selling_price' => 1300.00,
             'simple_weight_grams' => 300, // Non-sensitive change
             'simple_length' => 12.0,
             'submit_action' => 'save_changes',
@@ -359,9 +359,9 @@ class SellerProductTest extends TestCase
         $response->assertRedirect(route('seller.products.edit', $product));
         $this->assertEquals(ProductStatus::ACTIVE, $product->fresh()->status);
 
-        // 2. Sensitive update (changing selling price from 130 to 140) -> transitions to PENDING_REVIEW
+        // 2. Sensitive update (changing selling price from 1300 to 1400) -> transitions to PENDING_REVIEW
         $sensitivePayload = array_merge($nonSensitivePayload, [
-            'simple_selling_price' => 140.00,
+            'simple_selling_price' => 1400.00,
         ]);
 
         $response2 = $this->actingAs($this->sellerUser)
@@ -478,7 +478,7 @@ class SellerProductTest extends TestCase
         Product::factory()->create([
             'seller_id' => $this->seller->id,
             'category_id' => $this->category->id,
-            'title' => 'Exportable Ghee',
+            'title' => 'Exportable Power Bank',
         ]);
 
         $response = $this->actingAs($this->sellerUser)
@@ -486,5 +486,38 @@ class SellerProductTest extends TestCase
 
         $response->assertStatus(200);
         $this->assertStringContainsString('text/csv', (string) $response->headers->get('Content-Type'));
+    }
+
+    public function test_seller_cannot_create_non_electronics_products(): void
+    {
+        $nonElectronicsExamples = [
+            'Fresh Whole Milk 1L',
+            'Organic Basmati Rice 5kg',
+            'Cotton Casual Shirt for Men',
+            'Matte Liquid Lipstick Red',
+            'Baby Diapers Large Pack 50pcs',
+            'Ayurvedic Chyawanprash 500g',
+            'A4 Ruled Notebook 200 Pages',
+        ];
+
+        foreach ($nonElectronicsExamples as $prohibitedTitle) {
+            $payload = [
+                'title' => $prohibitedTitle,
+                'category_id' => $this->category->id,
+                'brand_id' => $this->brand->id,
+                'product_type' => 'simple',
+                'sku' => 'TEST-' . str()->random(8),
+                'mrp' => 500.00,
+                'selling_price' => 450.00,
+                'stock' => 10,
+                'submit_action' => 'save_draft',
+            ];
+
+            $response = $this->actingAs($this->sellerUser)
+                ->from(route('seller.products.create'))
+                ->post(route('seller.products.store'), $payload);
+
+            $response->assertSessionHasErrors('title');
+        }
     }
 }

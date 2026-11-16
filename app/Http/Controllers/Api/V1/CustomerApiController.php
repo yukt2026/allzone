@@ -654,7 +654,7 @@ class CustomerApiController extends ApiController
                 'total' => (float) $order->total,
                 'packages' => $order->fulfilmentOrders->map(fn ($fo) => [
                     'package_number' => $fo->fulfilment_order_number,
-                    'seller_name' => $fo->seller?->company_name ?? 'ALLZONE Seller',
+                    'seller_name' => 'ALLZONE Verified Partner',
                     'status' => $fo->status instanceof OrderStatus ? $fo->status->value : (string) $fo->status,
                     'items_count' => $fo->items->count(),
                     'items' => $fo->items->map(fn ($it) => [
@@ -708,7 +708,9 @@ class CustomerApiController extends ApiController
             return [
                 'package_number' => $fo->fulfilment_order_number,
                 'status' => $fo->status instanceof OrderStatus ? $fo->status->value : (string) $fo->status,
-                'courier' => $shipment?->courier ?? 'ALLZONE Express',
+                'courier' => $shipment?->courier ?? 'ALLZONE Express (Shiprocket)',
+                'seller_name' => 'ALLZONE Verified Partner',
+                'fulfilled_by' => 'ALLZONE Assured',
                 'awb' => $shipment?->awb,
                 'tracking' => $tracking,
                 'items' => $fo->items->map(fn ($i) => [

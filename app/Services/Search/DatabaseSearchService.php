@@ -10,6 +10,7 @@ use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\ProductVariant;
+use App\Models\Review;
 use App\Models\Seller;
 use App\Models\Store;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -41,19 +42,16 @@ class DatabaseSearchService implements SearchServiceInterface
                 'seller',
             ]);
 
-        // 1. Text Search with Fulltext & Trigram Token Fallback
+        // 1. Text Search with Sanitized Fulltext, Trigram Token, SKU, & Specification Fallback
         if ($q !== '') {
-            $tokens = array_filter(explode(' ', $q), fn ($t) => strlen(trim($t)) > 1);
+            $productQuery->where(function (Builder $builder) use ($q) {
+                // Strip characters that have special boolean operator semantics in MySQL Boolean Mode
+                $sanitized = preg_replace('/[+\-><()~*\"@\\\\]+/', ' ', $q);
+                $words = array_filter(preg_split('/\s+/', trim((string) $sanitized)), fn ($w) => mb_strlen($w) >= 2);
 
-            $productQuery->where(function (Builder $builder) use ($q, $tokens) {
-                // If MySQL, try FULLTEXT match; fallback to LIKE
-                if (DB::connection()->getDriverName() === 'mysql') {
-                    try {
-                        $builder->whereRaw('MATCH(products.title, products.short_desc) AGAINST(? IN BOOLEAN MODE)', ["+{$q}*"]);
-                    } catch (\Throwable $e) {
-                        $builder->where('products.title', 'like', "%{$q}%")
-                            ->orWhere('products.description', 'like', "%{$q}%");
-                    }
+                if (DB::connection()->getDriverName() === 'mysql' && !empty($words)) {
+                    $booleanQuery = implode(' ', array_map(fn ($w) => '+' . $w . '*', $words));
+                    $builder->whereRaw('MATCH(products.title, products.short_desc) AGAINST(? IN BOOLEAN MODE)', [$booleanQuery]);
                 } else {
                     $builder->where('products.title', 'like', "%{$q}%")
                         ->orWhere('products.short_desc', 'like', "%{$q}%")
@@ -70,8 +68,19 @@ class DatabaseSearchService implements SearchServiceInterface
                     $c->where('name', 'like', "%{$q}%");
                 });
 
+                // Match in Variant SKU & Title (e.g. AZ-SKU-0008, 128GB Black)
+                $builder->orWhereHas('variants', function ($v) use ($q) {
+                    $v->where('sku', 'like', "%{$q}%")
+                        ->orWhere('title', 'like', "%{$q}%");
+                });
+
+                // Match in Product Specifications (model numbers, specs)
+                $builder->orWhereHas('specifications', function ($s) use ($q) {
+                    $s->where('value', 'like', "%{$q}%");
+                });
+
                 // Match individual tokens (trigram-like token matching)
-                foreach ($tokens as $token) {
+                foreach ($words as $token) {
                     $builder->orWhere('products.title', 'like', "%{$token}%");
                 }
             });
@@ -137,7 +146,31 @@ class DatabaseSearchService implements SearchServiceInterface
             $productQuery->where('products.is_quick_capable', true);
         }
 
-        // 9. Location-Aware Ranking (Nearby Available First)
+        // 9. Minimum Rating Filter
+        if (!empty($filters['min_rating']) && is_numeric($filters['min_rating'])) {
+            $minRating = (float) $filters['min_rating'];
+            $productQuery->where(function ($q) use ($minRating) {
+                $q->whereHas('reviews', fn ($r) => $r->where('status', 'approved'))
+                    ->whereRaw('(SELECT coalesce(avg(rating), 0) FROM reviews WHERE reviews.product_id = products.id AND reviews.status = "approved") >= ?', [$minRating]);
+            });
+        }
+
+        // 10. Minimum Discount Filter (percentage)
+        if (!empty($filters['discount_min']) && is_numeric($filters['discount_min'])) {
+            $minDiscount = (float) $filters['discount_min'] / 100.0;
+            $productQuery->whereHas('variants', fn ($v) => $v->whereRaw('mrp > 0 AND ((mrp - selling_price) / mrp) >= ?', [$minDiscount]));
+        }
+
+        // 11. Specifications / Attributes Filter
+        if (!empty($filters['specifications']) && is_array($filters['specifications'])) {
+            foreach ($filters['specifications'] as $specKey => $specVal) {
+                if (!empty($specVal)) {
+                    $productQuery->whereHas('specifications', fn ($s) => $s->where('key', $specKey)->where('value', $specVal));
+                }
+            }
+        }
+
+        // 12. Location-Aware Ranking (Nearby Available First)
         $hasLocation = !empty($location['lat']) && !empty($location['lng']);
         if ($hasLocation) {
             $lat = (float) $location['lat'];
@@ -176,7 +209,7 @@ class DatabaseSearchService implements SearchServiceInterface
             $productQuery->select('products.*');
         }
 
-        // 10. Sorting
+        // 13. Sorting
         if ($hasLocation && ($sort === 'relevance' || empty($sort))) {
             $productQuery->orderByDesc('is_nearby');
         }
@@ -217,6 +250,14 @@ class DatabaseSearchService implements SearchServiceInterface
                 break;
 
             case 'rating_desc':
+                $productQuery->orderBy(
+                    Review::selectRaw('coalesce(avg(rating), 0)')
+                        ->whereColumn('reviews.product_id', 'products.id')
+                        ->where('status', 'approved'),
+                    'desc'
+                )->orderByDesc('products.id');
+                break;
+
             case 'relevance':
             default:
                 $productQuery->orderByDesc('products.id');
@@ -401,32 +442,46 @@ class DatabaseSearchService implements SearchServiceInterface
         if (trim($query) !== '') {
             $q = trim($query);
             $baseQuery->where(function ($builder) use ($q) {
-                $builder->where('products.title', 'like', "%{$q}%")
-                    ->orWhere('products.description', 'like', "%{$q}%");
+                $sanitized = preg_replace('/[+\-><()~*\"@\\\\]+/', ' ', $q);
+                $words = array_filter(preg_split('/\s+/', trim((string) $sanitized)), fn ($w) => mb_strlen($w) >= 2);
+
+                if (DB::connection()->getDriverName() === 'mysql' && !empty($words)) {
+                    $booleanQuery = implode(' ', array_map(fn ($w) => '+' . $w . '*', $words));
+                    $builder->whereRaw('MATCH(products.title, products.short_desc) AGAINST(? IN BOOLEAN MODE)', [$booleanQuery]);
+                } else {
+                    $builder->where('products.title', 'like', "%{$q}%")
+                        ->orWhere('products.description', 'like', "%{$q}%");
+                }
+
+                $builder->orWhereHas('brand', fn ($b) => $b->where('name', 'like', "%{$q}%"))
+                    ->orWhereHas('category', fn ($c) => $c->where('name', 'like', "%{$q}%"))
+                    ->orWhereHas('variants', fn ($v) => $v->where('sku', 'like', "%{$q}%")->orWhere('title', 'like', "%{$q}%"))
+                    ->orWhereHas('specifications', fn ($s) => $s->where('value', 'like', "%{$q}%"));
             });
         }
 
+        $matchingProductIds = trim($query) !== '' ? (clone $baseQuery)->pluck('id') : null;
+
         // Categories with counts
-        $categories = Category::where('is_active', true)
-            ->whereHas('products', fn ($p) => $p->active())
-            ->withCount(['products' => fn ($p) => $p->active()])
-            ->orderByDesc('products_count')
-            ->take(8)
-            ->get();
+        $categoriesQuery = Category::where('is_active', true)
+            ->whereHas('products', fn ($p) => $matchingProductIds !== null ? $p->whereIn('products.id', $matchingProductIds) : $p->active());
+
+        if ($matchingProductIds !== null) {
+            $categoriesQuery->withCount(['products' => fn ($p) => $p->whereIn('products.id', $matchingProductIds)]);
+        } else {
+            $categoriesQuery->withCount(['products' => fn ($p) => $p->active()]);
+        }
+        $categories = $categoriesQuery->orderByDesc('products_count')->take(10)->get();
 
         // Brands with counts
-        $brands = Brand::whereHas('products', fn ($p) => $p->active())
-            ->withCount(['products' => fn ($p) => $p->active()])
-            ->orderByDesc('products_count')
-            ->take(10)
-            ->get();
+        $brandsQuery = Brand::whereHas('products', fn ($p) => $matchingProductIds !== null ? $p->whereIn('products.id', $matchingProductIds) : $p->active());
 
-        // Sellers
-        $sellers = Seller::where('status', 'approved')
-            ->whereHas('products', fn ($p) => $p->active())
-            ->withCount(['products' => fn ($p) => $p->active()])
-            ->take(6)
-            ->get();
+        if ($matchingProductIds !== null) {
+            $brandsQuery->withCount(['products' => fn ($p) => $p->whereIn('products.id', $matchingProductIds)]);
+        } else {
+            $brandsQuery->withCount(['products' => fn ($p) => $p->active()]);
+        }
+        $brands = $brandsQuery->orderByDesc('products_count')->take(12)->get();
 
         // Price range bounds
         $minPrice = (float) (ProductVariant::where('is_active', true)->min('selling_price') ?? 0);
@@ -435,7 +490,6 @@ class DatabaseSearchService implements SearchServiceInterface
         return [
             'categories' => $categories,
             'brands' => $brands,
-            'sellers' => $sellers,
             'min_price' => $minPrice,
             'max_price' => $maxPrice,
             'total_products_count' => (clone $baseQuery)->count(),

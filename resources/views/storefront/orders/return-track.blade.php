@@ -198,13 +198,13 @@
                     </div>
                 </div>
 
-                <!-- Seller Context Card -->
+                <!-- Guarantee & Support Card -->
                 <div class="bg-white rounded-3xl border border-slate-200 p-6 space-y-2 shadow-xs">
-                    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500">Merchant Info</h3>
-                    <div class="text-xs font-bold text-slate-900">{{ $return->seller?->business_name ?? (setting('name', 'ALLZONE') . ' Marketplace') }}</div>
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500">Fulfilled By</h3>
+                    <div class="text-xs font-bold text-slate-900">{{ setting('name', 'ALLZONE') }} Assured Electronics</div>
                     @if($return->seller_notes)
                         <div class="text-[11px] text-slate-600 bg-slate-50 p-2.5 rounded-xl border border-slate-100 mt-2">
-                            <span class="font-bold text-slate-700">Seller Note:</span> {{ $return->seller_notes }}
+                            <span class="font-bold text-slate-700">Support Note:</span> {{ $return->seller_notes }}
                         </div>
                     @endif
                 </div>

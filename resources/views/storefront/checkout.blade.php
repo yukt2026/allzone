@@ -257,10 +257,8 @@
                                                 {{ $index + 1 }}
                                             </span>
                                             <div>
-                                                <span class="text-xs font-black text-slate-900">Package {{ $index + 1 }}: {{ $group->sellerName }}</span>
-                                                @if ($group->storeName)
-                                                    <span class="text-[11px] text-slate-500">({{ $group->storeName }})</span>
-                                                @endif
+                                                <span class="text-xs font-black text-slate-900">Package {{ $index + 1 }}: {{ setting('name', 'ALLZONE') }} Assured</span>
+                                                <span class="text-[11px] text-slate-500">(Shiprocket Express Courier)</span>
                                             </div>
                                         </div>
 

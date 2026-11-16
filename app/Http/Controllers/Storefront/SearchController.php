@@ -74,10 +74,8 @@ class SearchController extends Controller
             }
         }
 
-        // Execute Tab-based Search
-        if ($tab === 'stores') {
-            $results = $this->searchService->searchStores($query, $filters, $location, 12);
-        } elseif ($tab === 'brands') {
+        // Execute Tab-based Search (Unified Electronics Products & Official Brands)
+        if ($tab === 'brands') {
             $results = $this->searchService->searchBrands($query, 18);
         } else {
             $tab = 'products';

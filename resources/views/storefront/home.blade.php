@@ -256,6 +256,26 @@
         </section>
     @endif
 
+    <!-- Featured Seasonal & Festive Campaigns -->
+    @if(isset($featuredCampaigns) && $featuredCampaigns->isNotEmpty())
+        <section id="campaigns" class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                @foreach($featuredCampaigns as $camp)
+                    <div class="p-3.5 bg-gradient-to-r from-blue-900 to-indigo-950 text-white rounded-2xl shadow-xs border border-blue-800 flex items-center justify-between">
+                        <div>
+                            <span class="text-[9px] font-black uppercase tracking-wider text-blue-300">Featured Campaign</span>
+                            <h4 class="font-black text-sm text-white">{{ $camp->name }}</h4>
+                            <p class="text-[11px] text-blue-200 mt-0.5 line-clamp-1">{{ $camp->description }}</p>
+                        </div>
+                        <a href="{{ route('campaign.show', $camp->slug) }}" class="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs shrink-0 ml-3 transition shadow-xs">
+                            Explore &rarr;
+                        </a>
+                    </div>
+                @endforeach
+            </div>
+        </section>
+    @endif
+
     <!-- 4. Categories Showcase (The 8 Primary Electronics Categories) -->
     <section id="categories" class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
         <div class="flex items-center justify-between mb-4">
@@ -417,48 +437,52 @@
         </div>
     </section>
 
-    <!-- 9. ALLZONE Flagship Experience Hubs (Powered by SK Refrigeration) -->
-    <section id="allzone-stores" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="p-6 rounded-3xl bg-slate-900 text-white shadow-xl mb-6 flex flex-col md:flex-row items-center justify-between gap-4 border border-slate-800">
+    <!-- 9. Why Shop on ALLZONE Electronics — Trust & Assurance -->
+    <section id="allzone-assurance" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="p-6 sm:p-8 rounded-3xl bg-slate-900 text-white shadow-xl mb-6 flex flex-col md:flex-row items-center justify-between gap-4 border border-slate-800">
             <div class="flex items-center space-x-4">
                 <div class="w-12 h-12 rounded-2xl bg-blue-600 text-white flex items-center justify-center font-extrabold text-base shadow-md tracking-tighter">
                     AZ
                 </div>
                 <div>
-                    <span class="text-[10px] font-bold uppercase tracking-wider text-cyan-400">Powered by SK Refrigeration</span>
-                    <h2 class="text-xl sm:text-2xl font-black text-white">{{ setting('name', 'ALLZONE') }} Flagship Centers</h2>
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-cyan-400">Unified Electronics Marketplace</span>
+                    <h2 class="text-xl sm:text-2xl font-black text-white">{{ setting('name', 'ALLZONE') }} Assured Promise</h2>
                 </div>
             </div>
             <p class="text-xs text-slate-300 max-w-md">
-                Verified inventory, direct factory pricing, expedited delivery, and certified technician installation.
+                100% genuine brand warranty, certified technician installation assistance, secure Razorpay checkout, and express Shiprocket doorstep dispatch.
             </p>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            @foreach($onestallStores as $osStore)
-                <div class="p-5 rounded-3xl bg-white border border-slate-200/90 shadow-sm hover:shadow-lg transition">
-                    <div class="flex items-center space-x-3 mb-3">
-                        <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-black text-sm">
-                            🏪
-                        </div>
-                        <div>
-                            <h3 class="text-sm font-extrabold text-slate-900">{{ $osStore->name }}</h3>
-                            <span class="text-[11px] text-slate-500">{{ $osStore->location?->city ?? setting('default_city', 'Bengaluru') }} Hub</span>
-                        </div>
-                    </div>
-                    <p class="text-xs text-slate-600 mb-4 line-clamp-2">
-                        {{ $osStore->description ?: 'Authorized electronics fulfillment hub with genuine brand warranty and same-day dispatch.' }}
-                    </p>
-                    <div class="flex items-center justify-between pt-3 border-t border-slate-100">
-                        <span class="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2.5 py-0.5 rounded-full">
-                            ✓ Direct Quality Guarantee
-                        </span>
-                        <a href="{{ route('store.show', $osStore->slug) }}" class="text-xs font-bold text-blue-600 hover:text-blue-800">
-                            Visit Hub &rarr;
-                        </a>
-                    </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="p-5 rounded-2xl bg-white border border-slate-200/90 shadow-2xs hover:shadow-md transition">
+                <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-lg mb-3">
+                    🛡️
                 </div>
-            @endforeach
+                <h3 class="text-xs font-black text-slate-900">100% Genuine Brand Stock</h3>
+                <p class="text-[11px] text-slate-500 mt-1">Direct authorized brand partnerships with official manufacturer warranty and invoices.</p>
+            </div>
+            <div class="p-5 rounded-2xl bg-white border border-slate-200/90 shadow-2xs hover:shadow-md transition">
+                <div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-lg mb-3">
+                    🚚
+                </div>
+                <h3 class="text-xs font-black text-slate-900">Shiprocket Express Courier</h3>
+                <p class="text-[11px] text-slate-500 mt-1">Fully tracked, insured doorstep delivery with SMS and real-time tracking updates.</p>
+            </div>
+            <div class="p-5 rounded-2xl bg-white border border-slate-200/90 shadow-2xs hover:shadow-md transition">
+                <div class="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center text-lg mb-3">
+                    💳
+                </div>
+                <h3 class="text-xs font-black text-slate-900">Razorpay &amp; COD Available</h3>
+                <p class="text-[11px] text-slate-500 mt-1">Instant UPI, debit/credit cards, and NetBanking via Razorpay, plus Cash on Delivery.</p>
+            </div>
+            <div class="p-5 rounded-2xl bg-white border border-slate-200/90 shadow-2xs hover:shadow-md transition">
+                <div class="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-lg mb-3">
+                    🔄
+                </div>
+                <h3 class="text-xs font-black text-slate-900">7-Day Replacement Policy</h3>
+                <p class="text-[11px] text-slate-500 mt-1">Hassle-free replacement for transit damage, defective units, or missing parts.</p>
+            </div>
         </div>
     </section>
 

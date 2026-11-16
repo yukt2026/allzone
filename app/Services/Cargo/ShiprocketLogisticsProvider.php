@@ -383,8 +383,15 @@ class ShiprocketLogisticsProvider implements LogisticsProvider
      */
     public function submitNdrAction(NdrCase $ndrCase, string $action, array $params = []): array
     {
-        $ndrCase->status = 'action_transmitted';
+        $ndrCase->status = $action === 'rto' ? 'rto_requested' : 'reattempt_scheduled';
+        $ndrCase->customer_action = $action;
+        $ndrCase->action_notes = $params['remarks'] ?? "Action '{$action}' submitted.";
         $ndrCase->save();
+
+        if ($action === 'rto' && $ndrCase->shipment) {
+            $ndrCase->shipment->status = \App\Enums\ShipmentStatus::RTO_INITIATED;
+            $ndrCase->shipment->save();
+        }
 
         return [
             'success' => true,

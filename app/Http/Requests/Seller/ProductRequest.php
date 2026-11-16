@@ -105,6 +105,40 @@ class ProductRequest extends FormRequest
             $isSimple = $this->input('product_type') === ProductType::SIMPLE->value;
             $productId = $this->route('product')?->id;
 
+            // Strict Electronics-Only Catalog Validation
+            $categoryId = (int) $this->input('category_id');
+            $category = \App\Models\Category::find($categoryId);
+            if (!$category || !$category->is_active) {
+                $validator->errors()->add('category_id', 'Please select an active Electronics & Appliances category.');
+            }
+
+            // Prohibit non-electronics products (Groceries, Food, Fashion, Beauty, Baby, Health, Stationery, Perishables)
+            $prohibitedKeywords = [
+                'grocery', 'groceries', 'atta', 'flour', 'rice', 'dal', 'dals', 'pulses',
+                'edible oil', 'ghee', 'mustard oil', 'sunflower oil', 'spices', 'masala',
+                'vegetable', 'vegetables', 'fruit', 'fruits', 'greens',
+                'milk', 'curd', 'butter', 'cheese', 'paneer', 'bread', 'bakery', 'farm eggs',
+                'chips', 'namkeen', 'biscuit', 'biscuits', 'cookie', 'cookies', 'tea', 'coffee',
+                'honey', 'sugar', 'salt', 'chocolate', 'chocolates', 'sweets', 'snack', 'snacks', 'food',
+                'shampoo', 'body wash', 'soap', 'soaps', 'toothpaste', 'oral care',
+                'lipstick', 'lipsticks', 'makeup', 'cosmetics', 'nail polish',
+                'shirt', 't-shirt', 'saree', 'trousers', 'jeans', 'clothing', 'apparel', 'dress',
+                'diaper', 'diapers', 'baby food', 'baby wipes', 'baby care',
+                'chyawanprash', 'ayurveda', 'herbal supplement', 'immunity booster',
+                'notebook', 'notebooks', 'stationery', 'ball pen', 'pencils',
+            ];
+
+            $textToCheck = strtolower($this->input('title', '') . ' ' . $this->input('short_desc', '') . ' ' . $this->input('description', ''));
+            foreach ($prohibitedKeywords as $prohibited) {
+                if (preg_match('/\b' . preg_quote($prohibited, '/') . '\b/i', $textToCheck)) {
+                    $validator->errors()->add(
+                        'title',
+                        "ALLZONE is an exclusive Electronics & Home Appliances marketplace. Non-electronics items ('{$prohibited}') are strictly prohibited."
+                    );
+                    break;
+                }
+            }
+
             if ($isSimple) {
                 // Ensure simple SKU is unique
                 $sku = strtoupper(trim((string) $this->input('simple_sku', '')));
