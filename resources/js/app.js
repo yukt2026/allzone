@@ -75,6 +75,9 @@ Alpine.store('cart', {
             const data = await res.json();
             if (data && data.cart) {
                 this.applySummary(data.cart);
+                if (typeof window !== 'undefined' && window.location.pathname.replace(/\/+$/, '').endsWith('/cart')) {
+                    window.location.reload();
+                }
             }
         } catch (e) {
             console.error('Failed to load cart summary', e);
@@ -139,6 +142,9 @@ Alpine.store('cart', {
             const data = await res.json();
             if (data && data.cart) {
                 this.applySummary(data.cart);
+                if (typeof window !== 'undefined' && window.location.pathname.replace(/\/+$/, '').endsWith('/cart')) {
+                    window.location.reload();
+                }
             }
         } catch (e) {
             console.error('Add to cart error', e);
@@ -163,6 +169,9 @@ Alpine.store('cart', {
             const data = await res.json();
             if (data && data.cart) {
                 this.applySummary(data.cart);
+                if (typeof window !== 'undefined' && window.location.pathname.replace(/\/+$/, '').endsWith('/cart')) {
+                    window.location.reload();
+                }
             }
         } catch (e) {
             console.error('Update quantity error', e);
@@ -186,6 +195,9 @@ Alpine.store('cart', {
             const data = await res.json();
             if (data && data.cart) {
                 this.applySummary(data.cart);
+                if (typeof window !== 'undefined' && window.location.pathname.replace(/\/+$/, '').endsWith('/cart')) {
+                    window.location.reload();
+                }
             }
         } catch (e) {
             console.error('Remove item error', e);
@@ -209,6 +221,9 @@ Alpine.store('cart', {
             const data = await res.json();
             if (data && data.cart) {
                 this.applySummary(data.cart);
+                if (typeof window !== 'undefined' && window.location.pathname.replace(/\/+$/, '').endsWith('/cart')) {
+                    window.location.reload();
+                }
             }
         } catch (e) {
             console.error('Save for later error', e);
@@ -232,6 +247,9 @@ Alpine.store('cart', {
             const data = await res.json();
             if (data && data.cart) {
                 this.applySummary(data.cart);
+                if (typeof window !== 'undefined' && window.location.pathname.replace(/\/+$/, '').endsWith('/cart')) {
+                    window.location.reload();
+                }
             }
         } catch (e) {
             console.error('Move to cart error', e);
@@ -256,6 +274,9 @@ Alpine.store('cart', {
             const data = await res.json();
             if (data && data.cart) {
                 this.applySummary(data.cart);
+                if (typeof window !== 'undefined' && window.location.pathname.replace(/\/+$/, '').endsWith('/cart')) {
+                    window.location.reload();
+                }
             }
             return data;
         } catch (e) {
@@ -281,6 +302,9 @@ Alpine.store('cart', {
             const data = await res.json();
             if (data && data.cart) {
                 this.applySummary(data.cart);
+                if (typeof window !== 'undefined' && window.location.pathname.replace(/\/+$/, '').endsWith('/cart')) {
+                    window.location.reload();
+                }
             }
         } catch (e) {
             console.error('Remove coupon error', e);
@@ -304,6 +328,9 @@ Alpine.store('cart', {
             const data = await res.json();
             if (data && data.cart) {
                 this.applySummary(data.cart);
+                if (typeof window !== 'undefined' && window.location.pathname.replace(/\/+$/, '').endsWith('/cart')) {
+                    window.location.reload();
+                }
             }
         } catch (e) {
             console.error('Accept price changes error', e);

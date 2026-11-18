@@ -19,6 +19,9 @@
             this.couponLoading = false;
             this.couponMessage = res.message;
             this.couponSuccess = res.status === 'success';
+            if (this.couponSuccess) {
+                setTimeout(() => window.location.reload(), 400);
+            }
         },
         async handleRemoveCoupon() {
             this.couponLoading = true;
@@ -27,6 +30,7 @@
             this.couponInput = '';
             this.couponMessage = 'Coupon removed';
             this.couponSuccess = true;
+            setTimeout(() => window.location.reload(), 400);
         }
      }">
 
@@ -71,8 +75,8 @@
                 </div>
                 <form action="{{ route('cart.accept-price-changes') }}" method="POST" class="flex-shrink-0">
                     @csrf
-                    <button type="submit" @click.prevent="$store.cart.acceptPriceChanges()"
-                            class="w-full sm:w-auto px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow-sm active:scale-95 transition">
+                    <button type="submit"
+                            class="w-full sm:w-auto px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow-sm active:scale-95 transition cursor-pointer">
                         Accept Updated Prices
                     </button>
                 </form>
@@ -241,7 +245,7 @@
                                                 <form action="{{ route('cart.update', $item['id']) }}" method="POST">
                                                     @csrf
                                                     <input type="hidden" name="quantity" value="{{ $item['quantity'] - 1 }}">
-                                                    <button type="submit" @click.prevent="$store.cart.updateQuantity({{ $item['id'] }}, {{ $item['quantity'] - 1 }})"
+                                                    <button type="submit"
                                                             class="w-7 h-7 rounded-lg bg-white hover:bg-slate-200 font-black text-slate-800 text-xs flex items-center justify-center shadow-2xs active:scale-95 transition cursor-pointer" aria-label="Decrease quantity">
                                                         -
                                                     </button>
@@ -253,7 +257,7 @@
                                                 <form action="{{ route('cart.update', $item['id']) }}" method="POST">
                                                     @csrf
                                                     <input type="hidden" name="quantity" value="{{ $item['quantity'] + 1 }}">
-                                                    <button type="submit" @click.prevent="$store.cart.updateQuantity({{ $item['id'] }}, {{ $item['quantity'] + 1 }})"
+                                                    <button type="submit"
                                                             class="w-7 h-7 rounded-lg bg-white hover:bg-slate-200 font-black text-slate-800 text-xs flex items-center justify-center shadow-2xs active:scale-95 transition cursor-pointer" aria-label="Increase quantity">
                                                         +
                                                     </button>
@@ -268,7 +272,7 @@
 
                                                 <form action="{{ route('cart.save-for-later', $item['id']) }}" method="POST">
                                                     @csrf
-                                                    <button type="submit" @click.prevent="$store.cart.saveForLater({{ $item['id'] }})"
+                                                    <button type="submit"
                                                             class="text-indigo-600 hover:text-indigo-800 font-semibold hover:underline transition whitespace-nowrap cursor-pointer">
                                                         Save for later
                                                     </button>
@@ -278,7 +282,7 @@
 
                                                 <form action="{{ route('cart.remove', $item['id']) }}" method="POST">
                                                     @csrf
-                                                    <button type="submit" @click.prevent="$store.cart.removeItem({{ $item['id'] }})"
+                                                    <button type="submit"
                                                             class="text-rose-500 hover:text-rose-700 font-semibold hover:underline transition whitespace-nowrap cursor-pointer" title="Remove item">
                                                         Remove
                                                     </button>
@@ -331,16 +335,16 @@
                                             <div class="pt-2 flex items-center space-x-2 text-[11px]">
                                                 <form action="{{ route('cart.move-to-cart', $saved['id']) }}" method="POST">
                                                     @csrf
-                                                    <button type="submit" @click.prevent="$store.cart.moveToCart({{ $saved['id'] }})"
-                                                            class="px-2.5 py-1 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-extrabold transition">
+                                                    <button type="submit"
+                                                            class="px-2.5 py-1 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-extrabold transition cursor-pointer">
                                                         Move to Cart
                                                     </button>
                                                 </form>
 
                                                 <form action="{{ route('cart.remove', $saved['id']) }}" method="POST">
                                                     @csrf
-                                                    <button type="submit" @click.prevent="$store.cart.removeItem({{ $saved['id'] }})"
-                                                            class="text-rose-500 hover:text-rose-700 font-semibold transition">
+                                                    <button type="submit"
+                                                            class="text-rose-500 hover:text-rose-700 font-semibold transition cursor-pointer">
                                                         Delete
                                                     </button>
                                                 </form>
@@ -437,13 +441,15 @@
                             <!-- Total MRP -->
                             <div class="flex items-center justify-between">
                                 <span>Total MRP</span>
-                                <span class="font-bold text-slate-800" x-text="$store.cart.formattedTotalMrp || '{{ $summary['formatted_total_mrp'] }}'">{{ $summary['formatted_total_mrp'] }}</span>
+                                <span class="font-bold text-slate-800"
+                                      x-text="$store.cart.itemCount > 0 ? $store.cart.formattedTotalMrp : '{{ $summary['formatted_total_mrp'] }}'">{{ $summary['formatted_total_mrp'] }}</span>
                             </div>
 
                             <!-- Product Discount -->
                             <div class="flex items-center justify-between text-emerald-600">
                                 <span>Product Discount</span>
-                                <span class="font-bold" x-text="'- ' + ($store.cart.formattedProductDiscount || '{{ $summary['formatted_product_discount'] }}')">- {{ $summary['formatted_product_discount'] }}</span>
+                                <span class="font-bold"
+                                      x-text="'- ' + ($store.cart.itemCount > 0 ? $store.cart.formattedProductDiscount : '{{ $summary['formatted_product_discount'] }}')">- {{ $summary['formatted_product_discount'] }}</span>
                             </div>
 
                             <!-- Coupon Discount -->
@@ -459,7 +465,7 @@
                                     <span class="text-[10px] text-slate-400" title="Free on orders over {{ format_currency($summary['free_delivery_threshold']) }}">ℹ️</span>
                                 </span>
                                 <span :class="($store.cart.freeQualified || {{ $summary['free_delivery_qualified'] ? 'true' : 'false' }}) ? 'text-emerald-600 font-extrabold' : 'font-bold text-slate-800'"
-                                      x-text="($store.cart.freeQualified || {{ $summary['free_delivery_qualified'] ? 'true' : 'false' }}) ? 'FREE' : ($store.cart.formattedDeliveryFee || '{{ $summary['formatted_delivery_fee'] }}')">
+                                      x-text="($store.cart.itemCount > 0 ? ($store.cart.freeQualified ? 'FREE' : $store.cart.formattedDeliveryFee) : '{{ $summary['formatted_delivery_fee'] }}')">
                                     {{ $summary['formatted_delivery_fee'] }}
                                 </span>
                             </div>
@@ -473,7 +479,8 @@
                             <!-- Total Payable -->
                             <div class="flex items-center justify-between text-base font-black text-slate-900 pt-3 border-t border-slate-200">
                                 <span>Total Payable</span>
-                                <span class="text-indigo-600 text-lg" x-text="$store.cart.formattedTotalPayable || '{{ $summary['formatted_total_payable'] }}'">{{ $summary['formatted_total_payable'] }}</span>
+                                <span class="text-indigo-600 text-lg"
+                                      x-text="$store.cart.itemCount > 0 ? $store.cart.formattedTotalPayable : '{{ $summary['formatted_total_payable'] }}'">{{ $summary['formatted_total_payable'] }}</span>
                             </div>
                         </div>
 
@@ -520,7 +527,7 @@
         <div class="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200/90 px-4 py-3 shadow-[0_-8px_24px_rgba(0,0,0,0.08)] flex items-center justify-between gap-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
             <div class="min-w-0">
                 <div class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Total Payable</div>
-                <div class="text-lg font-black text-slate-900 tracking-tight whitespace-nowrap" x-text="$store.cart.formattedTotalPayable || '{{ $summary['formatted_total_payable'] }}'">
+                <div class="text-lg font-black text-slate-900 tracking-tight whitespace-nowrap" x-text="$store.cart.itemCount > 0 ? $store.cart.formattedTotalPayable : '{{ $summary['formatted_total_payable'] }}'">
                     {{ $summary['formatted_total_payable'] }}
                 </div>
             </div>
@@ -532,4 +539,13 @@
         </div>
     @endif
 </div>
+
+{{-- Pre-seed Alpine cart store with SSR summary so bill section renders correctly before AJAX --}}
+<script>
+document.addEventListener('alpine:init', () => {
+    @if($summary['item_count'] > 0)
+    Alpine.store('cart').applySummary(@json($summary));
+    @endif
+});
+</script>
 @endsection

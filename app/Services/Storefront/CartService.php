@@ -132,6 +132,12 @@ class CartService
     public function updateQuantity(Cart $cart, int $cartItemId, int $quantity): ?CartItem
     {
         $item = CartItem::where('cart_id', $cart->id)->where('id', $cartItemId)->first();
+        if (!$item && $cart->user_id) {
+            $item = CartItem::where('id', $cartItemId)
+                ->whereHas('cart', fn ($q) => $q->where('user_id', $cart->user_id)->orWhere('customer_id', $cart->customer_id))
+                ->first();
+        }
+
         if (!$item) {
             return null;
         }
@@ -152,7 +158,14 @@ class CartService
      */
     public function removeItem(Cart $cart, int $cartItemId): bool
     {
-        return (bool) CartItem::where('cart_id', $cart->id)->where('id', $cartItemId)->delete();
+        $item = CartItem::where('cart_id', $cart->id)->where('id', $cartItemId)->first();
+        if (!$item && $cart->user_id) {
+            $item = CartItem::where('id', $cartItemId)
+                ->whereHas('cart', fn ($q) => $q->where('user_id', $cart->user_id)->orWhere('customer_id', $cart->customer_id))
+                ->first();
+        }
+
+        return $item ? (bool) $item->delete() : false;
     }
 
     /**
@@ -169,6 +182,12 @@ class CartService
     public function moveToSavedForLater(Cart $cart, int $cartItemId): ?CartItem
     {
         $item = CartItem::where('cart_id', $cart->id)->where('id', $cartItemId)->first();
+        if (!$item && $cart->user_id) {
+            $item = CartItem::where('id', $cartItemId)
+                ->whereHas('cart', fn ($q) => $q->where('user_id', $cart->user_id)->orWhere('customer_id', $cart->customer_id))
+                ->first();
+        }
+
         if (!$item) {
             return null;
         }
@@ -185,6 +204,12 @@ class CartService
     public function moveToCart(Cart $cart, int $cartItemId): ?CartItem
     {
         $item = CartItem::where('cart_id', $cart->id)->where('id', $cartItemId)->first();
+        if (!$item && $cart->user_id) {
+            $item = CartItem::where('id', $cartItemId)
+                ->whereHas('cart', fn ($q) => $q->where('user_id', $cart->user_id)->orWhere('customer_id', $cart->customer_id))
+                ->first();
+        }
+
         if (!$item) {
             return null;
         }
@@ -208,29 +233,38 @@ class CartService
         $cartId = $explicitCartId ?: ($sessionCartId ?: $cookieCartId);
 
         if ($cartId) {
+            // Try guest cart (no user_id) first, then try cart that was just linked
             $guestCart = Cart::where('id', (int) $cartId)
-                ->whereNull('user_id')
                 ->where('is_active', true)
+                ->whereHas('items')
                 ->with('items')
                 ->first();
+            // Only use if it doesn't already belong to another user
+            if ($guestCart && $guestCart->user_id && $guestCart->user_id !== $user->id) {
+                $guestCart = null;
+            }
         }
 
         // 2. Second, check by session ID
         if (!$guestCart && !empty($sessionId)) {
             $guestCart = Cart::where('session_id', $sessionId)
-                ->whereNull('user_id')
                 ->where('is_active', true)
+                ->whereHas('items')
                 ->with('items')
                 ->first();
+            if ($guestCart && $guestCart->user_id && $guestCart->user_id !== $user->id) {
+                $guestCart = null;
+            }
         }
 
-        // 3. Third fallback: check for any active unassigned guest cart with items created recently
+        // 3. Third fallback: any active unassigned guest cart with items in the last 6 hours
         if (!$guestCart) {
             $guestCart = Cart::whereNull('user_id')
                 ->where('is_active', true)
                 ->whereHas('items')
-                ->where('created_at', '>=', now()->subHours(4))
+                ->where('created_at', '>=', now()->subHours(6))
                 ->latest('id')
+                ->with('items')
                 ->first();
         }
 

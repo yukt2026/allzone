@@ -25,14 +25,15 @@ class CartController extends Controller
     {
         $sessionId = $request->session()->getId();
         $user = $request->user();
-        $cart = $this->cartService->getActiveCart($user, $sessionId);
+        $cookieCartId = $request->cookie('allzone_cart_id');
+        $guestCartId = $request->session()->get('guest_cart_id') ?? ($cookieCartId ? (int) $cookieCartId : null);
 
-        if ($user && $cart->activeItems->isEmpty()) {
-            $this->cartService->mergeSessionCart($sessionId, $user);
-            $cart = $this->cartService->getActiveCart($user, $sessionId);
-            $cart->load('items.variant.product');
+        // Always attempt cart merge for logged-in users to recover guest cart items
+        if ($user) {
+            $this->cartService->mergeSessionCart($sessionId, $user, $guestCartId);
         }
 
+        $cart = $this->cartService->getActiveCart($user, $sessionId);
         $summary = $this->cartService->getSummary($cart, $user);
 
         return view('storefront.cart', [
@@ -48,13 +49,15 @@ class CartController extends Controller
     {
         $sessionId = $request->session()->getId();
         $user = $request->user();
-        $cart = $this->cartService->getActiveCart($user, $sessionId);
+        $cookieCartId = $request->cookie('allzone_cart_id');
+        $guestCartId = $request->session()->get('guest_cart_id') ?? ($cookieCartId ? (int) $cookieCartId : null);
 
-        if ($user && $cart->activeItems->isEmpty()) {
-            $this->cartService->mergeSessionCart($sessionId, $user);
-            $cart = $this->cartService->getActiveCart($user, $sessionId);
-            $cart->load('items.variant.product');
+        // Attempt merge for logged-in users (idempotent — won't re-merge if already done)
+        if ($user) {
+            $this->cartService->mergeSessionCart($sessionId, $user, $guestCartId);
         }
+
+        $cart = $this->cartService->getActiveCart($user, $sessionId);
 
         return response()->json([
             'status' => 'success',
