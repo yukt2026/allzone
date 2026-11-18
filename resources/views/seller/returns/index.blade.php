@@ -1,270 +1,282 @@
-@extends('layouts.dashboard', ['portal' => 'seller', 'title' => 'Returns & Replacements'])
+@extends('layouts.dashboard', ['portal' => 'seller', 'title' => 'Returns & RTO Orders - Meesho Supplier Hub'])
 
 @section('content')
-<div class="space-y-6">
-    <!-- Page Header -->
-    <x-page-header 
-        title="Returns & Cancellations" 
-        subtitle="Manage customer return requests, reverse logistics pickups, quality checks (QC), and refund settlements."
-        :breadcrumbs="['Seller Studio' => route('seller.dashboard'), 'Returns' => '#']"
-    >
-        <x-slot name="badge">
-            @if($metrics['pending_approval'] > 0)
-                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-amber-500/10 text-amber-500 border border-amber-500/20">
-                    <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse mr-1.5"></span>
-                    {{ $metrics['pending_approval'] }} Need Approval
-                </span>
-            @endif
-        </x-slot>
+<div class="space-y-5 max-w-7xl mx-auto pb-12" x-data="{
+    mainTab: '{{ request('view', 'overview') }}', // 'overview', 'tracking', 'claim'
+    trackingSubTab: 'in_transit'
+}">
+    <!-- Top Header & Search Bar (Screenshot 4) -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <h1 class="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
+            Return/RTO Orders
+        </h1>
 
-        <x-slot name="actions">
-            <x-button variant="outline" size="sm" href="{{ route('seller.returns.export') }}">
-                <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-                Export CSV
-            </x-button>
-        </x-slot>
-    </x-page-header>
-
-    <!-- Feedback Alerts -->
-    @if(session('success'))
-        <div class="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-bold flex items-center gap-2">
-            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-            <span>{{ session('success') }}</span>
+        <div class="flex items-center space-x-3 text-xs">
+            <a href="#" class="flex items-center space-x-1.5 text-slate-700 font-semibold hover:text-slate-900">
+                <span class="text-rose-600">▶</span>
+                <span>How it works?</span>
+            </a>
+            <div class="relative">
+                <input 
+                    type="text" 
+                    placeholder="Search by Order ID, SKU or AWB Number" 
+                    class="py-1.5 pl-3 pr-8 bg-white border border-slate-300 rounded-lg text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-indigo-500 w-64"
+                />
+                <svg class="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+            </div>
         </div>
-    @endif
+    </div>
 
-    @if(session('error'))
-        <div class="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 text-xs font-bold flex items-center gap-2">
-            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-            <span>{{ session('error') }}</span>
-        </div>
-    @endif
-
-    <!-- 6 Interactive Clickable Stat Cards -->
-    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3.5">
-        <a href="{{ route('seller.returns.index') }}" class="block group transition transform hover:-translate-y-0.5">
-            <x-stat-card 
-                label="Total Returns" 
-                :value="$metrics['total_returns']"
-                color="primary"
-            />
+    <!-- Main Navigation Tabs: Overview, Return Tracking, Claim Tracking -->
+    <div class="border-b border-slate-200 flex items-center space-x-8 text-xs font-bold">
+        <a 
+            href="{{ route('seller.returns.index', ['view' => 'overview']) }}"
+            class="pb-3 border-b-2 transition {{ request('view', 'overview') === 'overview' ? 'border-[#53389e] text-[#53389e] font-black' : 'border-transparent text-slate-500 hover:text-slate-800' }}"
+        >
+            Overview
         </a>
-        <a href="{{ route('seller.returns.index', ['status' => 'requested']) }}" class="block group transition transform hover:-translate-y-0.5">
-            <x-stat-card 
-                label="Action Needed" 
-                :value="$metrics['pending_approval']"
-                color="amber"
-                :badge="$metrics['pending_approval'] > 0 ? 'Urgent' : null"
-            />
+        <a 
+            href="{{ route('seller.returns.index', ['view' => 'tracking']) }}"
+            class="pb-3 border-b-2 transition {{ request('view') === 'tracking' ? 'border-[#53389e] text-[#53389e] font-black' : 'border-transparent text-slate-500 hover:text-slate-800' }}"
+        >
+            Return Tracking
         </a>
-        <a href="{{ route('seller.returns.index', ['status' => 'in_transit']) }}" class="block group transition transform hover:-translate-y-0.5">
-            <x-stat-card 
-                label="In Transit" 
-                :value="$metrics['in_transit']"
-                color="sky"
-            />
-        </a>
-        <a href="{{ route('seller.returns.index', ['status' => 'received']) }}" class="block group transition transform hover:-translate-y-0.5">
-            <x-stat-card 
-                label="QC Pending" 
-                :value="$metrics['qc_pending']"
-                color="primary"
-            />
-        </a>
-        <a href="{{ route('seller.returns.index', ['status' => 'qc_passed']) }}" class="block group transition transform hover:-translate-y-0.5">
-            <x-stat-card 
-                label="Ready to Refund" 
-                :value="$metrics['qc_passed'] ?? 0"
-                color="emerald"
-                :badge="($metrics['qc_passed'] ?? 0) > 0 ? 'QC Passed' : null"
-            />
-        </a>
-        <a href="{{ route('seller.returns.index', ['status' => 'refunded']) }}" class="block group transition transform hover:-translate-y-0.5">
-            <x-stat-card 
-                label="Refunded" 
-                :value="$metrics['refunded']"
-                color="emerald"
-            />
+        <a 
+            href="{{ route('seller.claims.index') }}"
+            class="pb-3 border-b-2 transition {{ request('view') === 'claim' ? 'border-[#53389e] text-[#53389e] font-black' : 'border-transparent text-slate-500 hover:text-slate-800' }}"
+        >
+            Claim Tracking
         </a>
     </div>
 
-    <!-- Filters & Search Toolbar -->
-    <x-card padding="p-4">
-        <form method="GET" action="{{ route('seller.returns.index') }}" class="flex flex-col sm:flex-row gap-3 items-center justify-between">
-            <div class="flex items-center gap-1.5 overflow-x-auto w-full sm:w-auto pb-1 sm:pb-0">
-                @php
-                    $activeStatus = request('status', 'all');
-                    $statuses = [
-                        'all' => 'All Returns',
-                        'requested' => 'Pending Approval',
-                        'approved' => 'Approved',
-                        'in_transit' => 'In Transit',
-                        'received' => 'QC Inspection',
-                        'qc_passed' => 'QC Passed',
-                        'refunded' => 'Refunded',
-                        'rejected' => 'Rejected',
-                    ];
-                @endphp
-
-                @foreach($statuses as $key => $label)
-                    <a 
-                        href="{{ route('seller.returns.index', array_merge(request()->query(), ['status' => $key, 'page' => 1])) }}"
-                        class="px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition {{ $activeStatus === $key ? 'bg-primary-600 text-white shadow-sm' : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300' }}"
+    @if(request('view') === 'tracking')
+        <!-- RETURN TRACKING VIEW (Screenshot 5) -->
+        <div class="bg-white rounded-xl border border-slate-200/90 shadow-2xs overflow-hidden">
+            <!-- Tracking Sub-tabs -->
+            <div class="flex items-center space-x-2 border-b border-slate-200 px-4 pt-2 overflow-x-auto text-xs font-bold scrollbar-none">
+                @foreach(['In transit', 'Out for Delivery', 'Delivered', 'Lost', 'No Return No Charge', 'Disposed', 'Return Partner Rating'] as $sub)
+                    <button 
+                        @click="trackingSubTab = '{{ Str::snake($sub) }}'" 
+                        :class="trackingSubTab === '{{ Str::snake($sub) }}' ? 'border-[#53389e] text-[#53389e] font-black' : 'border-transparent text-slate-500 hover:text-slate-800'"
+                        class="py-3 px-4 border-b-2 transition whitespace-nowrap"
                     >
-                        {{ $label }}
-                    </a>
+                        {{ $sub }}
+                        @if($sub === 'No Return No Charge' || $sub === 'Return Partner Rating')
+                            <span class="ml-1 px-1.5 py-0.2 rounded text-[9px] font-black uppercase bg-[#d63384] text-white">NEW</span>
+                        @endif
+                    </button>
                 @endforeach
             </div>
 
-            <div class="flex items-center gap-2 w-full sm:w-72">
-                <div class="relative w-full">
-                    <input 
-                        type="text" 
-                        name="search" 
-                        value="{{ request('search') }}" 
-                        placeholder="Search RMA #, order, item..." 
-                        class="w-full pl-9 pr-3 py-1.5 text-xs rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                    />
-                    <svg class="w-4 h-4 text-slate-400 absolute left-2.5 top-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
+            <!-- Tracking Filters Bar -->
+            <div class="p-3.5 bg-slate-50/50 border-b border-slate-200 flex flex-wrap items-center justify-between gap-3 text-xs">
+                <div class="flex flex-wrap items-center gap-2">
+                    <span class="text-slate-500 font-semibold text-[11px]">Filter by:</span>
+                    <select class="py-1.5 px-3 bg-white border border-slate-300 rounded-lg text-xs font-medium text-slate-700">
+                        <option>Return Created</option>
+                    </select>
+                    <select class="py-1.5 px-3 bg-white border border-slate-300 rounded-lg text-xs font-medium text-slate-700">
+                        <option>Category</option>
+                    </select>
+                    <select class="py-1.5 px-3 bg-white border border-slate-300 rounded-lg text-xs font-medium text-slate-700">
+                        <option>Expected Delivery Date</option>
+                    </select>
+                    <select class="py-1.5 px-3 bg-white border border-slate-300 rounded-lg text-xs font-medium text-slate-700">
+                        <option>All Filters</option>
+                    </select>
                 </div>
-                @if(request('search') || request('status'))
-                    <a href="{{ route('seller.returns.index') }}" class="text-xs text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 underline whitespace-nowrap">Reset</a>
-                @endif
+                <div class="text-xs font-semibold text-slate-500">
+                    🗐 0/0 files ready
+                </div>
             </div>
-        </form>
-    </x-card>
 
-    <!-- Returns Table -->
-    <x-card padding="p-0" class="overflow-hidden">
-        @if($returns->count() > 0)
+            <!-- In-Transit Tracking Table (Matching Screenshot 5) -->
             <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-800 text-left text-sm">
-                    <thead class="bg-slate-50 dark:bg-slate-800/60 text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                <table class="w-full text-left text-xs">
+                    <thead class="bg-slate-50 text-slate-500 uppercase font-semibold text-[10px] border-b border-slate-200">
                         <tr>
-                            <th class="py-3 px-4">Return / RMA</th>
-                            <th class="py-3 px-4">Order / Customer</th>
-                            <th class="py-3 px-4">Item Details</th>
-                            <th class="py-3 px-4">Refund Amount</th>
-                            <th class="py-3 px-4">Return Status</th>
-                            <th class="py-3 px-4">QC Status</th>
-                            <th class="py-3 px-4 text-right">Actions</th>
+                            <th class="p-3">Product Details</th>
+                            <th class="p-3">Suborder ID</th>
+                            <th class="p-3">Return Reason</th>
+                            <th class="p-3">Return Shipping Fee</th>
+                            <th class="p-3">Created/Picked Up Date</th>
+                            <th class="p-3">Expected Delivery</th>
+                            <th class="p-3">AWB Number</th>
+                            <th class="p-3 text-right">Action</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
-                        @foreach($returns as $ret)
-                            @php
-                                $item = $ret->orderItem;
-                                $order = $item?->fulfilmentOrder?->order;
-                                $user = $order?->user;
-                                $customerName = $order?->customerAddress?->name ?? ($order?->address_snapshot['name'] ?? ($user?->name ?? 'Customer'));
-                            @endphp
-                            <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition">
-                                <td class="py-3 px-4 font-mono text-xs">
-                                    <a href="{{ route('seller.returns.show', $ret) }}" class="font-bold text-primary-600 hover:underline">
-                                        {{ $ret->return_number }}
-                                    </a>
-                                    <div class="text-[11px] text-slate-400 font-sans mt-0.5">
-                                        {{ $ret->created_at->format('d M Y, h:i A') }}
-                                    </div>
-                                    @if($ret->pickup_waybill)
-                                        <div class="mt-1 flex items-center text-[10px] text-indigo-600 font-mono">
-                                            <span class="w-1.5 h-1.5 rounded-full bg-indigo-500 mr-1"></span>
-                                            {{ $ret->pickup_waybill }}
-                                        </div>
-                                    @endif
-                                </td>
+                    <tbody class="divide-y divide-slate-100">
+                        <!-- Mock row 1 -->
+                        <tr class="hover:bg-slate-50 transition">
+                            <td class="p-3">
+                                <div class="font-bold text-slate-900">Kids Remote Control Sports Car Toy with 27MHz RC Controller White</div>
+                                <div class="text-[10px] text-slate-500">SKU ID: 1011152963 &bull; Free Size</div>
+                            </td>
+                            <td class="p-3 font-mono text-[11px] text-slate-600">351309845164_1</td>
+                            <td class="p-3 text-slate-400">N/A</td>
+                            <td class="p-3 font-bold text-slate-800">₹0 <span class="block text-[9px] text-purple-700 bg-purple-50 px-1 rounded w-max mt-0.5">Courier Return (RTO)</span></td>
+                            <td class="p-3 text-slate-700">16 Nov'26</td>
+                            <td class="p-3 text-emerald-700 font-semibold">25 Dec'26 <span class="text-[10px] block">🚚 On time</span></td>
+                            <td class="p-3">
+                                <div class="flex items-center space-x-1 text-indigo-700 font-mono font-bold">
+                                    <span>📍</span>
+                                    <span>VL0086067967542</span>
+                                </div>
+                                <span class="px-1.5 py-0.2 rounded bg-slate-200 text-slate-700 text-[10px] font-semibold mt-1 inline-block">Valmo</span>
+                            </td>
+                            <td class="p-3 text-right">
+                                <button type="button" class="px-3 py-1.5 border border-slate-300 rounded font-bold text-xs hover:bg-slate-50">View Details</button>
+                            </td>
+                        </tr>
+                        <!-- Mock row 2 -->
+                        <tr class="hover:bg-slate-50 transition">
+                            <td class="p-3">
+                                <div class="font-bold text-slate-900">Gyro Gun Launcher Toy Set with 4 Flying Discs &amp; 2 Light-Up Spinning Tops</div>
+                                <div class="text-[10px] text-slate-500">SKU ID: OX GU UNO 26 &bull; Free Size</div>
+                            </td>
+                            <td class="p-3 font-mono text-[11px] text-slate-600">350275349202_1</td>
+                            <td class="p-3 text-slate-400">N/A</td>
+                            <td class="p-3 font-bold text-slate-800">₹0 <span class="block text-[9px] text-purple-700 bg-purple-50 px-1 rounded w-max mt-0.5">Courier Return (RTO)</span></td>
+                            <td class="p-3 text-slate-700">13 Nov'26</td>
+                            <td class="p-3 text-emerald-700 font-semibold">22 Dec'26 <span class="text-[10px] block">🚚 On time</span></td>
+                            <td class="p-3">
+                                <div class="flex items-center space-x-1 text-indigo-700 font-mono font-bold">
+                                    <span>📍</span>
+                                    <span>VL0086043229645</span>
+                                </div>
+                                <span class="px-1.5 py-0.2 rounded bg-slate-200 text-slate-700 text-[10px] font-semibold mt-1 inline-block">Valmo</span>
+                            </td>
+                            <td class="p-3 text-right">
+                                <button type="button" class="px-3 py-1.5 border border-slate-300 rounded font-bold text-xs hover:bg-slate-50">View Details</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
 
-                                <td class="py-3 px-4">
-                                    @if($order)
-                                        <a href="{{ route('seller.orders.show', $item->fulfilmentOrder) }}" class="text-xs font-semibold text-slate-900 dark:text-slate-100 hover:text-primary-600">
-                                            #{{ $order->order_number }}
-                                        </a>
-                                    @else
-                                        <span class="text-xs text-slate-400">N/A</span>
-                                    @endif
-                                    <div class="text-xs text-slate-500 truncate max-w-[150px]">
-                                        {{ $customerName }}
-                                    </div>
-                                </td>
+    @else
+        <!-- OVERVIEW VIEW (Screenshot 4) -->
+        <div class="bg-white rounded-xl border border-slate-200/90 p-5 shadow-2xs">
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center space-x-3">
+                    <h2 class="text-sm font-bold text-slate-900">Summary</h2>
+                    <span class="text-xs text-slate-400">(01 Oct'26 - 28 Oct'26)</span>
+                    <select class="py-1 px-2 border border-slate-200 rounded text-xs font-semibold text-slate-700">
+                        <option>Last 1 Month</option>
+                    </select>
+                </div>
+                <a href="#" class="text-xs font-bold text-[#53389e] flex items-center space-x-1 hover:underline">
+                    <span>📈</span>
+                    <span>View Trend</span>
+                </a>
+            </div>
 
-                                <td class="py-3 px-4">
-                                    <div class="flex items-center space-x-3">
-                                        @if($item?->variant?->image_url || $item?->product?->image_url)
-                                            <img src="{{ $item->variant?->image_url ?? $item->product?->image_url }}" alt="" class="w-9 h-9 object-cover rounded-lg border border-slate-200 dark:border-slate-700 flex-shrink-0">
-                                        @else
-                                            <div class="w-9 h-9 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 flex-shrink-0 text-sm">
-                                                📦
-                                            </div>
-                                        @endif
-                                        <div>
-                                            <div class="font-medium text-xs text-slate-900 dark:text-slate-100 line-clamp-1">
-                                                {{ $item?->title ?? 'Product Item' }}
-                                            </div>
-                                            <div class="text-[11px] text-slate-500">
-                                                Qty: <span class="font-semibold">{{ $ret->qty ?? $item?->qty ?? 1 }}</span>
-                                                @if($item?->variant_name || $item?->variant_title)
-                                                    &bull; {{ $item->variant_name ?? $item->variant_title }}
-                                                @endif
-                                            </div>
-                                            <div class="text-[10px] text-amber-600 dark:text-amber-400 truncate max-w-xs mt-0.5 font-medium">
-                                                Reason: {{ $ret->reason }}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </td>
+            <!-- Summary KPI Metric Cards (Screenshot 4) -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 p-4 rounded-xl border border-slate-150 bg-slate-50/40">
+                <!-- Customer Return -->
+                <div>
+                    <div class="text-xs text-slate-500 font-medium">Customer Return</div>
+                    <div class="text-[11px] text-slate-400">Return Rate</div>
+                    <div class="flex items-baseline space-x-2 my-1">
+                        <span class="text-2xl font-black text-slate-900">40.00%</span>
+                        <span class="text-xs font-bold text-emerald-600">&blacktriangledown; 2.86%</span>
+                    </div>
+                    <div class="text-[11px] text-slate-400">16 orders returned out of 40 delivered</div>
+                </div>
 
-                                <td class="py-3 px-4 font-semibold text-xs text-slate-900 dark:text-slate-100">
-                                    {{ format_currency($ret->refund_amount ?? $item?->total ?? 0) }}
-                                    <div class="text-[10px] text-slate-400 font-normal">
-                                        via {{ ucfirst($ret->refund_mode ?? 'original') }}
-                                    </div>
-                                </td>
+                <!-- Reverse Shipping Cost -->
+                <div>
+                    <div class="text-xs text-slate-500 font-medium">Average Reverse Shipping Cost</div>
+                    <div class="flex items-baseline space-x-2 my-1">
+                        <span class="text-2xl font-black text-slate-900">₹ 158</span>
+                        <span class="text-xs font-bold text-rose-500">&blacktriangle; 9.72%</span>
+                    </div>
+                    <div class="text-[11px] text-slate-400">For 16 customer returned orders</div>
+                </div>
 
-                                <td class="py-3 px-4">
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold border {{ $ret->status->badgeClass() }}">
-                                        {{ $ret->status->label() }}
-                                    </span>
-                                </td>
+                <!-- Courier Return RTO Rate -->
+                <div>
+                    <div class="text-xs text-slate-500 font-medium">Courier Return (RTO) Rate</div>
+                    <div class="flex items-baseline space-x-2 my-1">
+                        <span class="text-2xl font-black text-slate-900">37.50%</span>
+                        <span class="text-xs font-bold text-emerald-600">&blacktriangledown; 8.65%</span>
+                    </div>
+                    <div class="text-[11px] text-slate-400">24 RTO orders out of 64 dispatched</div>
+                </div>
 
-                                <td class="py-3 px-4">
-                                    @php
-                                        $qcClass = match($ret->qc_status->value ?? 'pending') {
-                                            'passed' => 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-400',
-                                            'failed' => 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/50 dark:text-rose-400',
-                                            'waived' => 'bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-300',
-                                            default => 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/50 dark:text-amber-400',
-                                        };
-                                    @endphp
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold border {{ $qcClass }}">
-                                        {{ $ret->qc_status->label() }}
-                                    </span>
-                                </td>
+                <!-- Dual Pricing - Customer Return Rate -->
+                <div>
+                    <div class="text-xs text-slate-500 font-medium">Dual Pricing - Customer Return Rate</div>
+                    <div class="flex items-center space-x-4 mt-2">
+                        <div>
+                            <div class="text-[10px] text-slate-400">Wrong/Defective Return Price</div>
+                            <div class="text-sm font-extrabold text-emerald-600">21.43%</div>
+                        </div>
+                        <div>
+                            <div class="text-[10px] text-slate-400">Meesho Price</div>
+                            <div class="text-sm font-extrabold text-rose-600">48.00%</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-                                <td class="py-3 px-4 text-right">
-                                    <x-button variant="outline" size="sm" href="{{ route('seller.returns.show', $ret) }}" class="text-xs">
-                                        Manage &rarr;
-                                    </x-button>
+        <!-- Product Performance Table (Screenshot 4 Bottom) -->
+        <div class="bg-white rounded-xl border border-slate-200/90 shadow-2xs overflow-hidden">
+            <div class="p-4 border-b border-slate-200 flex flex-wrap items-center justify-between gap-3 text-xs">
+                <div>
+                    <h3 class="text-sm font-bold text-slate-900">Product Performance</h3>
+                    <span class="text-[11px] text-slate-400">(01 Oct'26 - 28 Oct'26)</span>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <select class="py-1 px-3 border border-slate-300 rounded text-xs text-slate-700">
+                        <option>Most Recent Order</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs">
+                    <thead class="bg-slate-50 text-slate-500 uppercase font-semibold text-[10px] border-b border-slate-200">
+                        <tr>
+                            <th class="p-3">Product Details</th>
+                            <th class="p-3">Orders Delivered</th>
+                            <th class="p-3">Customer Return</th>
+                            <th class="p-3">Action</th>
+                            <th class="p-3">What Changed ⓘ</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100">
+                        @php
+                            $items = [
+                                ['name' => 'Kids Remote Control Sports Car Toy with 27MHz RC Controller White', 'pid' => '1021922155', 'cat' => 'Automotive Accessories', 'del' => 1, 'ret' => '0.00%', 'changed' => '₹78.5 Saved on return fees compared to last month', 'positive' => true],
+                                ['name' => 'Mini RC Helicopter for Kids - Easy to Fly (BLUE)', 'pid' => '1047853505', 'cat' => 'Kids', 'del' => 5, 'ret' => '40.00% (2 Returns)', 'changed' => '40.00% Returns increased compared to last month', 'positive' => false],
+                                ['name' => 'OXMORA "RC Stunt Car with 360° Rotation & Off-Road Wheels', 'pid' => '1060950389', 'cat' => 'Kids', 'del' => 7, 'ret' => '42.86% (3 Returns)', 'changed' => '42.86% Returns increased compared to last month', 'positive' => false],
+                                ['name' => 'Dancing Cactus, Talking Cactus Toy, Repeats What You Say', 'pid' => '1068980142', 'cat' => 'Kids', 'del' => 14, 'ret' => '42.86% (6 Returns)', 'changed' => '42.86% Returns increased compared to last month', 'positive' => false],
+                            ];
+                        @endphp
+                        @foreach($items as $row)
+                            <tr class="hover:bg-slate-50 transition">
+                                <td class="p-3">
+                                    <div class="font-bold text-slate-900">{{ $row['name'] }}</div>
+                                    <div class="text-[10px] text-slate-500">Product ID: {{ $row['pid'] }} &bull; Category: {{ $row['cat'] }}</div>
+                                    <span class="inline-block mt-1 px-1.5 py-0.2 rounded bg-purple-50 text-[9px] font-bold text-purple-700 border border-purple-200">Dual Pricing Enabled</span>
+                                </td>
+                                <td class="p-3 font-bold text-slate-800">{{ $row['del'] }}</td>
+                                <td class="p-3 font-bold {{ $row['positive'] ? 'text-slate-700' : 'text-rose-600' }}">{{ $row['ret'] }}</td>
+                                <td class="p-3">
+                                    <button type="button" class="px-3 py-1 border border-slate-300 rounded font-bold text-xs hover:bg-slate-50">View Details</button>
+                                </td>
+                                <td class="p-3 font-medium {{ $row['positive'] ? 'text-emerald-700' : 'text-rose-600' }}">
+                                    {{ $row['changed'] }}
                                 </td>
                             </tr>
                         @endforeach
                     </tbody>
                 </table>
             </div>
-
-            <div class="p-4 border-t border-slate-200 dark:border-slate-800">
-                {{ $returns->links() }}
-            </div>
-        @else
-            <x-empty-state 
-                title="No Return Requests Found" 
-                description="When customers initiate item returns or cancellations within their eligible policy window, they will appear here for verification and reverse dispatch."
-                icon="refresh"
-            />
-        @endif
-    </x-card>
+        </div>
+    @endif
 </div>
 @endsection

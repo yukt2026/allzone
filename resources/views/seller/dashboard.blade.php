@@ -1,696 +1,320 @@
-@extends('layouts.dashboard', ['portal' => 'seller', 'title' => 'Seller Studio'])
+@extends('layouts.dashboard', ['portal' => 'seller', 'title' => 'Meesho Supplier Hub'])
 
 @section('content')
-<div class="space-y-8" x-data="sellerDashboard({{ Js::from([
-    'charts' => $charts,
-    'chartDataUrl' => route('seller.chart_data'),
-    'activeStoreId' => $activeStore?->id,
-    'range' => $range,
-]) }})">
-    <!-- Page Header & Top Operations Bar -->
-    <x-page-header 
-        title="Merchant Operations Hub" 
-        subtitle="Real-time multi-store orders, 10-30m instant dispatch SLA, and catalog inventory."
-        :breadcrumbs="['Seller Studio' => route('seller.dashboard'), ($activeStore ? $activeStore->name : 'All Outlets') => '#']"
-    >
-        <x-slot name="badge">
-            <div class="flex items-center space-x-2">
-                @if($storeStatus['is_open'])
-                    <x-badge variant="success" dot pulse size="sm">
-                        Store Open &amp; Accepting Orders
-                    </x-badge>
-                @else
-                    <x-badge variant="danger" dot size="sm">
-                        Store Offline / Closed
-                    </x-badge>
-                @endif
-                <span class="text-[11px] text-slate-500 font-medium hidden sm:inline">&bull; {{ $storeStatus['today_timings'] }}</span>
-            </div>
-        </x-slot>
-
-        <x-slot name="actions">
-            <x-button variant="primary" size="sm" href="{{ route('seller.products.create') }}">
-                + Add Product
-            </x-button>
-            <x-button variant="outline" size="sm" href="{{ route('seller.orders.index') }}">
-                Orders Console &rarr;
-            </x-button>
-        </x-slot>
-    </x-page-header>
-
-    <!-- 8 KPI Cards Grid (Blueprint Section 15) -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        @foreach($kpi as $metricKey => $stat)
-            <a href="{{ $stat['url'] }}" class="block group transition transform hover:-translate-y-0.5">
-                <x-stat-card 
-                    :label="$stat['label']" 
-                    :value="$stat['formatted_value'] ?? $stat['value']" 
-                    :change="$stat['change']" 
-                    :changeType="$stat['change_type']"
-                    :badge="$stat['badge']"
-                    :color="$stat['color']" 
-                />
+<div class="space-y-6 max-w-7xl mx-auto pb-12" x-data="{
+    activeTab: 'daily',
+    flashModal: false,
+}">
+    <!-- Top Greeting Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+        <div>
+            <h1 class="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
+                Welcome back, {{ $seller?->business_name ?? 'DREESTI' }}
+            </h1>
+            <p class="text-xs text-slate-500">
+                Manage and grow your business with Meesho
+            </p>
+        </div>
+        <div class="flex items-center space-x-2">
+            <a href="{{ route('seller.products.create') }}" class="px-4 py-2 rounded-lg bg-[#53389e] hover:bg-[#432c81] text-white text-xs font-semibold shadow-xs transition flex items-center space-x-1.5">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                <span>Add Product</span>
             </a>
-        @endforeach
+        </div>
     </div>
 
-    <!-- Charts Section: Sales 30d, Channels, Top Products & Store Comparison -->
+    <!-- Policy Update Banner (Screenshot 1) -->
+    <div class="p-3.5 rounded-xl bg-orange-50/70 border border-orange-200/80 flex items-center justify-between text-xs text-slate-700">
+        <div class="flex items-center space-x-2.5">
+            <span class="text-base">📢</span>
+            <span>
+                <strong class="font-semibold text-slate-900">Upcoming Policy Update:</strong> Next Day Dispatch is becoming the new platform standard for all orders.
+            </span>
+        </div>
+        <a href="{{ route('seller.orders.dispatch_performance') }}" class="font-semibold text-indigo-600 hover:text-indigo-800 underline ml-2 shrink-0">
+            Know more
+        </a>
+    </div>
+
+    <!-- To Do List Action Cards (Screenshot 1) -->
+    <div class="bg-white rounded-xl border border-slate-200/90 p-5 shadow-2xs">
+        <div class="flex items-center space-x-2 mb-4">
+            <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+            <h2 class="text-sm font-bold text-slate-800">To do list</h2>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <!-- Pending Orders -->
+            <a href="{{ route('seller.orders.index', ['status' => 'pending']) }}" class="flex items-center justify-between p-3.5 rounded-lg border border-slate-150 hover:border-indigo-400 bg-slate-50/50 hover:bg-white transition group">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-lg bg-amber-50 border border-amber-200/80 flex items-center justify-center text-amber-600">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    </div>
+                    <div>
+                        <div class="text-xs text-slate-600 font-medium">Pending Orders</div>
+                        <div class="text-base font-extrabold text-slate-900 group-hover:text-indigo-600">{{ $actionOrders->count() ?? 0 }} &rsaquo;</div>
+                    </div>
+                </div>
+            </a>
+
+            <!-- Download Labels -->
+            <a href="{{ route('seller.orders.index', ['status' => 'ready']) }}" class="flex items-center justify-between p-3.5 rounded-lg border border-slate-150 hover:border-indigo-400 bg-slate-50/50 hover:bg-white transition group">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-lg bg-sky-50 border border-sky-200/80 flex items-center justify-center text-sky-600">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                    </div>
+                    <div>
+                        <div class="text-xs text-slate-600 font-medium">Download Labels</div>
+                        <div class="text-base font-extrabold text-slate-900 group-hover:text-indigo-600">0 &rsaquo;</div>
+                    </div>
+                </div>
+            </a>
+
+            <!-- Out of Stock -->
+            <a href="{{ route('seller.inventory.index') }}" class="flex items-center justify-between p-3.5 rounded-lg border border-slate-150 hover:border-rose-400 bg-slate-50/50 hover:bg-white transition group">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-lg bg-rose-50 border border-rose-200/80 flex items-center justify-center text-rose-600">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                    </div>
+                    <div>
+                        <div class="text-xs text-slate-600 font-medium">Out of Stock</div>
+                        <div class="text-base font-extrabold text-rose-600">5 &rsaquo;</div>
+                    </div>
+                </div>
+            </a>
+
+            <!-- Low Stock -->
+            <a href="{{ route('seller.inventory.index') }}" class="flex items-center justify-between p-3.5 rounded-lg border border-slate-150 hover:border-amber-400 bg-slate-50/50 hover:bg-white transition group">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-lg bg-amber-50 border border-amber-200/80 flex items-center justify-center text-amber-600">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"/></svg>
+                    </div>
+                    <div>
+                        <div class="text-xs text-slate-600 font-medium">Low Stock</div>
+                        <div class="text-base font-extrabold text-slate-900 group-hover:text-indigo-600">0 &rsaquo;</div>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    <!-- Main Grid: Business Insights Graph + Right Promotion Cards -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <!-- Sales & Orders 30-Day Trend (Dual Line Chart) -->
-        <div class="lg:col-span-2">
-            <x-card title="Sales & Order Trajectory" subtitle="Revenue (₹) and daily order counts across the last 30 days">
-                <x-slot name="action">
-                    <div class="flex items-center space-x-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl text-xs font-bold">
-                        <button 
-                            type="button" 
-                            @click="changeRange('7d')" 
-                            :class="activeRange === '7d' ? 'bg-white dark:bg-slate-900 shadow-xs text-indigo-600' : 'text-slate-500 hover:text-slate-900'"
-                            class="px-2.5 py-1 rounded-lg transition"
-                        >7d</button>
-                        <button 
-                            type="button" 
-                            @click="changeRange('30d')" 
-                            :class="activeRange === '30d' ? 'bg-white dark:bg-slate-900 shadow-xs text-indigo-600' : 'text-slate-500 hover:text-slate-900'"
-                            class="px-2.5 py-1 rounded-lg transition"
-                        >30d</button>
-                        <button 
-                            type="button" 
-                            @click="changeRange('90d')" 
-                            :class="activeRange === '90d' ? 'bg-white dark:bg-slate-900 shadow-xs text-indigo-600' : 'text-slate-500 hover:text-slate-900'"
-                            class="px-2.5 py-1 rounded-lg transition"
-                        >90d</button>
+        <!-- Left: Business Insights (2 Cols) -->
+        <div class="lg:col-span-2 bg-white rounded-xl border border-slate-200/90 p-5 shadow-2xs flex flex-col justify-between">
+            <div>
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center space-x-2">
+                        <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"/></svg>
+                        <h2 class="text-sm font-bold text-slate-900">Business Insights</h2>
                     </div>
-                </x-slot>
-
-                <div class="relative h-72">
-                    <canvas id="sellerSalesChart"></canvas>
-                </div>
-            </x-card>
-        </div>
-
-        <!-- Orders by Channel (Donut Chart) -->
-        <div>
-            <x-card title="Fulfillment Channels" subtitle="10-30m Quick Commerce vs National Courier">
-                <div class="relative h-60 flex items-center justify-center">
-                    <canvas id="sellerChannelChart"></canvas>
-                </div>
-                <div class="grid grid-cols-3 gap-2 pt-3 border-t border-slate-100 dark:border-slate-800 text-center text-xs">
-                    <div>
-                        <div class="font-extrabold text-amber-500">{{ $charts['channel']['data'][0] ?? 0 }}</div>
-                        <div class="text-[10px] text-slate-400 font-semibold">⚡ Quick 15m</div>
-                    </div>
-                    <div>
-                        <div class="font-extrabold text-indigo-500">{{ $charts['channel']['data'][1] ?? 0 }}</div>
-                        <div class="text-[10px] text-slate-400 font-semibold">📦 Standard</div>
-                    </div>
-                    <div>
-                        <div class="font-extrabold text-emerald-500">{{ $charts['channel']['data'][2] ?? 0 }}</div>
-                        <div class="text-[10px] text-slate-400 font-semibold">🏬 Pickup</div>
+                    <div class="text-xs font-semibold text-slate-600 bg-slate-100 px-3 py-1 rounded-md">
+                        Daily
                     </div>
                 </div>
-            </x-card>
-        </div>
-    </div>
 
-    <!-- Secondary Charts & Multi-Store Row -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <!-- Top 5 Products by Revenue -->
-        <x-card title="Top 5 Products by Revenue" subtitle="Best-performing catalog items this month">
-            @if(!empty($charts['top_products']['labels']))
-                <div class="relative h-56">
-                    <canvas id="sellerTopProductsChart"></canvas>
-                </div>
-            @else
-                <div class="h-56 flex flex-col items-center justify-center text-center text-xs text-slate-400">
-                    <div class="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-2 text-slate-400">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                    <div class="md:col-span-2 relative h-48 sm:h-56">
+                        <canvas id="meeshoInsightsChart"></canvas>
                     </div>
-                    <p class="font-bold text-slate-700 dark:text-slate-300">No Product Sales Yet</p>
-                    <p class="text-[11px] text-slate-400 mt-0.5">Top-grossing items will appear here as orders are placed.</p>
-                </div>
-            @endif
-        </x-card>
-
-        <!-- Revenue by Store Outlet (If Multi-store) or Physical Store Performance -->
-        @if($charts['is_multi_store'] && !empty($charts['revenue_by_store']['labels']))
-            <x-card title="Revenue by Physical Store Outlet" subtitle="Comparison of earnings across physical branch locations">
-                <div class="relative h-56">
-                    <canvas id="sellerStoreComparisonChart"></canvas>
-                </div>
-            </x-card>
-        @else
-            <!-- Store Dispatch & Timings Profile -->
-            <x-card title="Physical Store Performance" subtitle="Hyper-local dispatch metrics & store profile">
-                <x-slot name="action">
-                    <a href="{{ route('seller.store.edit') }}" class="text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:underline">
-                        Edit Store &rarr;
-                    </a>
-                </x-slot>
-                <div class="space-y-3 text-xs">
-                    <div class="flex justify-between py-2 border-b border-slate-100 dark:border-slate-800">
-                        <span class="text-slate-500">Active Outlet:</span>
-                        <span class="font-bold text-slate-900 dark:text-white">{{ $activeStore ? $activeStore->name : ($stores->first()?->name ?? 'Default Store') }}</span>
-                    </div>
-                    <div class="flex justify-between py-2 border-b border-slate-100 dark:border-slate-800">
-                        <span class="text-slate-500">City &amp; Location:</span>
-                        <span class="font-mono text-slate-800 dark:text-slate-200">
-                            {{ $activeStore?->location?->city ?? 'Location not set' }}
-                            @if($activeStore?->location?->pincode)
-                                ({{ $activeStore->location->pincode }})
-                            @endif
-                        </span>
-                    </div>
-                    <div class="flex justify-between py-2 border-b border-slate-100 dark:border-slate-800">
-                        <span class="text-slate-500">Instant Delivery Radius:</span>
-                        <span class="font-bold text-slate-900 dark:text-slate-100">
-                            {{ $activeStore?->delivery_radius_km ?? setting('default_delivery_radius_km', 8.00) }} km
-                        </span>
-                    </div>
-                    <div class="flex justify-between py-2 border-b border-slate-100 dark:border-slate-800">
-                        <span class="text-slate-500">Fulfillment Mode:</span>
-                        <span class="font-bold {{ $activeStore?->accepts_quick_commerce ? 'text-amber-500' : 'text-slate-700 dark:text-slate-300' }}">
-                            {{ $activeStore?->accepts_quick_commerce ? '⚡ Quick 15m Dispatch Active' : 'Standard Delivery Only' }}
-                        </span>
-                    </div>
-                    <div class="flex justify-between py-2">
-                        <span class="text-slate-500">Operating Status:</span>
-                        <span class="font-bold flex items-center space-x-1.5 {{ $storeStatus['is_open'] ? 'text-emerald-500' : 'text-slate-400' }}">
-                            <span class="w-1.5 h-1.5 rounded-full {{ $storeStatus['is_open'] ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400' }}"></span>
-                            <span>{{ $storeStatus['is_open'] ? 'Open & Accepting Orders' : 'Store Closed' }}</span>
-                        </span>
-                    </div>
-                </div>
-            </x-card>
-        @endif
-    </div>
-
-    <!-- Widgets Section 1: Orders Needing Action & Low Stock Items -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <!-- Orders Needing Action (Urgent Live Queue) -->
-        <div class="lg:col-span-2">
-            <x-card 
-                title="Orders Needing Immediate Action" 
-                subtitle="Accept, pack, and hand over orders to meet your 10-30 min delivery SLA"
-            >
-                <x-slot name="action">
-                    <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800 flex items-center space-x-1">
-                        <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping"></span>
-                        <span>{{ $actionOrders->count() }} Live Orders</span>
-                    </span>
-                </x-slot>
-
-                <div class="space-y-3">
-                    @forelse($actionOrders as $order)
-                        <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200/80 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                            <div class="space-y-1">
-                                <div class="flex items-center space-x-2">
-                                    <span class="text-xs font-mono font-bold text-indigo-600 dark:text-indigo-400">#{{ $order->fulfilment_order_number }}</span>
-                                    <x-badge 
-                                        :variant="$order->fulfilment_type === \App\Enums\FulfilmentType::QUICK ? 'warning' : 'info'" 
-                                        size="sm"
-                                    >
-                                        {{ $order->fulfilment_type === \App\Enums\FulfilmentType::QUICK ? '⚡ Quick 15m' : '📦 Courier' }}
-                                    </x-badge>
-                                    <span class="px-2 py-0.5 rounded text-[10px] font-extrabold uppercase bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
-                                        {{ str_replace('_', ' ', $order->status) }}
-                                    </span>
-                                </div>
-
-                                <div class="text-xs font-medium text-slate-800 dark:text-slate-200">
-                                    {{ $order->items->count() }} items &bull; {{ format_currency($order->seller_payable) }} payable
-                                </div>
-
-                                <div class="text-[11px] text-slate-500 dark:text-slate-400">
-                                    Placed {{ $order->created_at->diffForHumans() }} &bull; Store: {{ $order->store?->name ?? 'Default' }}
-                                </div>
-                            </div>
-
-                            <!-- Inline Action Buttons based on status -->
-                            <div class="flex items-center space-x-2">
-                                @if(in_array($order->status, ['placed', 'confirmed']))
-                                    <form method="POST" action="{{ route('seller.orders.accept', $order) }}">
-                                        @csrf
-                                        <button type="submit" class="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-xs transition">
-                                            Accept Order
-                                        </button>
-                                    </form>
-                                @endif
-
-                                @if(in_array($order->status, ['store_accepted', 'confirmed']))
-                                    <form method="POST" action="{{ route('seller.orders.pack', $order) }}">
-                                        @csrf
-                                        <button type="submit" class="px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs shadow-xs transition">
-                                            Start Packing
-                                        </button>
-                                    </form>
-                                @endif
-
-                                @if(in_array($order->status, ['packing']))
-                                    <form method="POST" action="{{ route('seller.orders.ready', $order) }}">
-                                        @csrf
-                                        <button type="submit" class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs transition">
-                                            Ready For Handover
-                                        </button>
-                                    </form>
-                                @endif
+                    <div class="flex flex-col justify-center space-y-4 border-t md:border-t-0 md:border-l border-slate-100 md:pl-5">
+                        <div>
+                            <div class="text-[11px] text-slate-500 font-medium">Views (17 Nov)</div>
+                            <div class="flex items-baseline space-x-2">
+                                <span class="text-2xl font-black text-slate-900">496</span>
+                                <span class="text-xs font-bold text-emerald-600 flex items-center">&blacktriangle; 2655.56%</span>
                             </div>
                         </div>
-                    @empty
-                        <x-empty-state 
-                            title="No urgent orders pending" 
-                            description="All incoming store orders have been accepted and dispatched!" 
-                        />
-                    @endforelse
-                </div>
-            </x-card>
-        </div>
-
-        <!-- Low Stock Items List with Quick Restock Modal -->
-        <div>
-            <x-card title="Low Stock Warning" subtitle="Items near stock-out threshold">
-                <div class="space-y-3">
-                    @forelse($lowStock as $item)
-                        <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200/80 dark:border-slate-800 flex items-center justify-between text-xs">
-                            <div class="min-w-0 flex-1 pr-2">
-                                <div class="font-bold text-slate-900 dark:text-white truncate">
-                                    {{ $item->variant?->product?->title ?? 'Product SKU' }}
-                                </div>
-                                <div class="text-[11px] text-slate-400 font-mono">
-                                    {{ $item->variant?->sku }} &bull; Available: <strong class="text-rose-500 font-bold">{{ $item->available_quantity }}</strong> (Min: {{ $item->low_stock_threshold }})
-                                </div>
+                        <div>
+                            <div class="text-[11px] text-slate-500 font-medium">Orders (17 Nov)</div>
+                            <div class="flex items-baseline space-x-2">
+                                <span class="text-2xl font-black text-slate-900">0</span>
+                                <span class="text-xs font-bold text-rose-500 flex items-center">&blacktriangledown; 100.00%</span>
                             </div>
-
-                            <button 
-                                type="button" 
-                                @click="openRestockModal(@js($item))"
-                                class="px-2.5 py-1 text-xs font-bold rounded-lg bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 hover:bg-rose-100 transition shrink-0"
-                            >
-                                Restock +
-                            </button>
                         </div>
-                    @empty
-                        <div class="py-6 text-center text-xs text-slate-400">
-                            🎉 All inventory levels are healthy!
-                        </div>
-                    @endforelse
+                    </div>
                 </div>
-            </x-card>
-        </div>
-    </div>
+            </div>
 
-    <!-- Financial Settlements & Customer Feedback -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <!-- 1. Settlements & Payouts Card -->
-        <x-card title="Settlements & Payouts" subtitle="Automated clearing and earnings ledger">
-            <x-slot name="action">
-                <a href="{{ route('seller.settlements.index') }}" class="text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:underline">
-                    View Settlements &rarr;
+            <div class="pt-3 border-t border-slate-100">
+                <a href="{{ route('seller.stores.reports') }}" class="inline-block px-4 py-2 rounded-lg border border-slate-200 text-xs font-bold text-[#53389e] hover:bg-slate-50 transition">
+                    View More Details
                 </a>
-            </x-slot>
+            </div>
+        </div>
 
-            <div class="space-y-4 text-xs">
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200/80 dark:border-slate-800">
+        <!-- Right: Maha Indian Savings Sale / Flash Discount Promotion -->
+        <div class="space-y-4">
+            <div class="bg-white rounded-xl border border-slate-200/90 p-5 shadow-2xs">
+                <div class="flex items-center justify-between text-xs text-slate-500 mb-2">
+                    <span class="flex items-center space-x-1 font-mono text-[11px] font-semibold">
+                        <span>⏱</span>
+                        <span>2h : 21m : 23s</span>
+                    </span>
+                    <span class="px-1.5 py-0.5 rounded bg-rose-50 text-[10px] font-black text-rose-600 border border-rose-200">
+                        MAHA INDIAN SAVINGS SALE
+                    </span>
+                </div>
+                <h3 class="text-sm font-bold text-slate-900 mb-1">
+                    Add timer on Nov &amp; Dec Sale events! Get extra 40% growth*
+                </h3>
+
+                <!-- Small Sparkline / Curve -->
+                <div class="py-3 flex items-center justify-between text-xs font-bold text-slate-600">
                     <div>
-                        <div class="text-slate-400 text-[10px] font-bold uppercase tracking-wider">Unsettled Accrued Balance</div>
-                        <div class="text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-0.5">
-                            {{ $settlement['formatted_accrued'] }}
-                        </div>
-                        <div class="text-[10px] text-slate-400 mt-0.5">Pending clearing to bank</div>
+                        <div class="text-slate-400 font-normal text-[10px]">current growth</div>
+                        <div>220%</div>
                     </div>
-                    <div>
-                        <div class="text-slate-400 text-[10px] font-bold uppercase tracking-wider">Next Scheduled Payout</div>
-                        <div class="text-base font-bold text-slate-800 dark:text-slate-200 mt-1">
-                            {{ $settlement['next_payout_date'] }}
-                        </div>
-                        <div class="text-[10px] text-slate-400 mt-0.5">Weekly automated cycle</div>
+                    <div class="text-emerald-600 text-right">
+                        <div class="text-slate-400 font-normal text-[10px]">flash growth</div>
+                        <div>260% (+40%)</div>
                     </div>
                 </div>
 
-                <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200/80 dark:border-slate-800 flex items-center justify-between">
-                    <div>
-                        <div class="text-slate-400 text-[10px] font-bold uppercase tracking-wider">Primary Payout Bank</div>
-                        @if($settlement['primary_bank'])
-                            <div class="font-bold text-slate-900 dark:text-white text-xs mt-0.5">
-                                {{ $settlement['primary_bank']->bank_name }}
-                            </div>
-                            <div class="font-mono text-[11px] text-slate-500">
-                                A/C: &bull;&bull;&bull;&bull; {{ substr($settlement['primary_bank']->account_no, -4) }} &bull; IFSC: {{ $settlement['primary_bank']->ifsc }}
-                            </div>
-                        @else
-                            <div class="text-rose-500 font-semibold mt-0.5">No bank account linked</div>
-                            <div class="text-[10px] text-slate-400">Add a bank account to receive automated payouts</div>
-                        @endif
+                <a href="{{ route('seller.pricing.index') }}" class="w-full block text-center py-2.5 rounded-lg bg-[#3e2e84] hover:bg-[#32236e] text-white text-xs font-bold transition shadow-xs">
+                    Add flash discount
+                </a>
+                <p class="text-[10px] text-slate-400 text-center mt-2">
+                    *Based on internal projections. Actual figures may vary.
+                </p>
+            </div>
+
+            <!-- Important Announcements -->
+            <div class="bg-white rounded-xl border border-slate-200/90 p-4 shadow-2xs">
+                <h4 class="text-xs font-bold text-slate-800 mb-2">Important Announcements</h4>
+                <a href="#" class="flex items-center justify-between p-2 rounded-lg hover:bg-slate-50 text-xs text-slate-700 transition">
+                    <div class="flex items-center space-x-2 truncate pr-2">
+                        <span class="text-base shrink-0">📢</span>
+                        <span class="truncate font-medium">Pay Later Lite is Live - Enable NOW!! Grow Your Business...</span>
                     </div>
-                    @if($settlement['primary_bank'])
-                        <span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-800 shrink-0">
-                            Verified
-                        </span>
-                    @else
-                        <a href="{{ route('seller.settlements.index') }}" class="px-3 py-1.5 text-xs font-bold rounded-lg bg-indigo-600 text-white shrink-0">
-                            Add Bank
+                    <span class="text-slate-400">&rsaquo;</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dispatch Performance & Insights (Screenshot 1 & 3) -->
+    <div class="bg-white rounded-xl border border-slate-200/90 p-5 shadow-2xs">
+        <div class="flex items-center space-x-2 mb-4">
+            <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+            <h2 class="text-sm font-bold text-slate-900">Dispatch Performance &amp; Insights</h2>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 rounded-xl border border-slate-200/80 bg-slate-50/30">
+            <!-- Health Rating Bar -->
+            <div>
+                <div class="flex items-center space-x-3 mb-2">
+                    <span class="text-2xl font-black text-slate-900">94%</span>
+                    <span class="text-xs font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+                        dispatch health – catalogs at risk
+                    </span>
+                </div>
+
+                <!-- 3-Segment Progress bar -->
+                <div class="grid grid-cols-3 gap-1.5 h-2 rounded-full overflow-hidden my-3">
+                    <div class="bg-emerald-500 h-full rounded-l-full" title="Good: 100% - 95%"></div>
+                    <div class="bg-amber-400 h-full" title="At Risk: 95% - 75%"></div>
+                    <div class="bg-rose-400 h-full rounded-r-full" title="Blocked: Less than 75%"></div>
+                </div>
+
+                <div class="grid grid-cols-3 text-[10px] text-slate-500 font-semibold pt-1">
+                    <div>
+                        <div class="text-emerald-700">Good</div>
+                        <div>100% - 95%</div>
+                    </div>
+                    <div>
+                        <div class="text-amber-700">At Risk</div>
+                        <div>95% - 75%</div>
+                    </div>
+                    <div>
+                        <div class="text-rose-700">Blocked</div>
+                        <div>Less than 75%</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Catalogs to Review -->
+            <div class="flex flex-col justify-between border-t md:border-t-0 md:border-l border-slate-200/80 md:pl-6 pt-3 md:pt-0">
+                <div>
+                    <h3 class="text-xs font-bold text-slate-800 mb-2">Catalogs to Review</h3>
+                    <div class="flex items-center space-x-6 text-xs font-medium text-slate-600">
+                        <a href="{{ route('seller.quality.index') }}" class="hover:text-slate-900 flex items-center space-x-1">
+                            <span class="text-slate-400">&Delta;</span>
+                            <span>0 Catalog(s) blocked</span>
+                            <span class="text-slate-400">&rsaquo;</span>
                         </a>
-                    @endif
+                        <a href="{{ route('seller.quality.index') }}" class="text-amber-600 hover:text-amber-700 flex items-center space-x-1 font-semibold">
+                            <span>&Delta;</span>
+                            <span>1 Catalog(s) at risk</span>
+                            <span class="text-slate-400">&rsaquo;</span>
+                        </a>
+                    </div>
                 </div>
 
-                @if(!empty($settlement['recent_settlements']) && $settlement['recent_settlements']->isNotEmpty())
-                    <div class="space-y-2 pt-1">
-                        <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Recent Payout Settlements</div>
-                        <div class="divide-y divide-slate-100 dark:divide-slate-800 border border-slate-200/80 dark:border-slate-800 rounded-xl overflow-hidden">
-                            @foreach($settlement['recent_settlements'] as $recentSettlement)
-                                <div class="px-3.5 py-2.5 flex items-center justify-between bg-white dark:bg-slate-900">
-                                    <div>
-                                        <span class="font-mono font-bold text-indigo-600 dark:text-indigo-400">#{{ $recentSettlement->settlement_number }}</span>
-                                        <span class="text-[10px] text-slate-400 ml-1">{{ $recentSettlement->created_at->format('d M Y') }}</span>
-                                    </div>
-                                    <div class="flex items-center space-x-2">
-                                        <span class="font-bold text-slate-900 dark:text-white">{{ format_currency($recentSettlement->net_payable) }}</span>
-                                        <span class="px-1.5 py-0.5 text-[9px] font-bold uppercase rounded {{ $recentSettlement->status->value === 'paid' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400' : 'bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-400' }}">
-                                            {{ $recentSettlement->status->value }}
-                                        </span>
-                                    </div>
-                                </div>
-                            @endforeach
-                        </div>
-                    </div>
-                @endif
+                <div class="pt-3">
+                    <a href="{{ route('seller.orders.dispatch_performance') }}" class="inline-block px-4 py-1.5 rounded-lg border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-100 transition">
+                        View More
+                    </a>
+                </div>
             </div>
-        </x-card>
-
-        <!-- 2. Recent Customer Reviews Card -->
-        <x-card title="Customer Feedback & Ratings" subtitle="Verified customer reviews on your catalog">
-            <div class="space-y-3">
-                @forelse($reviews as $rev)
-                    <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200/60 dark:border-slate-800 text-xs space-y-1.5">
-                        <div class="flex items-center justify-between">
-                            <span class="font-bold text-slate-900 dark:text-white">{{ $rev->user?->name ?? 'Verified Buyer' }}</span>
-                            <div class="flex items-center text-amber-400 text-xs font-bold space-x-0.5">
-                                @for($i = 0; $i < $rev->rating; $i++)
-                                    ★
-                                @endfor
-                                <span class="text-slate-400 text-[10px] ml-1">({{ $rev->rating }}/5)</span>
-                            </div>
-                        </div>
-                        <p class="text-slate-600 dark:text-slate-300 text-[11px] leading-relaxed">"{{ $rev->body }}"</p>
-                        <div class="text-[10px] text-slate-400 flex items-center justify-between pt-1 border-t border-slate-200/40 dark:border-slate-800/40">
-                            <span class="truncate max-w-[200px]">{{ $rev->product?->title ?? 'Product' }}</span>
-                            <span>{{ $rev->created_at->diffForHumans() }}</span>
-                        </div>
-                    </div>
-                @empty
-                    <div class="py-12 text-center text-xs">
-                        <div class="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto mb-3 text-slate-400">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>
-                        </div>
-                        <p class="font-bold text-slate-700 dark:text-slate-300">No Customer Reviews Yet</p>
-                        <p class="text-slate-400 mt-1 max-w-xs mx-auto text-[11px]">
-                            As customers purchase and review your products, their ratings and feedback will automatically appear here.
-                        </p>
-                    </div>
-                @endforelse
-            </div>
-        </x-card>
+        </div>
     </div>
 
-    <!-- Merchant Readiness & Platform Notices -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <!-- 3. Onboarding Launchpad Checklist -->
-        <x-card title="Merchant Readiness" subtitle="Checklist to scale sales">
-            <div class="space-y-3">
-                <div class="flex items-center justify-between text-xs">
-                    <span class="font-bold text-indigo-600 dark:text-indigo-400">{{ $checklist['progress'] }}% Ready</span>
-                    <span class="text-slate-400">{{ $checklist['completed_count'] }}/{{ $checklist['total_count'] }} Steps</span>
-                </div>
-                <div class="w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
-                    <div class="bg-indigo-600 h-2 rounded-full transition-all" style="width: {{ $checklist['progress'] }}%"></div>
-                </div>
-
-                <div class="space-y-2 pt-1 text-xs">
-                    @foreach($checklist['items'] as $item)
-                        <div class="flex items-center space-x-2">
-                            <span class="w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-bold {{ $item['done'] ? 'bg-emerald-500 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-400' }}">
-                                {{ $item['done'] ? '✓' : '•' }}
-                            </span>
-                            <span class="{{ $item['done'] ? 'text-slate-800 dark:text-slate-200 font-medium' : 'text-slate-400' }}">
-                                {{ $item['title'] }}
-                            </span>
-                        </div>
-                    @endforeach
-                </div>
-            </div>
-        </x-card>
-
-        <!-- 4. Platform Announcements from Admin -->
-        <x-card title="Platform Notices" subtitle="Updates from {{ setting('name', 'ALLZONE') }} Command">
-            <div class="space-y-3">
-                @foreach($announcements as $anc)
-                    <div class="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200/60 dark:border-slate-800 text-xs space-y-1">
-                        <div class="flex items-center justify-between">
-                            <span class="text-[10px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">{{ $anc['badge'] }}</span>
-                            <span class="text-[10px] text-slate-400">{{ $anc['date'] }}</span>
-                        </div>
-                        <h4 class="font-bold text-slate-900 dark:text-white">{{ $anc['title'] }}</h4>
-                        <p class="text-[11px] text-slate-500 dark:text-slate-400">{{ $anc['description'] }}</p>
-                    </div>
-                @endforeach
-            </div>
-        </x-card>
+    <!-- Promotional Ads Banner (Screenshot 1 Bottom) -->
+    <div class="max-w-md bg-white rounded-xl border border-slate-200/90 p-5 shadow-2xs">
+        <div class="p-3 bg-amber-50/60 rounded-lg border border-amber-100 flex items-center space-x-2 text-xs font-bold text-amber-900 mb-3">
+            <span>✨ Get upto <strong>3X more orders</strong> for the upcoming sales with Ads</span>
+        </div>
+        <h4 class="text-sm font-extrabold text-slate-900 mb-1">Go Bigger this sale season.</h4>
+        <p class="text-xs text-slate-500 mb-4">
+            Drive more visibility for your products and get more orders with Ads.
+        </p>
+        <a href="{{ route('seller.products.index') }}" class="block text-center py-2.5 px-4 rounded-lg bg-[#3e2e84] hover:bg-[#32236e] text-white text-xs font-bold transition shadow-xs">
+            Participate in ads now!
+        </a>
     </div>
-
-    <!-- Quick Restock Modal -->
-    <x-modal name="quick-restock-modal" size="sm">
-        <x-slot:header>
-            <h3 class="text-base font-bold text-slate-900 dark:text-white">Quick Inventory Replenishment</h3>
-        </x-slot:header>
-
-        <form :action="restockAction" method="POST" class="space-y-4">
-            @csrf
-
-            <div>
-                <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">Target Variant</span>
-                <div class="font-bold text-sm text-slate-900 dark:text-white" x-text="restockItem?.variant?.product?.title || 'Product SKU'"></div>
-                <div class="text-xs text-slate-500 font-mono" x-text="'SKU: ' + (restockItem?.variant?.sku || 'N/A')"></div>
-            </div>
-
-            <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs">
-                <span class="text-slate-500">Current On Hand:</span>
-                <span class="font-bold text-slate-900 dark:text-white" x-text="restockItem?.quantity_on_hand || 0"></span>
-            </div>
-
-            <div>
-                <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1">
-                    Units to Add to Stock
-                </label>
-                <div class="flex items-center space-x-2 mb-2">
-                    <button type="button" @click="restockQty = 10" class="px-2.5 py-1 text-xs font-bold rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-200">+10</button>
-                    <button type="button" @click="restockQty = 25" class="px-2.5 py-1 text-xs font-bold rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-200">+25</button>
-                    <button type="button" @click="restockQty = 50" class="px-2.5 py-1 text-xs font-bold rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-200">+50</button>
-                    <button type="button" @click="restockQty = 100" class="px-2.5 py-1 text-xs font-bold rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-200">+100</button>
-                </div>
-                <input 
-                    type="number" 
-                    name="added_quantity" 
-                    x-model.number="restockQty"
-                    min="1" 
-                    max="10000" 
-                    required 
-                    class="w-full p-2.5 text-xs font-mono rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-bold"
-                />
-            </div>
-
-            <div class="flex items-center justify-end space-x-2 pt-3 border-t border-slate-100 dark:border-slate-800">
-                <button type="button" @click="$dispatch('close-modal', 'quick-restock-modal')" class="px-3 py-1.5 text-xs text-slate-500">Cancel</button>
-                <button type="submit" class="px-4 py-2 text-xs font-bold rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs">Replenish Stock</button>
-            </div>
-        </form>
-    </x-modal>
 </div>
 
-<!-- Chart.js Client Controller Logic -->
+@push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
-function sellerDashboard(config) {
-    return {
-        activeRange: config.range || '30d',
-        salesChart: null,
-        channelChart: null,
-        topProductsChart: null,
-        storeComparisonChart: null,
-        restockItem: null,
-        restockQty: 25,
-        restockAction: '',
-
-        init() {
-            this.$nextTick(() => {
-                this.renderSalesChart(config.charts.sales_trend);
-                this.renderChannelChart(config.charts.channel);
-                this.renderTopProductsChart(config.charts.top_products);
-                if (config.charts.is_multi_store && config.charts.revenue_by_store) {
-                    this.renderStoreComparisonChart(config.charts.revenue_by_store);
-                }
-            });
-        },
-
-        openRestockModal(item) {
-            this.restockItem = item;
-            this.restockQty = 25;
-            this.restockAction = '/seller/inventory/' + item.id + '/quick-restock';
-            this.$dispatch('open-modal', 'quick-restock-modal');
-        },
-
-        async changeRange(newRange) {
-            this.activeRange = newRange;
-            try {
-                const res = await fetch(`${config.chartDataUrl}?range=${newRange}`);
-                const data = await res.json();
-                if (data.sales_trend && this.salesChart) {
-                    this.salesChart.data.labels = data.sales_trend.labels;
-                    this.salesChart.data.datasets[0].data = data.sales_trend.sales;
-                    this.salesChart.data.datasets[1].data = data.sales_trend.orders;
-                    this.salesChart.update();
-                }
-            } catch (e) {
-                console.error('Failed to update chart range', e);
-            }
-        },
-
-        renderSalesChart(data) {
-            const ctx = document.getElementById('sellerSalesChart');
-            if (!ctx) return;
-
-            this.salesChart = new Chart(ctx, {
+    document.addEventListener('DOMContentLoaded', () => {
+        const ctx = document.getElementById('meeshoInsightsChart');
+        if (ctx) {
+            new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: data.labels,
-                    datasets: [
-                        {
-                            label: 'Revenue (₹)',
-                            data: data.sales,
-                            borderColor: '#6366f1',
-                            backgroundColor: 'rgba(99, 102, 241, 0.1)',
-                            borderWidth: 2,
-                            fill: true,
-                            tension: 0.3,
-                            yAxisID: 'y'
-                        },
-                        {
-                            label: 'Orders Count',
-                            data: data.orders,
-                            borderColor: '#f59e0b',
-                            backgroundColor: 'transparent',
-                            borderWidth: 2,
-                            borderDash: [5, 5],
-                            tension: 0.3,
-                            yAxisID: 'y1'
-                        }
-                    ]
+                    labels: ['11th', '12th', '13th', '14th', '15th', '16th', '17th Nov'],
+                    datasets: [{
+                        label: 'Views',
+                        data: [1500, 10, 15, 380, 390, 350, 496],
+                        borderColor: '#6366f1',
+                        backgroundColor: 'rgba(99, 102, 241, 0.08)',
+                        fill: true,
+                        tension: 0.35,
+                        pointRadius: 4,
+                        pointBackgroundColor: '#6366f1',
+                    }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    interaction: { mode: 'index', intersect: false },
-                    plugins: {
-                        legend: { position: 'top', labels: { boxWidth: 12, font: { size: 11 } } }
-                    },
+                    plugins: { legend: { display: false } },
                     scales: {
                         y: {
-                            type: 'linear',
-                            display: true,
-                            position: 'left',
-                            grid: { color: 'rgba(148, 163, 184, 0.1)' }
-                        },
-                        y1: {
-                            type: 'linear',
-                            display: true,
-                            position: 'right',
-                            grid: { drawOnChartArea: false }
+                            beginAtZero: true,
+                            grid: { color: 'rgba(226, 232, 240, 0.6)' },
+                            ticks: { font: { size: 10 } }
                         },
                         x: {
                             grid: { display: false },
-                            ticks: { maxTicksLimit: 10, font: { size: 10 } }
+                            ticks: { font: { size: 10 } }
                         }
-                    }
-                }
-            });
-        },
-
-        renderChannelChart(data) {
-            const ctx = document.getElementById('sellerChannelChart');
-            if (!ctx) return;
-
-            this.channelChart = new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: data.labels,
-                    datasets: [{
-                        data: data.data,
-                        backgroundColor: data.colors,
-                        borderWidth: 0,
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } }
-                    },
-                    cutout: '70%'
-                }
-            });
-        },
-
-        renderTopProductsChart(data) {
-            const ctx = document.getElementById('sellerTopProductsChart');
-            if (!ctx) return;
-
-            this.topProductsChart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: data.labels.length > 0 ? data.labels : ['No orders yet'],
-                    datasets: [{
-                        label: 'Sales (₹)',
-                        data: data.data.length > 0 ? data.data : [0],
-                        backgroundColor: '#6366f1',
-                        borderRadius: 6
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: {
-                        y: { grid: { color: 'rgba(148, 163, 184, 0.1)' } },
-                        x: { grid: { display: false }, ticks: { font: { size: 9 } } }
-                    }
-                }
-            });
-        },
-
-        renderStoreComparisonChart(data) {
-            const ctx = document.getElementById('sellerStoreComparisonChart');
-            if (!ctx) return;
-
-            this.storeComparisonChart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: data.labels,
-                    datasets: [{
-                        label: 'Outlet Revenue (₹)',
-                        data: data.data,
-                        backgroundColor: ['#10b981', '#6366f1', '#f59e0b', '#06b6d4'],
-                        borderRadius: 6
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: {
-                        y: { grid: { color: 'rgba(148, 163, 184, 0.1)' } },
-                        x: { grid: { display: false }, ticks: { font: { size: 10 } } }
                     }
                 }
             });
         }
-    };
-}
+    });
 </script>
+@endpush
 @endsection

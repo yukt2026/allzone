@@ -55,6 +55,7 @@ Route::middleware(['auth', 'seller.status'])->group(function () {
     // Seller Order Management Console (Blueprint Section 21)
     Route::prefix('orders')->name('orders.')->group(function () {
         Route::get('/', [\App\Http\Controllers\Seller\OrderController::class, 'index'])->name('index');
+        Route::get('/dispatch-performance', [\App\Http\Controllers\Seller\QualityController::class, 'index'])->name('dispatch_performance');
         Route::get('/{fulfilmentOrder}', [\App\Http\Controllers\Seller\OrderController::class, 'show'])->name('show');
         Route::post('/{fulfilmentOrder}/transition', [\App\Http\Controllers\Seller\OrderController::class, 'transition'])->name('transition');
         Route::get('/{fulfilmentOrder}/packing-slip', [\App\Http\Controllers\Seller\OrderController::class, 'packingSlip'])->name('packing_slip');
@@ -62,6 +63,26 @@ Route::middleware(['auth', 'seller.status'])->group(function () {
         Route::get('/{fulfilmentOrder}/shipping-label', [\App\Http\Controllers\Seller\OrderController::class, 'shippingLabel'])->name('shipping_label');
     });
     Route::get('/api/orders/pending-count', [\App\Http\Controllers\Seller\OrderController::class, 'pendingCount'])->name('orders.pending_count');
+
+    // Pricing & Recommendations (Meesho style)
+    Route::prefix('pricing')->name('pricing.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Seller\PricingController::class, 'index'])->name('index');
+        Route::get('/reduce-rto', [\App\Http\Controllers\Seller\PricingController::class, 'reduceRto'])->name('reduce_rto');
+        Route::post('/{variant}/update-price', [\App\Http\Controllers\Seller\PricingController::class, 'updatePrice'])->name('update_price');
+    });
+
+    // Claims Management
+    Route::prefix('claims')->name('claims.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Seller\ClaimController::class, 'index'])->name('index');
+    });
+
+    // Catalog Quality
+    Route::prefix('quality')->name('quality.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Seller\QualityController::class, 'index'])->name('index');
+    });
+
+    // Image Bulk Upload
+    Route::get('/products-bulk-upload', [\App\Http\Controllers\Seller\ProductController::class, 'index'])->name('products.bulk_upload');
 
     // My Store Settings & Public Profile Management
     Route::get('/store', [StoreController::class, 'edit'])->name('store.edit');

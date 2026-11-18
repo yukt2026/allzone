@@ -298,38 +298,67 @@
                 'lg:w-20': sidebarCollapsed,
                 'lg:w-64': !sidebarCollapsed
             }"
-            class="fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 transition-all duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-auto flex flex-col shrink-0 select-none shadow-sm dark:shadow-none"
+            class="fixed inset-y-0 left-0 z-50 w-64 {{ $isSeller ? 'bg-[#181920] text-slate-200 border-r border-[#262833]' : 'bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800' }} transition-all duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-auto flex flex-col shrink-0 select-none shadow-sm dark:shadow-none"
         >
-            <!-- Sidebar Header / Logo -->
-            <div class="h-16 flex items-center justify-between px-4 border-b border-slate-200/80 dark:border-slate-800">
-                <a href="{{ $isSeller ? route('seller.dashboard') : route('admin.dashboard') }}" class="flex items-center space-x-3 overflow-hidden">
-                    <div class="w-9 h-9 rounded-xl {{ $isSeller ? 'bg-gradient-to-tr from-emerald-600 to-teal-500 shadow-emerald-500/20' : 'bg-gradient-to-tr from-blue-700 via-indigo-600 to-amber-400 shadow-indigo-500/20' }} flex items-center justify-center text-white font-extrabold text-sm shadow-md shrink-0 tracking-tighter">
-                        AZ
+            @if($isSeller)
+                <!-- Meesho Supplier Hub Left Header -->
+                <div class="p-3 border-b border-[#262833]">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-2.5 min-w-0">
+                            <div class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-800 font-bold text-xs shrink-0">
+                                <svg class="w-4 h-4 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                            </div>
+                            <div class="min-w-0 flex-1" x-show="!sidebarCollapsed">
+                                <span class="font-bold text-xs uppercase tracking-wide text-white block truncate">
+                                    {{ $seller?->business_name ?? ($effectiveStore?->name ?? 'DREESTI') }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-1" x-show="!sidebarCollapsed">
+                            <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                        </div>
                     </div>
-                    <div x-show="!sidebarCollapsed" x-transition class="whitespace-nowrap min-w-0">
-                        <span class="text-base font-bold text-slate-900 dark:text-white tracking-tight">{{ setting('name', 'ALLZONE') }}</span>
-                        <span class="block text-[10px] font-bold uppercase tracking-widest {{ $isSeller ? 'text-emerald-500' : 'text-indigo-500' }} -mt-1 truncate max-w-[140px]">
-                            {{ $isSeller ? ($seller?->business_name ?? 'Seller Studio') : 'Admin Central' }}
-                        </span>
+
+                    <!-- Notices & Support top sub-bar -->
+                    <div class="flex items-center justify-between mt-3 pt-2.5 border-t border-[#262833] text-[11px] text-slate-400 font-medium" x-show="!sidebarCollapsed">
+                        <a href="{{ route('seller.notifications.index') }}" class="flex items-center space-x-1.5 hover:text-white transition">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+                            <span>Notices</span>
+                        </a>
+                        <span class="text-slate-600">|</span>
+                        <a href="{{ route('seller.support.index') }}" class="flex items-center space-x-1.5 hover:text-white transition">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                            <span>Support</span>
+                        </a>
                     </div>
-                </a>
+                </div>
+            @else
+                <!-- Sidebar Header / Logo (Admin) -->
+                <div class="h-16 flex items-center justify-between px-4 border-b border-slate-200/80 dark:border-slate-800">
+                    <a href="{{ route('admin.dashboard') }}" class="flex items-center space-x-3 overflow-hidden">
+                        <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-700 via-indigo-600 to-amber-400 shadow-indigo-500/20 flex items-center justify-center text-white font-extrabold text-sm shadow-md shrink-0 tracking-tighter">
+                            AZ
+                        </div>
+                        <div x-show="!sidebarCollapsed" x-transition class="whitespace-nowrap min-w-0">
+                            <span class="text-base font-bold text-slate-900 dark:text-white tracking-tight">{{ setting('name', 'ALLZONE') }}</span>
+                            <span class="block text-[10px] font-bold uppercase tracking-widest text-indigo-500 -mt-1 truncate max-w-[140px]">
+                                Super Admin Central
+                            </span>
+                        </div>
+                    </a>
 
-                <!-- Desktop Collapse Button -->
-                <button 
-                    @click="toggleSidebar()" 
-                    class="hidden lg:flex p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
-                    title="Toggle Sidebar Collapse"
-                >
-                    <svg class="w-4 h-4 transform transition-transform" :class="sidebarCollapsed ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"/>
-                    </svg>
-                </button>
-
-                <!-- Mobile Close Button -->
-                <button @click="mobileSidebarOpen = false" class="lg:hidden text-slate-400 hover:text-slate-600 dark:hover:text-white">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                </button>
-            </div>
+                    <!-- Desktop Collapse Button -->
+                    <button 
+                        @click="toggleSidebar()" 
+                        class="hidden lg:flex p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                        title="Toggle Sidebar Collapse"
+                    >
+                        <svg class="w-4 h-4 transform transition-transform" :class="sidebarCollapsed ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"/>
+                        </svg>
+                    </button>
+                </div>
+            @endif
 
             <!-- Portal & Store Context Card -->
             <div x-show="!sidebarCollapsed" class="p-3 mx-3 my-2.5 rounded-xl bg-slate-100/70 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/60 text-xs">
@@ -439,81 +468,86 @@
                             @endphp
 
                             @if($hasPermission)
-                                <a 
-                                    href="{{ \Illuminate\Support\Facades\Route::has($item['route']) ? route($item['route']) : '#' }}"
-                                    class="flex items-center px-3 py-2.5 rounded-xl font-medium transition-all duration-150 group {{ $isActive ? ($isSeller ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 font-bold shadow-xs border-l-4 border-emerald-500' : 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-400 font-bold shadow-xs border-l-4 border-indigo-500') : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800/80' }}"
-                                    title="{{ $item['title'] }}"
-                                >
-                                    <!-- Dynamic Heroicon Set -->
-                                    <div class="shrink-0 mr-3">
-                                        @if($item['icon'] === 'home')
-                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
-                                        @elseif($item['icon'] === 'cube')
-                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
-                                        @elseif($item['icon'] === 'plus')
-                                            <svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-                                        @elseif($item['icon'] === 'truck')
-                                            <svg class="w-5 h-5 text-sky-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0"/></svg>
-                                        @elseif($item['icon'] === 'refresh' || $item['icon'] === 'arrow-path')
-                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-                                        @elseif($item['icon'] === 'bolt')
-                                            <svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-                                        @elseif($item['icon'] === 'store' || $item['icon'] === 'building-storefront')
-                                            <svg class="w-5 h-5 text-teal-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
-                                        @elseif($item['icon'] === 'users')
-                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
-                                        @elseif($item['icon'] === 'chart-bar')
-                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
-                                        @elseif($item['icon'] === 'puzzle')
-                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 110-4h1a1 1 0 001-1V7a1 1 0 011-1h3a1 1 0 001-1V4z"/></svg>
-                                        @elseif($item['icon'] === 'tag')
-                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg>
-                                        @elseif($item['icon'] === 'currency-rupee')
-                                            <svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 8h6m-5 0a3 3 0 110 6H9l5 6M9 4h6"/></svg>
-                                        @elseif($item['icon'] === 'ticket')
-                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"/></svg>
-                                        @elseif($item['icon'] === 'cog')
-                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                                        @elseif($item['icon'] === 'map-pin')
-                                            <svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                                        @elseif($item['icon'] === 'credit-card')
-                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
-                                        @elseif($item['icon'] === 'shield-check')
-                                            <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
-                                        @elseif($item['icon'] === 'lock-closed')
-                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
-                                        @elseif($item['icon'] === 'photograph')
-                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                                        @elseif($item['icon'] === 'sparkles')
-                                            <svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>
-                                        @elseif($item['icon'] === 'document-text')
-                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                                        @elseif($item['icon'] === 'chat-bubble')
-                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
-                                        @else
-                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
-                                        @endif
-                                    </div>
+                                <div class="space-y-0.5">
+                                    <a 
+                                        href="{{ \Illuminate\Support\Facades\Route::has($item['route']) ? route($item['route']) : '#' }}"
+                                        class="flex items-center px-3 py-2 rounded-lg font-medium transition-all duration-150 group {{ $isActive ? ($isSeller ? 'bg-[#2b2542] text-white font-semibold' : 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-400 font-bold shadow-xs border-l-4 border-indigo-500') : ($isSeller ? 'text-[#b2b5c4] hover:text-white hover:bg-[#20222c]' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800/80') }}"
+                                        title="{{ $item['title'] }}"
+                                    >
+                                        <!-- Dynamic Heroicon Set -->
+                                        <div class="shrink-0 mr-3">
+                                            @if($item['icon'] === 'home')
+                                                <svg class="w-4 h-4 {{ $isSeller ? 'text-slate-400' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                                            @elseif($item['icon'] === 'cube')
+                                                <svg class="w-4 h-4 {{ $isSeller ? 'text-slate-400' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+                                            @elseif($item['icon'] === 'truck')
+                                                <svg class="w-4 h-4 {{ $isSeller ? 'text-slate-400' : 'text-sky-500' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0"/></svg>
+                                            @elseif($item['icon'] === 'refresh' || $item['icon'] === 'arrow-path')
+                                                <svg class="w-4 h-4 {{ $isSeller ? 'text-slate-400' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                                            @elseif($item['icon'] === 'currency-rupee')
+                                                <svg class="w-4 h-4 {{ $isSeller ? 'text-slate-400' : 'text-emerald-500' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 8h6m-5 0a3 3 0 110 6H9l5 6M9 4h6"/></svg>
+                                            @elseif($item['icon'] === 'document-text')
+                                                <svg class="w-4 h-4 {{ $isSeller ? 'text-slate-400' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                            @elseif($item['icon'] === 'arrow-up-tray')
+                                                <svg class="w-4 h-4 {{ $isSeller ? 'text-slate-400' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                                            @elseif($item['icon'] === 'photograph')
+                                                <svg class="w-4 h-4 {{ $isSeller ? 'text-slate-400' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                            @elseif($item['icon'] === 'sparkles')
+                                                <svg class="w-4 h-4 {{ $isSeller ? 'text-slate-400' : 'text-amber-500' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>
+                                            @elseif($item['icon'] === 'building-storefront')
+                                                <svg class="w-4 h-4 {{ $isSeller ? 'text-slate-400' : 'text-teal-500' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                                            @else
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                                            @endif
+                                        </div>
 
-                                    <!-- Menu Title & Dynamic Badges -->
-                                    <div x-show="!sidebarCollapsed" class="flex-1 flex items-center justify-between overflow-hidden">
-                                        <span class="truncate">{{ $item['title'] }}</span>
+                                        <!-- Menu Title & Badges -->
+                                        <div x-show="!sidebarCollapsed" class="flex-1 flex items-center justify-between overflow-hidden">
+                                            <span class="truncate text-xs">{{ $item['title'] }}</span>
 
-                                        @if($dynamicBadgeAlpine)
-                                            <span 
-                                                @if($dynamicShowAlpine) x-show="{{ $dynamicShowAlpine }}" @endif
-                                                x-text="{{ $dynamicBadgeAlpine }}"
-                                                class="ml-2 px-2 py-0.5 text-[10px] font-bold rounded-full border {{ $badgeClass }}"
-                                            >
-                                                {{ $badgeText }}
-                                            </span>
-                                        @elseif(!empty($badgeText))
-                                            <span class="ml-2 px-2 py-0.5 text-[10px] font-bold rounded-full border {{ $badgeClass }}">
-                                                {{ $badgeText }}
-                                            </span>
-                                        @endif
-                                    </div>
-                                </a>
+                                            @if($isSeller && !empty($item['badge']))
+                                                @if($item['badge'] === 'NEW')
+                                                    <span class="ml-2 px-1.5 py-0.2 rounded text-[9px] font-black uppercase tracking-wider bg-[#d63384] text-white">
+                                                        NEW
+                                                    </span>
+                                                @elseif(str_contains($item['badge'], 'Out of Stock'))
+                                                    <span class="ml-2 px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#ffd5d5] text-[#b31d1d]">
+                                                        Out of Stock (5)
+                                                    </span>
+                                                @else
+                                                    <span class="ml-2 px-2 py-0.5 text-[10px] font-bold rounded-full border {{ $badgeClass }}">
+                                                        {{ $item['badge'] }}
+                                                    </span>
+                                                @endif
+                                            @elseif(!empty($badgeText))
+                                                <span class="ml-2 px-2 py-0.5 text-[10px] font-bold rounded-full border {{ $badgeClass }}">
+                                                    {{ $badgeText }}
+                                                </span>
+                                            @endif
+
+                                            @if(!empty($item['children']))
+                                                <svg class="w-3.5 h-3.5 ml-1 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                                            @endif
+                                        </div>
+                                    </a>
+
+                                    @if(!empty($item['children']) && $isSeller && (request()->routeIs($item['active']) || true))
+                                        <div class="ml-7 pl-2 border-l border-[#2e313f] space-y-1 mt-1 mb-1" x-show="!sidebarCollapsed">
+                                            @foreach($item['children'] as $child)
+                                                @php $isChildActive = request()->routeIs($child['active'] ?? ''); @endphp
+                                                <a 
+                                                    href="{{ \Illuminate\Support\Facades\Route::has($child['route']) ? route($child['route']) : '#' }}" 
+                                                    class="block py-1 px-2 rounded text-[11px] font-medium transition {{ $isChildActive ? 'text-white bg-[#252837] font-semibold' : 'text-slate-400 hover:text-slate-200' }}"
+                                                >
+                                                    {{ $child['title'] }}
+                                                    @if(!empty($child['badge']))
+                                                        <span class="ml-1 px-1 py-0.2 rounded text-[8px] font-bold bg-[#d63384] text-white">NEW</span>
+                                                    @endif
+                                                </a>
+                                            @endforeach
+                                        </div>
+                                    @endif
+                                </div>
                             @endif
                         @endforeach
                     </div>
@@ -521,31 +555,44 @@
             </nav>
 
             <!-- Bottom User & Platform Meta -->
-            <div class="p-3 border-t border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/60">
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center space-x-2.5 min-w-0">
-                        <x-avatar name="{{ auth()->check() ? auth()->user()->name : ($isSeller ? 'Seller' : 'Admin') }}" status="online" size="sm" />
-                        <div x-show="!sidebarCollapsed" class="min-w-0 flex-1">
-                            <p class="text-xs font-bold text-slate-900 dark:text-white truncate">
-                                {{ auth()->check() ? auth()->user()->name : ($isSeller ? 'Merchant' : 'Admin') }}
-                            </p>
-                            <p class="text-[10px] text-slate-400 truncate flex items-center space-x-1">
-                                @if($isSeller)
-                                    <span class="truncate">{{ $seller?->business_name ?? 'Seller Studio' }}</span>
-                                @else
-                                    <span>{{ auth()->user()->email ?? 'admin@allzone.in' }}</span>
-                                @endif
-                            </p>
+            @if($isSeller)
+                <div class="p-3 border-t border-[#262833] bg-[#14151b]">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-2">
+                            <span class="text-sm font-extrabold tracking-tight text-[#ff3f8b]">meesho</span>
+                            <span class="text-[11px] text-slate-400 font-medium">Supplier Hub</span>
                         </div>
+                        <form method="POST" action="{{ route('seller.logout') }}" class="inline shrink-0" x-show="!sidebarCollapsed">
+                            @csrf
+                            <button type="submit" class="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 transition" title="Logout">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+                            </button>
+                        </form>
                     </div>
-                    <form method="POST" action="{{ $isSeller ? route('seller.logout') : route('admin.logout') }}" class="inline shrink-0" x-show="!sidebarCollapsed">
-                        @csrf
-                        <button type="submit" class="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition" title="Logout">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
-                        </button>
-                    </form>
                 </div>
-            </div>
+            @else
+                <div class="p-3 border-t border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/60">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-2.5 min-w-0">
+                            <x-avatar name="{{ auth()->check() ? auth()->user()->name : 'Admin' }}" status="online" size="sm" />
+                            <div x-show="!sidebarCollapsed" class="min-w-0 flex-1">
+                                <p class="text-xs font-bold text-slate-900 dark:text-white truncate">
+                                    {{ auth()->check() ? auth()->user()->name : 'Admin' }}
+                                </p>
+                                <p class="text-[10px] text-slate-400 truncate flex items-center space-x-1">
+                                    <span>{{ auth()->user()->email ?? 'admin@allzone.in' }}</span>
+                                </p>
+                            </div>
+                        </div>
+                        <form method="POST" action="{{ route('admin.logout') }}" class="inline shrink-0" x-show="!sidebarCollapsed">
+                            @csrf
+                            <button type="submit" class="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition" title="Logout">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            @endif
         </aside>
 
         <!-- Main Content Column -->
