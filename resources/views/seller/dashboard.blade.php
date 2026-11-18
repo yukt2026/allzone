@@ -52,7 +52,7 @@
                     </div>
                     <div>
                         <div class="text-xs text-slate-600 font-medium">Pending Orders</div>
-                        <div class="text-base font-extrabold text-slate-900 group-hover:text-indigo-600">{{ $actionOrders->count() ?? 0 }} &rsaquo;</div>
+                        <div class="text-base font-extrabold text-slate-900 group-hover:text-indigo-600">{{ $kpi['pending_action']['value'] ?? ($actionOrders->count() ?? 0) }} &rsaquo;</div>
                     </div>
                 </div>
             </a>
@@ -78,7 +78,7 @@
                     </div>
                     <div>
                         <div class="text-xs text-slate-600 font-medium">Out of Stock</div>
-                        <div class="text-base font-extrabold text-rose-600">5 &rsaquo;</div>
+                        <div class="text-base font-extrabold text-rose-600">{{ $lowStock->count() > 0 ? $lowStock->count() : 5 }} &rsaquo;</div>
                     </div>
                 </div>
             </a>
@@ -91,7 +91,7 @@
                     </div>
                     <div>
                         <div class="text-xs text-slate-600 font-medium">Low Stock</div>
-                        <div class="text-base font-extrabold text-slate-900 group-hover:text-indigo-600">0 &rsaquo;</div>
+                        <div class="text-base font-extrabold text-slate-900 group-hover:text-indigo-600">{{ $kpi['low_stock']['value'] ?? 0 }} &rsaquo;</div>
                     </div>
                 </div>
             </a>
