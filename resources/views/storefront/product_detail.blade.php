@@ -44,6 +44,14 @@
             $store.cart.addItem(this.currentVariant.id, {{ $product->id }}, 1);
         },
 
+        async buyNow() {
+            if (!this.currentVariant || !this.currentVariant.in_stock) return;
+            if (this.inCartQty === 0) {
+                await $store.cart.addItem(this.currentVariant.id, {{ $product->id }}, 1);
+            }
+            window.location.href = '{{ route('checkout.index') }}';
+        },
+
         increment() {
             if (this.cartItem) {
                 $store.cart.updateQuantity(this.cartItem.id, this.inCartQty + 1);
@@ -188,10 +196,10 @@
                              class="w-full h-full object-contain p-2 sm:p-4 group-hover:scale-105 transition-transform duration-300">
                     </template>
 
-                    <!-- Quick Commerce Badge -->
+                    <!-- Express Dispatch Badge -->
                     @if($product->is_quick_capable)
-                        <span class="absolute top-2.5 left-2.5 inline-flex items-center space-x-1 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg text-[10px] sm:text-xs font-black bg-amber-400 text-slate-950 shadow-xs border border-amber-300">
-                            <span>⚡ 15 MIN DELIVERY</span>
+                        <span class="absolute top-2.5 left-2.5 inline-flex items-center space-x-1 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg text-[10px] sm:text-xs font-black bg-indigo-600 text-white shadow-xs">
+                            <span>⚡ EXPRESS DISPATCH</span>
                         </span>
                     @endif
 
@@ -360,7 +368,7 @@
                 </div>
 
                 <button type="button"
-                        @click="if (inCartQty === 0) addToCart(); $store.cart.open = true"
+                        @click="buyNow()"
                         :disabled="!currentVariant.in_stock"
                         class="flex-1 sm:flex-initial py-3 px-3 sm:py-3.5 sm:px-6 rounded-xl sm:rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 text-white font-extrabold text-xs sm:text-sm shadow-md active:scale-95 transition whitespace-nowrap cursor-pointer text-center">
                     BUY NOW
@@ -757,13 +765,21 @@
         <!-- Action Stepper / Buy Buttons -->
         <div class="flex items-center space-x-2 shrink-0">
             <template x-if="inCartQty === 0">
-                <button type="button"
-                        @click="addToCart()"
-                        :disabled="!currentVariant.in_stock"
-                        class="py-2.5 px-6 rounded-2xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-extrabold text-xs shadow-md shadow-indigo-600/20 active:scale-95 transition flex items-center space-x-1.5 cursor-pointer whitespace-nowrap">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
-                    <span x-text="currentVariant.in_stock ? 'Add to Cart' : 'Out of Stock'">Add to Cart</span>
-                </button>
+                <div class="flex items-center space-x-1.5">
+                    <button type="button"
+                            @click="addToCart()"
+                            :disabled="!currentVariant.in_stock"
+                            class="py-2.5 px-3.5 rounded-2xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 font-extrabold text-xs shadow-2xs active:scale-95 transition flex items-center space-x-1 cursor-pointer whitespace-nowrap">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
+                        <span>Cart</span>
+                    </button>
+                    <button type="button"
+                            @click="buyNow()"
+                            :disabled="!currentVariant.in_stock"
+                            class="py-2.5 px-4 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 text-white font-extrabold text-xs shadow-md shadow-emerald-600/20 active:scale-95 transition whitespace-nowrap cursor-pointer">
+                        <span>BUY NOW</span>
+                    </button>
+                </div>
             </template>
 
             <template x-if="inCartQty > 0">
@@ -775,10 +791,9 @@
                     </div>
 
                     <button type="button"
-                            @click="$store.cart.open = true"
+                            @click="buyNow()"
                             class="py-2 px-3.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 text-white font-extrabold text-xs shadow-md shadow-emerald-600/20 active:scale-95 transition flex items-center space-x-1 whitespace-nowrap cursor-pointer">
-                        <span>View Cart</span>
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                        <span>Checkout &rarr;</span>
                     </button>
                 </div>
             </template>

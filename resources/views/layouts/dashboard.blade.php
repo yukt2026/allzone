@@ -105,6 +105,33 @@
             soundMuted: localStorage.getItem('seller_sound_muted') === 'true',
             toasts: [],
 
+            confirmModal: {
+                open: false,
+                title: 'Confirm Action',
+                message: 'Are you sure you want to proceed?',
+                confirmText: 'Confirm',
+                cancelText: 'Cancel',
+                variant: 'danger',
+                callback: null,
+            },
+
+            openConfirm(options = {}) {
+                this.confirmModal.title = options.title || 'Confirm Action';
+                this.confirmModal.message = options.message || 'Are you sure you want to proceed?';
+                this.confirmModal.confirmText = options.confirmText || 'Confirm';
+                this.confirmModal.cancelText = options.cancelText || 'Cancel';
+                this.confirmModal.variant = options.variant || 'danger';
+                this.confirmModal.callback = options.onConfirm || null;
+                this.confirmModal.open = true;
+            },
+
+            confirmAndExecute() {
+                if (typeof this.confirmModal.callback === 'function') {
+                    this.confirmModal.callback();
+                }
+                this.confirmModal.open = false;
+            },
+
             init() {
                 if (config.successMessage) {
                     this.addToast(config.successMessage, 'success');
@@ -117,6 +144,32 @@
                 }, { once: true });
                 window.addEventListener('toast', (e) => {
                     this.addToast(e.detail.message, e.detail.type || 'success');
+                });
+                window.addEventListener('open-confirm', (e) => {
+                    this.openConfirm(e.detail || {});
+                });
+                window.showConfirmDialog = (options) => {
+                    this.openConfirm(options);
+                };
+                document.addEventListener('submit', (e) => {
+                    const form = e.target;
+                    if (form && form.hasAttribute('data-confirm') && !form.dataset.confirmed) {
+                        e.preventDefault();
+                        const msg = form.getAttribute('data-confirm');
+                        const title = form.getAttribute('data-confirm-title') || 'Confirm Action';
+                        const btnText = form.getAttribute('data-confirm-btn') || 'Proceed';
+                        const variant = form.getAttribute('data-confirm-variant') || 'danger';
+                        this.openConfirm({
+                            title: title,
+                            message: msg,
+                            confirmText: btnText,
+                            variant: variant,
+                            onConfirm: () => {
+                                form.dataset.confirmed = 'true';
+                                form.submit();
+                            }
+                        });
+                    }
                 });
                 if (this.isSeller) {
                     this.pollInterval = setInterval(() => this.checkPendingOrders(), 20000);
@@ -281,6 +334,86 @@
         </template>
     </div>
 
+    <!-- Global Modern Confirmation Dialog Modal -->
+    <div 
+        x-show="confirmModal.open" 
+        x-cloak 
+        class="fixed inset-0 z-50 overflow-y-auto px-4 py-6 sm:px-0 flex items-center justify-center"
+    >
+        <div 
+            x-show="confirmModal.open" 
+            x-transition:enter="ease-out duration-200"
+            x-transition:enter-start="opacity-0"
+            x-transition:enter-end="opacity-100"
+            x-transition:leave="ease-in duration-150"
+            x-transition:leave-start="opacity-100"
+            x-transition:leave-end="opacity-0"
+            @click="confirmModal.open = false" 
+            class="fixed inset-0 bg-slate-950/75 backdrop-blur-xs"
+        ></div>
+
+        <div 
+            x-show="confirmModal.open" 
+            x-transition:enter="ease-out duration-200"
+            x-transition:enter-start="opacity-0 scale-95"
+            x-transition:enter-end="opacity-100 scale-100"
+            x-transition:leave="ease-in duration-150"
+            x-transition:leave-start="opacity-100 scale-100"
+            x-transition:leave-end="opacity-0 scale-95"
+            class="relative w-full max-w-md bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl p-6 z-10 transition-colors"
+        >
+            <div class="flex items-start space-x-4">
+                <div 
+                    class="w-11 h-11 rounded-xl flex items-center justify-center shrink-0 border"
+                    :class="{
+                        'bg-rose-100 dark:bg-rose-950/60 border-rose-200 dark:border-rose-800 text-rose-600 dark:text-rose-400': confirmModal.variant === 'danger',
+                        'bg-amber-100 dark:bg-amber-950/60 border-amber-200 dark:border-amber-800 text-amber-600 dark:text-amber-400': confirmModal.variant === 'warning',
+                        'bg-emerald-100 dark:bg-emerald-950/60 border-emerald-200 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400': confirmModal.variant === 'success',
+                        'bg-indigo-100 dark:bg-indigo-950/60 border-indigo-200 dark:border-indigo-800 text-indigo-600 dark:text-indigo-400': confirmModal.variant === 'primary' || confirmModal.variant === 'info'
+                    }"
+                >
+                    <template x-if="confirmModal.variant === 'danger'">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                    </template>
+                    <template x-if="confirmModal.variant === 'warning'">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    </template>
+                    <template x-if="confirmModal.variant === 'success'">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                    </template>
+                    <template x-if="confirmModal.variant !== 'danger' && confirmModal.variant !== 'warning' && confirmModal.variant !== 'success'">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    </template>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <h3 class="text-base font-bold text-slate-900 dark:text-white" x-text="confirmModal.title"></h3>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1.5 leading-relaxed" x-text="confirmModal.message"></p>
+                </div>
+            </div>
+
+            <div class="mt-6 flex items-center justify-end space-x-3">
+                <button 
+                    type="button" 
+                    @click="confirmModal.open = false" 
+                    class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                    x-text="confirmModal.cancelText"
+                ></button>
+                <button 
+                    type="button" 
+                    @click="confirmAndExecute()" 
+                    class="px-4 py-2 rounded-xl text-xs font-bold text-white shadow-md transition"
+                    :class="{
+                        'bg-rose-600 hover:bg-rose-700 shadow-rose-600/20': confirmModal.variant === 'danger',
+                        'bg-amber-600 hover:bg-amber-700 shadow-amber-600/20': confirmModal.variant === 'warning',
+                        'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-600/20': confirmModal.variant === 'success',
+                        'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-600/20': confirmModal.variant !== 'danger' && confirmModal.variant !== 'warning' && confirmModal.variant !== 'success'
+                    }"
+                    x-text="confirmModal.confirmText"
+                ></button>
+            </div>
+        </div>
+    </div>
+
     <!-- Mobile Drawer Sidebar Backdrop -->
     <div 
         x-show="mobileSidebarOpen" 
@@ -298,71 +431,42 @@
                 'lg:w-20': sidebarCollapsed,
                 'lg:w-64': !sidebarCollapsed
             }"
-            class="fixed inset-y-0 left-0 z-50 w-64 {{ $isSeller ? 'bg-[#181920] text-slate-200 border-r border-[#262833]' : 'bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800' }} transition-all duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-auto flex flex-col shrink-0 select-none shadow-sm dark:shadow-none"
+            class="fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 transition-all duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-auto flex flex-col shrink-0 select-none shadow-sm dark:shadow-none"
         >
-            @if($isSeller)
-                <!-- Meesho Supplier Hub Left Header -->
-                <div class="p-3 border-b border-[#262833]">
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center space-x-2.5 min-w-0">
-                            <div class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-800 font-bold text-xs shrink-0">
-                                <svg class="w-4 h-4 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
-                            </div>
-                            <div class="min-w-0 flex-1" x-show="!sidebarCollapsed">
-                                <span class="font-bold text-xs uppercase tracking-wide text-white block truncate">
-                                    {{ $seller?->business_name ?? ($effectiveStore?->name ?? 'DREESTI') }}
-                                </span>
-                            </div>
-                        </div>
-                        <div class="flex items-center space-x-1" x-show="!sidebarCollapsed">
-                            <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-                        </div>
+            <!-- Sidebar Header / Logo -->
+            <div class="h-16 flex items-center justify-between px-4 border-b border-slate-200/80 dark:border-slate-800">
+                <a href="{{ $isSeller ? route('seller.dashboard') : route('admin.dashboard') }}" class="flex items-center space-x-3 overflow-hidden">
+                    <div class="w-9 h-9 rounded-xl {{ $isSeller ? 'bg-gradient-to-tr from-emerald-600 to-teal-500 shadow-emerald-500/20' : 'bg-gradient-to-tr from-blue-700 via-indigo-600 to-amber-400 shadow-indigo-500/20' }} flex items-center justify-center text-white font-extrabold text-sm shadow-md shrink-0 tracking-tighter">
+                        AZ
                     </div>
-
-                    <!-- Notices & Support top sub-bar -->
-                    <div class="flex items-center justify-between mt-3 pt-2.5 border-t border-[#262833] text-[11px] text-slate-400 font-medium" x-show="!sidebarCollapsed">
-                        <a href="{{ route('seller.notifications.index') }}" class="flex items-center space-x-1.5 hover:text-white transition">
-                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
-                            <span>Notices</span>
-                        </a>
-                        <span class="text-slate-600">|</span>
-                        <a href="{{ route('seller.support.index') }}" class="flex items-center space-x-1.5 hover:text-white transition">
-                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
-                            <span>Support</span>
-                        </a>
+                    <div x-show="!sidebarCollapsed" x-transition class="whitespace-nowrap min-w-0">
+                        <span class="text-base font-bold text-slate-900 dark:text-white tracking-tight">{{ setting('name', 'ALLZONE') }}</span>
+                        <span class="block text-[10px] font-bold uppercase tracking-widest {{ $isSeller ? 'text-emerald-500' : 'text-indigo-500' }} -mt-1 truncate max-w-[140px]">
+                            {{ $isSeller ? ($seller?->business_name ?? 'Seller Studio') : 'Admin Central' }}
+                        </span>
                     </div>
-                </div>
-            @else
-                <!-- Sidebar Header / Logo (Admin) -->
-                <div class="h-16 flex items-center justify-between px-4 border-b border-slate-200/80 dark:border-slate-800">
-                    <a href="{{ route('admin.dashboard') }}" class="flex items-center space-x-3 overflow-hidden">
-                        <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-700 via-indigo-600 to-amber-400 shadow-indigo-500/20 flex items-center justify-center text-white font-extrabold text-sm shadow-md shrink-0 tracking-tighter">
-                            AZ
-                        </div>
-                        <div x-show="!sidebarCollapsed" x-transition class="whitespace-nowrap min-w-0">
-                            <span class="text-base font-bold text-slate-900 dark:text-white tracking-tight">{{ setting('name', 'ALLZONE') }}</span>
-                            <span class="block text-[10px] font-bold uppercase tracking-widest text-indigo-500 -mt-1 truncate max-w-[140px]">
-                                Super Admin Central
-                            </span>
-                        </div>
-                    </a>
+                </a>
 
-                    <!-- Desktop Collapse Button -->
-                    <button 
-                        @click="toggleSidebar()" 
-                        class="hidden lg:flex p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
-                        title="Toggle Sidebar Collapse"
-                    >
-                        <svg class="w-4 h-4 transform transition-transform" :class="sidebarCollapsed ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"/>
-                        </svg>
-                    </button>
-                </div>
-            @endif
+                <!-- Desktop Collapse Button -->
+                <button 
+                    @click="toggleSidebar()" 
+                    class="hidden lg:flex p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                    title="Toggle Sidebar Collapse"
+                >
+                    <svg class="w-4 h-4 transform transition-transform" :class="sidebarCollapsed ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"/>
+                    </svg>
+                </button>
 
-            <!-- Portal & Store Context Card -->
+                <!-- Mobile Close Button -->
+                <button @click="mobileSidebarOpen = false" class="lg:hidden text-slate-400 hover:text-slate-600 dark:hover:text-white">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+
             @if(!$isSeller)
-                <div x-show="!sidebarCollapsed" class="p-3 mx-3 my-2.5 rounded-xl bg-slate-100/70 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/60 text-xs">
+                <!-- Admin Context Card -->
+                <div x-show="!sidebarCollapsed" class="p-3.5 mx-3 my-2.5 rounded-xl bg-slate-100/80 dark:bg-slate-800/70 border border-slate-200/80 dark:border-slate-700/70 shadow-xs">
                     <div class="flex items-center justify-between">
                         <div class="flex items-center space-x-2">
                             <span class="w-2 h-2 rounded-full bg-indigo-400 animate-pulse"></span>
@@ -445,86 +549,126 @@
                             @endphp
 
                             @if($hasPermission)
-                                <div class="space-y-0.5">
+                                @if(!empty($item['children']))
+                                    @php
+                                        $anyChildActive = collect($item['children'])->contains(fn($child) => request()->routeIs($child['active'] ?? ''));
+                                    @endphp
+                                    <div x-data="{ subOpen: {{ $anyChildActive ? 'true' : 'false' }} }" class="space-y-1">
+                                        <button 
+                                            @click="subOpen = !subOpen" 
+                                            type="button"
+                                            class="w-full flex items-center justify-between px-3 py-2.5 rounded-xl font-medium transition-all duration-150 group {{ $anyChildActive ? ($isSeller ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 font-bold shadow-xs border-l-4 border-emerald-500' : 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-400 font-bold shadow-xs border-l-4 border-indigo-500') : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800/80' }}"
+                                            title="{{ $item['title'] }}"
+                                        >
+                                            <div class="flex items-center min-w-0">
+                                                <div class="shrink-0 mr-3">
+                                                    @if($item['icon'] === 'ticket')
+                                                        <svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"/></svg>
+                                                    @elseif($item['icon'] === 'currency-rupee')
+                                                        <svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 8h6m-5 0a3 3 0 110 6H9l5 6M9 4h6"/></svg>
+                                                    @else
+                                                        <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                                                    @endif
+                                                </div>
+                                                <span x-show="!sidebarCollapsed" class="truncate">{{ $item['title'] }}</span>
+                                            </div>
+                                            <svg x-show="!sidebarCollapsed" class="w-3.5 h-3.5 text-slate-400 transform transition-transform shrink-0 ml-1" :class="subOpen ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                                        </button>
+                                        <div x-show="subOpen && !sidebarCollapsed" class="pl-8 pr-2 space-y-1">
+                                            @foreach($item['children'] as $child)
+                                                @php $isChildActive = request()->routeIs($child['active'] ?? ''); @endphp
+                                                <a href="{{ \Illuminate\Support\Facades\Route::has($child['route']) ? route($child['route']) : '#' }}"
+                                                   class="block py-1.5 px-2.5 rounded-lg text-xs font-medium transition {{ $isChildActive ? ($isSeller ? 'text-emerald-700 dark:text-emerald-300 font-bold bg-emerald-100/60 dark:bg-emerald-950/50' : 'text-indigo-700 dark:text-indigo-300 font-bold bg-indigo-100/60 dark:bg-indigo-950/50') : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60' }}">
+                                                    {{ $child['title'] }}
+                                                </a>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                @else
                                     <a 
                                         href="{{ \Illuminate\Support\Facades\Route::has($item['route']) ? route($item['route']) : '#' }}"
-                                        class="flex items-center px-3 py-2 rounded-lg font-medium transition-all duration-150 group {{ $isActive ? ($isSeller ? 'bg-[#2b2542] text-white font-semibold' : 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-400 font-bold shadow-xs border-l-4 border-indigo-500') : ($isSeller ? 'text-[#b2b5c4] hover:text-white hover:bg-[#20222c]' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800/80') }}"
+                                        class="flex items-center px-3 py-2.5 rounded-xl font-medium transition-all duration-150 group {{ $isActive ? ($isSeller ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 font-bold shadow-xs border-l-4 border-emerald-500' : 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-400 font-bold shadow-xs border-l-4 border-indigo-500') : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800/80' }}"
                                         title="{{ $item['title'] }}"
                                     >
                                         <!-- Dynamic Heroicon Set -->
                                         <div class="shrink-0 mr-3">
                                             @if($item['icon'] === 'home')
-                                                <svg class="w-4 h-4 {{ $isSeller ? 'text-slate-400' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
                                             @elseif($item['icon'] === 'cube')
-                                                <svg class="w-4 h-4 {{ $isSeller ? 'text-slate-400' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
-                                            @elseif($item['icon'] === 'truck')
-                                                <svg class="w-4 h-4 {{ $isSeller ? 'text-slate-400' : 'text-sky-500' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0"/></svg>
-                                            @elseif($item['icon'] === 'refresh' || $item['icon'] === 'arrow-path')
-                                                <svg class="w-4 h-4 {{ $isSeller ? 'text-slate-400' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-                                            @elseif($item['icon'] === 'currency-rupee')
-                                                <svg class="w-4 h-4 {{ $isSeller ? 'text-slate-400' : 'text-emerald-500' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 8h6m-5 0a3 3 0 110 6H9l5 6M9 4h6"/></svg>
-                                            @elseif($item['icon'] === 'document-text')
-                                                <svg class="w-4 h-4 {{ $isSeller ? 'text-slate-400' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+                                            @elseif($item['icon'] === 'plus')
+                                                <svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                                             @elseif($item['icon'] === 'arrow-up-tray')
-                                                <svg class="w-4 h-4 {{ $isSeller ? 'text-slate-400' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                                                <svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                                            @elseif($item['icon'] === 'truck')
+                                                <svg class="w-5 h-5 text-sky-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0"/></svg>
+                                            @elseif($item['icon'] === 'refresh' || $item['icon'] === 'arrow-path')
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                                            @elseif($item['icon'] === 'bolt')
+                                                <svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                                            @elseif($item['icon'] === 'store' || $item['icon'] === 'building-storefront')
+                                                <svg class="w-5 h-5 text-teal-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                                            @elseif($item['icon'] === 'users')
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                                            @elseif($item['icon'] === 'chart-bar')
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                                            @elseif($item['icon'] === 'puzzle')
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 110-4h1a1 1 0 001-1V7a1 1 0 011-1h3a1 1 0 001-1V4z"/></svg>
+                                            @elseif($item['icon'] === 'tag')
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg>
+                                            @elseif($item['icon'] === 'currency-rupee')
+                                                <svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 8h6m-5 0a3 3 0 110 6H9l5 6M9 4h6"/></svg>
+                                            @elseif($item['icon'] === 'ticket')
+                                                <svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"/></svg>
+                                            @elseif($item['icon'] === 'cog')
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                                            @elseif($item['icon'] === 'map-pin')
+                                                <svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                                            @elseif($item['icon'] === 'credit-card')
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+                                            @elseif($item['icon'] === 'shield-check')
+                                                <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                                            @elseif($item['icon'] === 'lock-closed')
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
                                             @elseif($item['icon'] === 'photograph')
-                                                <svg class="w-4 h-4 {{ $isSeller ? 'text-slate-400' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                                             @elseif($item['icon'] === 'sparkles')
-                                                <svg class="w-4 h-4 {{ $isSeller ? 'text-slate-400' : 'text-amber-500' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>
-                                            @elseif($item['icon'] === 'building-storefront')
-                                                <svg class="w-4 h-4 {{ $isSeller ? 'text-slate-400' : 'text-teal-500' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                                                <svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>
+                                            @elseif($item['icon'] === 'document-text')
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                            @elseif($item['icon'] === 'chat-bubble')
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+                                            @elseif($item['icon'] === 'bell')
+                                                <svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+                                            @elseif($item['icon'] === 'speakerphone' || $item['icon'] === 'megaphone')
+                                                <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/></svg>
+                                            @elseif($item['icon'] === 'question-mark-circle')
+                                                <svg class="w-5 h-5 text-sky-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                                             @else
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
                                             @endif
                                         </div>
 
-                                        <!-- Menu Title & Badges -->
+                                        <!-- Menu Title & Dynamic Badges -->
                                         <div x-show="!sidebarCollapsed" class="flex-1 flex items-center justify-between overflow-hidden">
-                                            <span class="truncate text-xs">{{ $item['title'] }}</span>
+                                            <span class="truncate">{{ $item['title'] }}</span>
 
-                                            @if($isSeller && !empty($item['badge']))
-                                                @if($item['badge'] === 'NEW')
-                                                    <span class="ml-2 px-1.5 py-0.2 rounded text-[9px] font-black uppercase tracking-wider bg-[#d63384] text-white">
-                                                        NEW
-                                                    </span>
-                                                @elseif(str_contains($item['badge'], 'Out of Stock'))
-                                                    <span class="ml-2 px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#ffd5d5] text-[#b31d1d]">
-                                                        Out of Stock (5)
-                                                    </span>
-                                                @else
-                                                    <span class="ml-2 px-2 py-0.5 text-[10px] font-bold rounded-full border {{ $badgeClass }}">
-                                                        {{ $item['badge'] }}
-                                                    </span>
-                                                @endif
+                                            @if($dynamicBadgeAlpine)
+                                                <span 
+                                                    @if($dynamicShowAlpine) x-show="{{ $dynamicShowAlpine }}" @endif
+                                                    x-text="{{ $dynamicBadgeAlpine }}"
+                                                    class="ml-2 px-2 py-0.5 text-[10px] font-bold rounded-full border {{ $badgeClass }}"
+                                                >
+                                                    {{ $badgeText }}
+                                                </span>
                                             @elseif(!empty($badgeText))
                                                 <span class="ml-2 px-2 py-0.5 text-[10px] font-bold rounded-full border {{ $badgeClass }}">
                                                     {{ $badgeText }}
                                                 </span>
                                             @endif
-
-                                            @if(!empty($item['children']))
-                                                <svg class="w-3.5 h-3.5 ml-1 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-                                            @endif
                                         </div>
                                     </a>
-
-                                    @if(!empty($item['children']) && $isSeller && (request()->routeIs($item['active']) || true))
-                                        <div class="ml-7 pl-2 border-l border-[#2e313f] space-y-1 mt-1 mb-1" x-show="!sidebarCollapsed">
-                                            @foreach($item['children'] as $child)
-                                                @php $isChildActive = request()->routeIs($child['active'] ?? ''); @endphp
-                                                <a 
-                                                    href="{{ \Illuminate\Support\Facades\Route::has($child['route']) ? route($child['route']) : '#' }}" 
-                                                    class="block py-1 px-2 rounded text-[11px] font-medium transition {{ $isChildActive ? 'text-white bg-[#252837] font-semibold' : 'text-slate-400 hover:text-slate-200' }}"
-                                                >
-                                                    {{ $child['title'] }}
-                                                    @if(!empty($child['badge']))
-                                                        <span class="ml-1 px-1 py-0.2 rounded text-[8px] font-bold bg-[#d63384] text-white">NEW</span>
-                                                    @endif
-                                                </a>
-                                            @endforeach
-                                        </div>
-                                    @endif
-                                </div>
+                                @endif
                             @endif
                         @endforeach
                     </div>
@@ -532,44 +676,31 @@
             </nav>
 
             <!-- Bottom User & Platform Meta -->
-            @if($isSeller)
-                <div class="p-3 border-t border-[#262833] bg-[#14151b]">
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center space-x-2">
-                            <span class="text-sm font-extrabold tracking-tight text-[#ff3f8b]">meesho</span>
-                            <span class="text-[11px] text-slate-400 font-medium">Supplier Hub</span>
-                        </div>
-                        <form method="POST" action="{{ route('seller.logout') }}" class="inline shrink-0" x-show="!sidebarCollapsed">
-                            @csrf
-                            <button type="submit" class="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 transition" title="Logout">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            @else
-                <div class="p-3 border-t border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/60">
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center space-x-2.5 min-w-0">
-                            <x-avatar name="{{ auth()->check() ? auth()->user()->name : 'Admin' }}" status="online" size="sm" />
-                            <div x-show="!sidebarCollapsed" class="min-w-0 flex-1">
-                                <p class="text-xs font-bold text-slate-900 dark:text-white truncate">
-                                    {{ auth()->check() ? auth()->user()->name : 'Admin' }}
-                                </p>
-                                <p class="text-[10px] text-slate-400 truncate flex items-center space-x-1">
+            <div class="p-3 border-t border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/60">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-2.5 min-w-0">
+                        <x-avatar name="{{ auth()->check() ? auth()->user()->name : ($isSeller ? 'Seller' : 'Admin') }}" status="online" size="sm" />
+                        <div x-show="!sidebarCollapsed" class="min-w-0 flex-1">
+                            <p class="text-xs font-bold text-slate-900 dark:text-white truncate">
+                                {{ auth()->check() ? auth()->user()->name : ($isSeller ? 'Merchant' : 'Admin') }}
+                            </p>
+                            <p class="text-[10px] text-slate-400 truncate flex items-center space-x-1">
+                                @if($isSeller)
+                                    <span class="truncate">{{ $seller?->business_name ?? 'Seller Studio' }}</span>
+                                @else
                                     <span>{{ auth()->user()->email ?? 'admin@allzone.in' }}</span>
-                                </p>
-                            </div>
+                                @endif
+                            </p>
                         </div>
-                        <form method="POST" action="{{ route('admin.logout') }}" class="inline shrink-0" x-show="!sidebarCollapsed">
-                            @csrf
-                            <button type="submit" class="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition" title="Logout">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
-                            </button>
-                        </form>
                     </div>
+                    <form method="POST" action="{{ $isSeller ? route('seller.logout') : route('admin.logout') }}" class="inline shrink-0" x-show="!sidebarCollapsed">
+                        @csrf
+                        <button type="submit" class="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition" title="Logout">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+                        </button>
+                    </form>
                 </div>
-            @endif
+            </div>
         </aside>
 
         <!-- Main Content Column -->
@@ -610,86 +741,113 @@
                 <!-- Right Topbar Controls -->
                 <div class="flex items-center space-x-2 sm:space-x-3">
                     @if($isSeller)
-                        <!-- Notifications & Orders Quick Bell -->
+                        <!-- Meesho-Style Supplier Header Badge -->
+                        <div class="hidden sm:flex items-center space-x-2 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-300">
+                            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                            <span class="truncate max-w-[160px]">{{ $seller?->business_name ?? 'Supplier Studio' }}</span>
+                            <span class="text-[10px] px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 font-bold">Verified Supplier</span>
+                        </div>
+
+                        <!-- Live Storefront Preview Link -->
                         <a 
-                            href="{{ route('seller.notifications.index') }}" 
-                            class="relative p-2 rounded-lg text-slate-500 hover:text-slate-800 transition"
-                            title="Notifications"
+                            href="{{ $storefrontUrl }}" 
+                            target="_blank" 
+                            class="hidden sm:inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700/80 border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-200 transition"
+                            title="Preview active public storefront in new tab"
                         >
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+                            <svg class="w-3.5 h-3.5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                            <span>Storefront</span>
+                            <svg class="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
                         </a>
+
+                        <!-- Live Pending Orders Alert Icon -->
                         <a 
-                            href="{{ route('seller.support.index') }}" 
-                            class="relative p-2 rounded-lg text-slate-500 hover:text-slate-800 transition"
-                            title="Support"
+                            href="{{ route('seller.orders.index') }}" 
+                            class="relative p-2 rounded-xl text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                            title="View Pending Merchant Orders"
                         >
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
+                            <span 
+                                x-show="pendingOrdersCount > 0" 
+                                class="absolute -top-1 -right-1 px-1.5 py-0.5 min-w-[18px] text-[10px] font-black leading-none rounded-full bg-amber-500 text-slate-950 shadow-sm animate-pulse"
+                                x-text="pendingOrdersCount"
+                            >
+                                {{ $pendingOrdersCount > 0 ? $pendingOrdersCount : '' }}
+                            </span>
                         </a>
-                    @else
-                        <!-- Dark/Light Theme Mode Switcher (Admin Only) -->
+
+                        <!-- Sound Alert Mute/Unmute Toggle -->
                         <button 
                             type="button" 
-                            @click="toggleDarkMode()" 
+                            @click="toggleSound()" 
                             class="p-2 rounded-xl text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition"
-                            title="Toggle Light/Dark Theme"
+                            :title="soundMuted ? 'Unmute order audio alerts' : 'Mute order audio alerts'"
                         >
-                            <template x-if="!darkMode">
-                                <svg class="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+                            <template x-if="!soundMuted">
+                                <svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/></svg>
                             </template>
-                            <template x-if="darkMode">
-                                <svg class="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 9H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                            <template x-if="soundMuted">
+                                <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"/></svg>
                             </template>
                         </button>
-
-                        <!-- Notifications Dropdown (Admin Only) -->
-                        @php
-                            $unreadNotificationsCount = auth()->check() ? auth()->user()->unreadNotifications()->count() : 0;
-                            $recentNotifications = auth()->check() ? auth()->user()->unreadNotifications()->latest()->limit(5)->get() : collect();
-                        @endphp
-                        <x-dropdown align="right" width="80">
-                            <x-slot name="trigger">
-                                <button class="relative p-2 rounded-xl text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition" title="Notifications">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
-                                    @if($unreadNotificationsCount > 0)
-                                        <span class="absolute top-1.5 right-1.5 flex h-2 w-2">
-                                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                                            <span class="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
-                                        </span>
-                                    @endif
-                                </button>
-                            </x-slot>
-
-                            <x-slot name="content">
-                                <div class="px-4 py-3 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
-                                    <span class="text-xs font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200">Alerts & Notifications</span>
-                                    <span class="px-2 py-0.5 text-[10px] font-bold rounded-full {{ $unreadNotificationsCount > 0 ? 'bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400' : 'bg-slate-100 text-slate-500' }}">
-                                        {{ $unreadNotificationsCount }} New
-                                    </span>
-                                </div>
-                                <div class="divide-y divide-slate-100 dark:divide-slate-800 max-h-64 overflow-y-auto">
-                                    @forelse($recentNotifications as $rn)
-                                        <a href="{{ $rn->data['action_url'] ?? route('notifications.index') }}" class="p-3.5 block hover:bg-slate-50 dark:hover:bg-slate-800/50 transition">
-                                            <div class="flex items-center justify-between text-xs font-bold text-slate-900 dark:text-white">
-                                                <span>{{ $rn->data['title'] ?? 'Notification' }}</span>
-                                                <span class="text-[10px] text-slate-400">{{ $rn->created_at->diffForHumans() }}</span>
-                                            </div>
-                                            <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">
-                                                {{ $rn->data['body'] ?? ($rn->data['message'] ?? 'New event occurred in the system.') }}
-                                            </p>
-                                        </a>
-                                    @empty
-                                        <div class="p-4 text-center text-xs text-slate-400">
-                                            No new notifications
-                                        </div>
-                                    @endforelse
-                                </div>
-                            </x-slot>
-                        </x-dropdown>
                     @endif
-                                            <span>{{ $rn->data['title'] ?? 'Notification' }}</span>
-                                            <span class="text-[10px] text-slate-400">{{ $rn->created_at->diffForHumans() }}</span>
+
+                    <!-- Dark/Light Theme Mode Switcher -->
+                    <button 
+                        type="button" 
+                        @click="toggleDarkMode()" 
+                        class="p-2 rounded-xl text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                        title="Toggle Light/Dark Theme"
+                    >
+                        <template x-if="!darkMode">
+                            <svg class="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+                        </template>
+                        <template x-if="darkMode">
+                            <svg class="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 9H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                        </template>
+                    </button>
+
+                    <!-- Notifications Dropdown -->
+                    @php
+                        $unreadNotificationsCount = auth()->check() ? auth()->user()->unreadNotifications()->count() : 0;
+                        $recentNotifications = auth()->check() ? auth()->user()->unreadNotifications()->latest()->limit(5)->get() : collect();
+                        $isAdminPortal = request()->is('admin*') || (auth()->check() && auth()->user()->hasRole(['super_admin', 'admin', 'operations_admin', 'catalog_manager', 'finance_manager', 'seller_support']));
+                        $notificationsViewAllUrl = $isAdminPortal ? route('admin.notifications.index') : (request()->is('seller*') ? route('seller.notifications.index') : route('notifications.index'));
+                        $notificationsMarkAllUrl = $isAdminPortal ? route('admin.notifications.mark_all_read') : (request()->is('seller*') ? route('seller.notifications.mark_all_read') : route('notifications.mark_all_read'));
+                    @endphp
+                    <x-dropdown align="right" width="80">
+                        <x-slot name="trigger">
+                            <button class="relative p-2 rounded-xl text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition" title="Notifications">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+                                @if($unreadNotificationsCount > 0)
+                                    <span class="absolute top-1.5 right-1.5 flex h-2 w-2">
+                                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                                        <span class="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+                                    </span>
+                                @endif
+                            </button>
+                        </x-slot>
+
+                        <x-slot name="content">
+                            <div class="px-4 py-3 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                                <span class="text-xs font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200">Alerts & Notifications</span>
+                                <span class="px-2 py-0.5 text-[10px] font-bold rounded-full {{ $unreadNotificationsCount > 0 ? 'bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400' : 'bg-slate-100 text-slate-500' }}">
+                                    {{ $unreadNotificationsCount }} New
+                                </span>
+                            </div>
+                            <div class="divide-y divide-slate-100 dark:divide-slate-800 max-h-64 overflow-y-auto">
+                                @forelse($recentNotifications as $rn)
+                                    @php
+                                        $goUrl = $isAdminPortal 
+                                            ? route('admin.notifications.go', $rn->id) 
+                                            : (request()->is('seller*') ? route('seller.notifications.go', $rn->id) : route('notifications.go', $rn->id));
+                                    @endphp
+                                    <a href="{{ $goUrl }}" class="p-3.5 block hover:bg-slate-50 dark:hover:bg-slate-800/50 transition">
+                                        <div class="flex items-center justify-between text-xs font-bold text-slate-900 dark:text-white">
+                                            <span class="truncate pr-2">{{ $rn->data['title'] ?? 'Notification' }}</span>
+                                            <span class="text-[10px] text-slate-400 whitespace-nowrap">{{ $rn->created_at->diffForHumans() }}</span>
                                         </div>
-                                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 truncate">{{ $rn->data['message'] ?? '' }}</p>
+                                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-2">{{ $rn->data['message'] ?? '' }}</p>
                                     </a>
                                 @empty
                                     <div class="p-4 text-center text-xs text-slate-400">
@@ -699,14 +857,14 @@
                             </div>
                             <div class="p-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs">
                                 @if($unreadNotificationsCount > 0)
-                                    <form method="POST" action="{{ route('notifications.mark_all_read') }}" class="inline">
+                                    <form method="POST" action="{{ $notificationsMarkAllUrl }}" class="inline">
                                         @csrf
                                         <button type="submit" class="font-semibold text-emerald-600 dark:text-emerald-400 hover:underline">Mark all read</button>
                                     </form>
                                 @else
                                     <span></span>
                                 @endif
-                                <a href="{{ route('notifications.index') }}" class="font-semibold text-slate-600 dark:text-slate-300 hover:underline">View All</a>
+                                <a href="{{ $notificationsViewAllUrl }}" class="font-semibold text-slate-600 dark:text-slate-300 hover:underline">View All</a>
                             </div>
                         </x-slot>
                     </x-dropdown>
@@ -725,23 +883,19 @@
                                 @if($isSeller)
                                     <a href="{{ route('seller.products.create') }}" class="flex items-center px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-800 transition">
                                         <span class="w-2 h-2 rounded-full bg-emerald-500 mr-2"></span>
-                                        Add New Product
+                                        Add Single Product
                                     </a>
-                                    <a href="{{ route('seller.quick.live') }}" class="flex items-center px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-800 transition">
+                                    <a href="{{ route('seller.products.bulk_upload') }}" class="flex items-center px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-800 transition">
+                                        <span class="w-2 h-2 rounded-full bg-indigo-500 mr-2"></span>
+                                        Bulk Catalog Upload
+                                    </a>
+                                    <a href="{{ route('seller.ads.create') }}" class="flex items-center px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-800 transition">
                                         <span class="w-2 h-2 rounded-full bg-amber-400 mr-2"></span>
-                                        Quick Live Dispatch
+                                        New Ad Campaign
                                     </a>
-                                    <a href="{{ route('seller.shipments.index') }}" class="flex items-center px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-800 transition">
-                                        <span class="w-2 h-2 rounded-full bg-sky-400 mr-2"></span>
-                                        Book Cargo Waybills
-                                    </a>
-                                    <a href="{{ route('seller.stores.create') }}" class="flex items-center px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-800 transition">
-                                        <span class="w-2 h-2 rounded-full bg-teal-400 mr-2"></span>
-                                        Add Store Outlet
-                                    </a>
-                                    <a href="{{ route('seller.connections.index') }}" class="flex items-center px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-800 transition">
-                                        <span class="w-2 h-2 rounded-full bg-indigo-400 mr-2"></span>
-                                        Connect Shop / Feeds
+                                    <a href="{{ route('seller.claims.create') }}" class="flex items-center px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-800 transition">
+                                        <span class="w-2 h-2 rounded-full bg-rose-400 mr-2"></span>
+                                        Raise Return Claim
                                     </a>
                                 @else
                                     <a href="{{ route('admin.catalogue.moderation.index') }}" class="flex items-center px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-800 transition">
@@ -756,9 +910,9 @@
                                         <span class="w-2 h-2 rounded-full bg-amber-400 mr-2"></span>
                                         Launch Campaign
                                     </a>
-                                    <a href="{{ route('admin.stores.index') }}" class="flex items-center px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-800 transition">
+                                    <a href="{{ route('admin.sellers.index') }}" class="flex items-center px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-800 transition">
                                         <span class="w-2 h-2 rounded-full bg-sky-400 mr-2"></span>
-                                        Register Dark Store
+                                        Manage Suppliers
                                     </a>
                                 @endif
                             </div>
@@ -813,6 +967,12 @@
 
                             <div class="py-1 text-xs">
                                 @if($isSeller)
+                                    <a href="{{ route('seller.settings.bank') }}" class="flex items-center px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 transition">
+                                        Settings &amp; Bank Details
+                                    </a>
+                                    <a href="{{ route('seller.notices.index') }}" class="flex items-center px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 transition">
+                                        Policy Notices
+                                    </a>
                                     <a href="{{ route('seller.store.edit') }}" class="flex items-center px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 transition">
                                         Storefront Settings
                                     </a>

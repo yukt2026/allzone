@@ -505,4 +505,333 @@ class AdminSellerTest extends TestCase
         $response = $this->actingAs($this->adminUser)->get("/admin/sellers/{$seller->id}/documents/{$doc->id}/download");
         $response->assertStatus(200);
     }
+
+    public function test_sellers_index_tabs_filter_correctly_and_display_accurate_counts(): void
+    {
+        $pendingUser = User::factory()->create();
+        $pendingSeller = Seller::factory()->create([
+            'user_id' => $pendingUser->id,
+            'business_name' => 'Pending Merchant Alpha',
+            'status' => SellerStatus::PENDING,
+        ]);
+
+        $activeUser = User::factory()->create();
+        $activeSeller = Seller::factory()->create([
+            'user_id' => $activeUser->id,
+            'business_name' => 'Active Merchant Beta',
+            'status' => SellerStatus::APPROVED,
+        ]);
+
+        $rejectedUser = User::factory()->create();
+        $rejectedSeller = Seller::factory()->create([
+            'user_id' => $rejectedUser->id,
+            'business_name' => 'Rejected Merchant Gamma',
+            'status' => SellerStatus::REJECTED,
+        ]);
+
+        $suspendedUser = User::factory()->create();
+        $suspendedSeller = Seller::factory()->create([
+            'user_id' => $suspendedUser->id,
+            'business_name' => 'Suspended Merchant Delta',
+            'status' => SellerStatus::SUSPENDED,
+        ]);
+
+        // 1. All tab
+        $allRes = $this->actingAs($this->adminUser)->get('/admin/sellers?tab=all');
+        $allRes->assertStatus(200);
+        $allRes->assertSee('Pending Merchant Alpha');
+        $allRes->assertSee('Active Merchant Beta');
+        $allRes->assertSee('Rejected Merchant Gamma');
+        $allRes->assertSee('Suspended Merchant Delta');
+
+        // 2. Pending tab
+        $pendingRes = $this->actingAs($this->adminUser)->get('/admin/sellers?tab=pending');
+        $pendingRes->assertStatus(200);
+        $pendingRes->assertSee('Pending Merchant Alpha');
+        $pendingRes->assertDontSee('Active Merchant Beta');
+        $pendingRes->assertDontSee('Rejected Merchant Gamma');
+        $pendingRes->assertDontSee('Suspended Merchant Delta');
+
+        // 3. Active tab
+        $activeRes = $this->actingAs($this->adminUser)->get('/admin/sellers?tab=active');
+        $activeRes->assertStatus(200);
+        $activeRes->assertSee('Active Merchant Beta');
+        $activeRes->assertDontSee('Pending Merchant Alpha');
+        $activeRes->assertDontSee('Rejected Merchant Gamma');
+        $activeRes->assertDontSee('Suspended Merchant Delta');
+
+        // 4. Rejected tab
+        $rejectedRes = $this->actingAs($this->adminUser)->get('/admin/sellers?tab=rejected');
+        $rejectedRes->assertStatus(200);
+        $rejectedRes->assertSee('Rejected Merchant Gamma');
+        $rejectedRes->assertDontSee('Pending Merchant Alpha');
+        $rejectedRes->assertDontSee('Active Merchant Beta');
+
+        // 5. Suspended tab
+        $suspendedRes = $this->actingAs($this->adminUser)->get('/admin/sellers?tab=suspended');
+        $suspendedRes->assertStatus(200);
+        $suspendedRes->assertSee('Suspended Merchant Delta');
+        $suspendedRes->assertDontSee('Active Merchant Beta');
+        $suspendedRes->assertDontSee('Rejected Merchant Gamma');
+    }
+
+    public function test_sellers_index_renders_all_required_columns(): void
+    {
+        $sellerUser = User::factory()->create([
+            'name' => 'Kavita Sharma',
+            'email' => 'kavita@artisancraft.in',
+            'phone' => '9876501234',
+        ]);
+        $seller = Seller::factory()->create([
+            'user_id' => $sellerUser->id,
+            'business_name' => 'Artisan Craft Bazaar',
+            'seller_type' => SellerType::MARKETPLACE,
+            'status' => SellerStatus::APPROVED,
+            'gstin' => '29AABCA1234A1Z5',
+            'commission_override' => 8.50,
+        ]);
+
+        $response = $this->actingAs($this->adminUser)->get('/admin/sellers');
+
+        $response->assertStatus(200);
+        $response->assertSee('Artisan Craft Bazaar');
+        $response->assertSee('Kavita Sharma');
+        $response->assertSee('kavita@artisancraft.in');
+        $response->assertSee('9876501234');
+        $response->assertSee('29AABCA1234A1Z5');
+        $response->assertSee('8.5%');
+        $response->assertSee('Custom Override');
+        $response->assertSee('Active');
+        $response->assertSee('items / orders');
+    }
+
+    public function test_admin_can_request_additional_verification_documents_from_seller(): void
+    {
+        $sellerUser = User::factory()->create();
+        $seller = Seller::factory()->create([
+            'user_id' => $sellerUser->id,
+            'business_name' => 'Spices of Kerala',
+            'status' => SellerStatus::PENDING,
+        ]);
+
+        // Attempting without instructions fails validation
+        $failResponse = $this->actingAs($this->adminUser)->post("/admin/sellers/{$seller->id}/request-documents", [
+            'document_type' => 'fssai_license',
+            'instructions' => '',
+        ]);
+        $failResponse->assertSessionHasErrors('instructions');
+
+        // Successful document request
+        $response = $this->actingAs($this->adminUser)->post("/admin/sellers/{$seller->id}/request-documents", [
+            'document_type' => 'fssai_license',
+            'instructions' => 'Please provide valid 14-digit state FSSAI manufacturing license.',
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success');
+
+        // Verify document entry exists with pending status
+        $this->assertDatabaseHas('seller_documents', [
+            'seller_id' => $seller->id,
+            'type' => 'fssai_license',
+            'status' => 'pending',
+            'remarks' => 'Requested by Administration: Please provide valid 14-digit state FSSAI manufacturing license.',
+        ]);
+
+        // Verify audit log
+        $this->assertDatabaseHas('activity_log', [
+            'subject_type' => Seller::class,
+            'subject_id' => $seller->id,
+            'causer_id' => $this->adminUser->id,
+        ]);
+    }
+
+    public function test_admin_can_update_seller_operational_settings(): void
+    {
+        $sellerUser = User::factory()->create();
+        $seller = Seller::factory()->create([
+            'user_id' => $sellerUser->id,
+            'seller_type' => SellerType::LOCAL_STORE,
+            'commission_override' => null,
+        ]);
+        $store = Store::factory()->create([
+            'seller_id' => $seller->id,
+            'accepts_quick_commerce' => false,
+            'accepts_pickup' => false,
+        ]);
+
+        $response = $this->actingAs($this->adminUser)->post("/admin/sellers/{$seller->id}/settings", [
+            'seller_type' => 'marketplace',
+            'commission_override' => 12.00,
+            'accepts_quick_commerce' => '1',
+            'accepts_pickup' => '1',
+            'remarks' => 'Upgraded merchant to marketplace tier with custom rake.',
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success');
+
+        $seller->refresh();
+        $this->assertEquals(SellerType::MARKETPLACE, $seller->seller_type);
+        $this->assertEquals(12.00, $seller->commission_override);
+
+        $store->refresh();
+        $this->assertTrue($store->accepts_quick_commerce);
+        $this->assertTrue($store->accepts_pickup);
+
+        // Audit log verified
+        $this->assertDatabaseHas('activity_log', [
+            'subject_type' => Seller::class,
+            'subject_id' => $seller->id,
+            'causer_id' => $this->adminUser->id,
+        ]);
+    }
+
+    public function test_sensitive_bank_details_are_masked_for_unauthorized_staff_and_unmasked_for_authorized_staff(): void
+    {
+        $sellerUser = User::factory()->create();
+        $seller = Seller::factory()->create(['user_id' => $sellerUser->id]);
+
+        SellerBankAccount::create([
+            'seller_id' => $seller->id,
+            'account_holder' => 'Sensitive Merchant Account',
+            'account_no' => '987654321000',
+            'ifsc' => 'HDFC0004321',
+            'bank_name' => 'HDFC Bank Payouts',
+            'is_primary' => true,
+        ]);
+
+        // 1. Support admin user (no viewSensitive authorization) sees masked account number
+        $supportResponse = $this->actingAs($this->supportUser)->get("/admin/sellers/{$seller->id}?tab=bank");
+        $supportResponse->assertStatus(200);
+        $supportResponse->assertSee('Restricted Financial Access');
+        $supportResponse->assertSee('•••••••• 1000');
+        $supportResponse->assertDontSee('987654321000');
+
+        // 2. Admin user (authorized) sees unmasked account number
+        $adminResponse = $this->actingAs($this->adminUser)->get("/admin/sellers/{$seller->id}?tab=bank");
+        $adminResponse->assertStatus(200);
+        $adminResponse->assertSee('Staff Clearance');
+        $adminResponse->assertSee('987654321000');
+    }
+
+    public function test_seller_detail_new_tabs_render_proper_content(): void
+    {
+        $sellerUser = User::factory()->create();
+        $seller = Seller::factory()->create([
+            'user_id' => $sellerUser->id,
+            'business_name' => 'All Tabs Showcase Seller',
+        ]);
+
+        // 1. Pickup Location
+        \App\Models\SellerPickupLocation::create([
+            'seller_id' => $seller->id,
+            'nickname' => 'Central Hub Warehouse',
+            'contact_person' => 'Rajesh Logistics',
+            'contact_phone' => '9876598765',
+            'address_line1' => 'Plot 42, Electronic City Phase 1',
+            'city' => 'Bengaluru',
+            'state' => 'Karnataka',
+            'pincode' => '560100',
+            'shiprocket_pickup_name' => 'SR_BLR_01',
+            'is_default' => true,
+            'is_verified' => true,
+            'is_serviceable' => true,
+        ]);
+
+        // 2. Settlement
+        \App\Models\SellerSettlement::create([
+            'seller_id' => $seller->id,
+            'settlement_number' => 'SET-TEST-999',
+            'period_start' => now()->subDays(7),
+            'period_end' => now(),
+            'gross' => 15000.00,
+            'commission' => 1500.00,
+            'tax_on_commission' => 270.00,
+            'cod_collected' => 0.00,
+            'adjustments' => 0.00,
+            'net' => 13230.00,
+            'status' => \App\Enums\SettlementStatus::SETTLED,
+            'paid_at' => now(),
+            'reference' => 'UTR123456789',
+        ]);
+
+        // 3. Fulfilment order and Commission entry
+        $custUser = User::factory()->create();
+        $customer = \App\Models\Customer::create(['user_id' => $custUser->id]);
+        $parentOrder = Order::create([
+            'customer_id' => $customer->id,
+            'order_number' => 'ORD-COMM-ENTRY-1',
+            'subtotal' => 2000,
+            'tax' => 100,
+            'delivery_fee' => 50,
+            'total' => 2150,
+            'payment_status' => \App\Enums\PaymentStatus::PAID,
+            'payment_method' => \App\Enums\PaymentMethod::UPI,
+            'status' => \App\Enums\OrderStatus::DELIVERED,
+            'address_snapshot' => ['city' => 'Bengaluru'],
+        ]);
+        $fo = FulfilmentOrder::create([
+            'order_id' => $parentOrder->id,
+            'fulfilment_order_number' => 'FO-COMM-ENTRY-1',
+            'seller_id' => $seller->id,
+            'fulfilment_type' => \App\Enums\FulfilmentType::QUICK,
+            'status' => 'delivered',
+            'subtotal' => 2000,
+            'commission_amount' => 200,
+            'seller_payable' => 1800,
+        ]);
+        \App\Models\CommissionEntry::create([
+            'fulfilment_order_id' => $fo->id,
+            'base_amount' => 2000.00,
+            'commission' => 200.00,
+            'tax_on_commission' => 36.00,
+            'gateway_fee' => 0.00,
+            'shipping_adjustment' => 0.00,
+            'net_payable' => 1764.00,
+            'entry_type' => 'Standard Commission',
+            'notes' => '10% platform rake applied.',
+        ]);
+
+        // 4. Support Ticket
+        \App\Models\SupportTicket::create([
+            'ticket_number' => 'TCK-SHOWCASE-1',
+            'seller_id' => $seller->id,
+            'user_id' => $sellerUser->id,
+            'subject' => 'Inquiry regarding Shiprocket API integration',
+            'category' => 'Shipping & Fulfilment',
+            'priority' => \App\Enums\TicketPriority::HIGH,
+            'status' => \App\Enums\TicketStatus::OPEN,
+        ]);
+
+        // Test Pickup Tab
+        $pickupRes = $this->actingAs($this->adminUser)->get("/admin/sellers/{$seller->id}?tab=pickup");
+        $pickupRes->assertStatus(200);
+        $pickupRes->assertSee('Central Hub Warehouse');
+        $pickupRes->assertSee('Plot 42, Electronic City Phase 1');
+        $pickupRes->assertSee('560100');
+        $pickupRes->assertSee('SR_BLR_01');
+
+        // Test Payments Tab
+        $paymentRes = $this->actingAs($this->adminUser)->get("/admin/sellers/{$seller->id}?tab=payments");
+        $paymentRes->assertStatus(200);
+        $paymentRes->assertSee('SET-TEST-999');
+        $paymentRes->assertSee('15,000.00');
+        $paymentRes->assertSee('13,230.00');
+        $paymentRes->assertSee('UTR123456789');
+
+        // Test Commission Tab
+        $commRes = $this->actingAs($this->adminUser)->get("/admin/sellers/{$seller->id}?tab=commission");
+        $commRes->assertStatus(200);
+        $commRes->assertSee('Merchant Commission Agreement');
+        $commRes->assertSee('Commission Deduction Ledger');
+        $commRes->assertSee('2,000.00');
+        $commRes->assertSee('10% platform rake applied.');
+
+        // Test Tickets Tab
+        $ticketRes = $this->actingAs($this->adminUser)->get("/admin/sellers/{$seller->id}?tab=tickets");
+        $ticketRes->assertStatus(200);
+        $ticketRes->assertSee('TCK-SHOWCASE-1');
+        $ticketRes->assertSee('Inquiry regarding Shiprocket API integration');
+    }
 }

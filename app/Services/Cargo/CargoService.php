@@ -52,10 +52,17 @@ class CargoService
     {
         if ($this->provider) {
             $result = $this->provider->createReversePickup($orderReturn);
+            $waybill = $result['waybill'] ?? $result['tracking_number'] ?? $result['awb_code'] ?? ('REV-' . $this->generateWaybill());
+            if (!str_starts_with((string) $waybill, 'REV-')) {
+                $waybill = 'REV-' . $waybill;
+            }
+            $orderReturn->pickup_waybill = $waybill;
+            $orderReturn->save();
+
             return [
-                'tracking_number' => $result['tracking_number'] ?? $orderReturn->pickup_waybill,
-                'waybill' => $result['waybill'] ?? $orderReturn->pickup_waybill,
-                'courier' => $result['courier'] ?? 'ALLZONE Cargo Logistics',
+                'tracking_number' => $waybill,
+                'waybill' => $waybill,
+                'courier' => $result['courier'] ?? $result['courier_name'] ?? 'ALLZONE Cargo Logistics',
                 'status' => $result['status'] ?? 'reverse_pickup_scheduled',
                 'estimated_pickup_at' => now()->addHours(24)->toIso8601String(),
             ];

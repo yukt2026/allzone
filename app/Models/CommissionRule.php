@@ -20,6 +20,7 @@ class CommissionRule extends Model
         'scope',
         'category_id',
         'seller_id',
+        'product_id',
         'percent',
         'fixed_fee',
         'starts_at',
@@ -46,6 +47,11 @@ class CommissionRule extends Model
     public function seller(): BelongsTo
     {
         return $this->belongsTo(Seller::class);
+    }
+
+    public function product(): BelongsTo
+    {
+        return $this->belongsTo(Product::class);
     }
 
     public function entries(): HasMany
@@ -77,5 +83,10 @@ class CommissionRule extends Model
     public function scopeForSeller(Builder $query, int $sellerId): Builder
     {
         return $query->where('scope', CommissionRuleScope::SELLER)->where('seller_id', $sellerId);
+    }
+
+    public function scopeForProduct(Builder $query, int $productId): Builder
+    {
+        return $query->where('scope', CommissionRuleScope::PRODUCT)->where('product_id', $productId);
     }
 }

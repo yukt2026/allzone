@@ -61,14 +61,14 @@ class RolesAndPermissionsSeeder extends Seeder
             'super_admin' => $permissions, // all permissions
 
             'admin' => [
-                'settings.view', 'audit_logs.view',
+                'settings.view', 'settings.manage', 'audit_logs.view',
                 'users.view', 'users.create', 'users.edit',
                 'sellers.view', 'sellers.approve', 'sellers.suspend',
                 'stores.view', 'stores.manage',
                 'categories.manage', 'brands.manage',
                 'products.view', 'products.create', 'products.edit', 'products.delete', 'products.approve',
                 'inventory.view',
-                'orders.view', 'orders.manage',
+                'orders.view', 'orders.manage', 'orders.cancel',
                 'fulfilment.view',
                 'cargo.view', 'cargo.manage',
                 'payments.view', 'payments.refund',
@@ -77,11 +77,54 @@ class RolesAndPermissionsSeeder extends Seeder
                 'tickets.view', 'tickets.reply', 'tickets.assign',
             ],
 
+            'operations_admin' => [
+                'audit_logs.view',
+                'sellers.view', 'sellers.approve', 'sellers.suspend',
+                'stores.view', 'stores.manage',
+                'categories.manage', 'brands.manage',
+                'products.view', 'products.approve',
+                'inventory.view', 'inventory.manage',
+                'orders.view', 'orders.manage', 'orders.cancel',
+                'fulfilment.view',
+                'cargo.view', 'cargo.manage',
+                'coupons.manage', 'banners.manage', 'reviews.moderate',
+                'tickets.view', 'tickets.reply',
+            ],
+
             'support_admin' => [
                 'orders.view', 'orders.manage',
-                'payments.view', 'payments.refund',
                 'tickets.view', 'tickets.reply', 'tickets.assign',
                 'reviews.moderate',
+            ],
+
+            'seller_support' => [
+                'orders.view',
+                'tickets.view', 'tickets.reply', 'tickets.assign',
+                'reviews.moderate',
+                'products.view',
+            ],
+
+            'catalog_manager' => [
+                'categories.manage', 'brands.manage',
+                'products.view', 'products.create', 'products.edit', 'products.approve',
+                'inventory.view',
+                'reviews.moderate',
+            ],
+
+            'finance_admin' => [
+                'payments.view', 'payments.refund',
+                'settlements.view', 'settlements.process',
+                'commissions.manage',
+                'orders.view',
+                'audit_logs.view',
+            ],
+
+            'finance_manager' => [
+                'payments.view', 'payments.refund',
+                'settlements.view', 'settlements.process',
+                'commissions.manage',
+                'orders.view',
+                'audit_logs.view',
             ],
 
             'seller_owner' => [

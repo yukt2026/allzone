@@ -116,7 +116,8 @@ class SellerAiController extends Controller
 
         $logs = AiActionLog::where('seller_id', $seller->id)
             ->latest('id')
-            ->paginate(15);
+            ->paginate(15)
+            ->withQueryString();
 
         return response()->json($logs);
     }

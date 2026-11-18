@@ -176,9 +176,33 @@ class SettlementService
 
         $settlement->status = SettlementStatus::PROCESSING;
         $settlement->hold_reason = null;
+        $settlement->approved_by = $adminId;
+        $settlement->approved_at = now();
         $settlement->save();
 
         Log::info("Settlement #{$settlement->settlement_number} approved by Admin #{$adminId}");
+
+        return $settlement;
+    }
+
+    /**
+     * Mark settlement payout failed with reason.
+     */
+    public function markFailed(SellerSettlement $settlement, string $reason, ?int $adminId = null): SellerSettlement
+    {
+        if ($settlement->status === SettlementStatus::PAID || $settlement->status === SettlementStatus::SETTLED) {
+            throw new InvalidArgumentException("Cannot mark an already paid settlement as failed.");
+        }
+
+        if (empty(trim($reason))) {
+            throw new InvalidArgumentException("A reason is required to record payout failure.");
+        }
+
+        $settlement->status = SettlementStatus::FAILED;
+        $settlement->failed_reason = trim($reason);
+        $settlement->save();
+
+        Log::warning("Settlement #{$settlement->settlement_number} marked FAILED by Admin #{$adminId}: {$reason}");
 
         return $settlement;
     }

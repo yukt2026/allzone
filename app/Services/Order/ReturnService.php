@@ -345,6 +345,10 @@ class ReturnService
      */
     public function processRefund(OrderReturn $return, ?float $amountOverride = null, ?User $actor = null): OrderReturn
     {
+        if ($return->status === ReturnStatus::REFUNDED || $return->refund_id) {
+            throw new \RuntimeException("Refund has already been issued for Return #{$return->return_number}.");
+        }
+
         return DB::transaction(function () use ($return, $amountOverride, $actor) {
             $refundAmount = $amountOverride ?? (float) ($return->refund_amount ?? $return->orderItem->total);
             $item = $return->orderItem;

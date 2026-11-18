@@ -16,7 +16,7 @@ class SellerPolicy extends BasePolicy
 
     public function view(User $user, Seller $seller): bool
     {
-        if ($user->can('sellers.view')) {
+        if ($user->hasRole(['super_admin', 'admin', 'support_admin']) || $user->can('sellers.view')) {
             return true;
         }
 
@@ -25,7 +25,7 @@ class SellerPolicy extends BasePolicy
 
     public function update(User $user, Seller $seller): bool
     {
-        if ($user->can('sellers.manage')) {
+        if ($user->hasRole(['super_admin', 'admin']) || $user->can('sellers.manage') || $user->can('sellers.approve')) {
             return true;
         }
 
@@ -65,5 +65,15 @@ class SellerPolicy extends BasePolicy
     public function verifyBank(User $user, Seller $seller): bool
     {
         return $user->can('sellers.approve');
+    }
+
+    public function requestDocuments(User $user, Seller $seller): bool
+    {
+        return $user->can('sellers.approve') || $user->can('sellers.manage');
+    }
+
+    public function viewSensitive(User $user, ?Seller $seller = null): bool
+    {
+        return $user->hasRole(['super_admin', 'admin', 'finance_manager']) || $user->can('sellers.manage');
     }
 }

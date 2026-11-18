@@ -6,8 +6,8 @@
     <!-- Page Header & Action Bar -->
     <x-page-header 
         title="Package #{{ $fo->fulfilment_order_number }}" 
-        subtitle="Parent Order: #{{ $fo->order?->order_number }} &bull; Channel: {{ $fo->fulfilment_type->label() }} &bull; Placed {{ $fo->created_at->format('d M Y, h:i A') }}"
-        :breadcrumbs="['Seller Studio' => route('seller.dashboard'), 'Orders' => route('seller.orders.index'), '#' . $fo->fulfilment_order_number => '#']"
+        subtitle="Parent Order: #{{ $fo->order?->order_number }} • Channel: {{ $fo->fulfilment_type->label() }} • Placed {{ $fo->created_at->format('d M Y, h:i A') }}"
+        :breadcrumbs="['Supplier Panel' => route('seller.dashboard'), 'Orders' => route('seller.orders.index'), '#' . $fo->fulfilment_order_number => '#']"
     >
         <x-slot name="badge">
             @php
@@ -67,12 +67,17 @@
         </div>
 
         <div class="flex flex-wrap items-center gap-2">
-            @if(empty($allowedNext))
-                <span class="text-xs text-slate-400 italic">No further transitions permitted for this order.</span>
+            @if(strtolower($fo->status) === 'delivered')
+                <div class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 text-xs font-bold">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                    <span>Delivered Successfully</span>
+                </div>
             @endif
 
             @foreach($allowedNext as $target)
-                @if($target === 'rejected')
+                @if($target === 'returned')
+                    {{-- Return processing handled under Returns & RMA module --}}
+                @elseif($target === 'rejected')
                     <button 
                         type="button" 
                         @click="rejectModal = true" 
@@ -109,18 +114,19 @@
                 {{ $fo->order?->address_snapshot['city'] ?? '' }}, {{ $fo->order?->address_snapshot['state'] ?? '' }} - {{ $fo->order?->address_snapshot['pincode'] ?? '' }}
             </div>
             <div class="pt-2 border-t border-slate-100 dark:border-slate-800 text-xs text-slate-500">
-                Phone: <strong class="text-slate-800 dark:text-slate-200">{{ $fo->order?->address_snapshot['phone'] ?? 'N/A' }}</strong>
+                @php $phone = $fo->order?->address_snapshot['phone'] ?? null; @endphp
+                Phone: <strong class="text-slate-800 dark:text-slate-200">{{ $phone ? (substr($phone, 0, 3) . '****' . substr($phone, -3)) : 'N/A' }}</strong>
             </div>
         </div>
 
-        <!-- Outlet & Source Location -->
+        <!-- Dispatch Facility & Location -->
         <div class="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-xs space-y-3">
-            <div class="text-xs font-black uppercase tracking-wider text-slate-400">Dispatch Outlet</div>
+            <div class="text-xs font-black uppercase tracking-wider text-slate-400">Dispatch Facility</div>
             <div class="text-sm font-bold text-slate-900 dark:text-white">
-                {{ $fo->store?->name ?? 'Default Store Shelf' }}
+                {{ $fo->seller?->business_name ?? 'Merchant Fulfillment Center' }}
             </div>
             <div class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
-                Inventory Location: <strong>{{ $fo->inventoryLocation?->name ?? 'Primary Store Room' }}</strong> ({{ $fo->inventoryLocation?->code ?? 'LOC-01' }})
+                Dispatch Location: <strong>{{ $fo->seller?->city ?? ($fo->store?->location?->city ?? 'Central Warehouse') }}</strong>
             </div>
             <div class="pt-2 border-t border-slate-100 dark:border-slate-800 text-xs text-slate-500">
                 Courier / AWB: <strong class="text-slate-800 dark:text-slate-200">{{ $fo->shipment?->awb ? (($fo->shipment->courier ?? 'Shiprocket') . ' - ' . $fo->shipment->awb) : 'Pending Shiprocket AWB' }}</strong>
@@ -132,7 +138,7 @@
             <div class="text-xs font-black uppercase tracking-wider text-slate-400 mb-1">Financial Settlement</div>
             <div class="flex justify-between text-xs text-slate-600 dark:text-slate-300">
                 <span>Package Total</span>
-                <span class="font-bold text-slate-900 dark:text-white">{{ format_currency((float) $fo->total) }}</span>
+                <span class="font-bold text-slate-900 dark:text-white">{{ format_currency((float) $fo->total_amount) }}</span>
             </div>
             <div class="flex justify-between text-xs text-rose-600 dark:text-rose-400 font-semibold">
                 <span>Marketplace Commission</span>

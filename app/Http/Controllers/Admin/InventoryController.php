@@ -5,106 +5,112 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Category;
 use App\Models\Inventory;
 use App\Models\Seller;
 use App\Models\StoreConnection;
 use App\Models\SyncLog;
+use App\Services\Admin\AdminInventoryService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
+use InvalidArgumentException;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class InventoryController extends Controller
 {
+    public function __construct(
+        protected AdminInventoryService $inventoryService
+    ) {}
+
     /**
-     * Read-only global inventory overview across all platform merchants.
+     * Read-only global inventory overview, movement ledger, and audit across all platform merchants.
      */
     public function index(Request $request): View
     {
         $this->authorize('viewAny', Inventory::class);
 
-        $query = $this->buildInventoryQuery($request);
-        $inventories = $query->paginate(20)->withQueryString();
-
-        // Platform KPI metrics
-        $totalItems = Inventory::count();
-        $totalOnHand = (int) Inventory::sum('quantity_on_hand');
-        $totalReserved = (int) Inventory::sum('quantity_reserved');
-        $outOfStock = Inventory::whereRaw('(quantity_on_hand - quantity_reserved) <= 0')->count();
-
+        $tab = $request->query('tab', 'registry');
+        $metrics = $this->inventoryService->getOverviewMetrics();
         $sellers = Seller::orderBy('business_name')->get(['id', 'business_name']);
+        $categories = Category::orderBy('name')->get(['id', 'name']);
+
+        if ($tab === 'discrepancies') {
+            $request->merge(['stock_status' => 'discrepancy']);
+        }
+
+        if ($tab === 'movements') {
+            $movements = $this->inventoryService->buildMovementsQuery($request)->paginate(20)->withQueryString();
+            $inventories = Inventory::query()->whereRaw('1=0')->paginate(20);
+        } else {
+            $query = $this->inventoryService->buildInventoryQuery($request);
+            $inventories = $query->paginate(20)->withQueryString();
+            $movements = null;
+        }
 
         return view('admin.inventory.index', [
+            'tab' => $tab,
             'inventories' => $inventories,
+            'movements' => $movements,
             'sellers' => $sellers,
-            'filters' => $request->only(['seller_id', 'location_type', 'stock_status', 'quick_available', 'search']),
-            'metrics' => [
-                'total_items' => $totalItems,
-                'total_on_hand' => $totalOnHand,
-                'total_reserved' => $totalReserved,
-                'out_of_stock' => $outOfStock,
-            ],
+            'categories' => $categories,
+            'filters' => $request->only([
+                'seller_id',
+                'category_id',
+                'location_type',
+                'stock_status',
+                'quick_available',
+                'search',
+                'type',
+                'from_date',
+                'to_date',
+                'inventory_id',
+            ]),
+            'metrics' => $metrics,
         ]);
     }
 
     /**
-     * Build filtered query for global inventory balances.
+     * View dedicated stock movement ledger.
      */
-    protected function buildInventoryQuery(Request $request)
+    public function movements(Request $request): View
     {
-        $query = Inventory::query()
-            ->with([
-                'variant.product.seller:id,business_name',
-                'location:id,name,type,seller_id',
-            ])
-            ->latest('id');
+        $this->authorize('viewAny', Inventory::class);
 
-        // Filter by Seller
-        if ($request->filled('seller_id')) {
-            $query->whereHas('location', fn ($q) => $q->where('seller_id', (int) $request->seller_id));
+        $request->merge(['tab' => 'movements']);
+
+        return $this->index($request);
+    }
+
+    /**
+     * Authorized manual stock adjustment with mandatory audit reason.
+     */
+    public function adjust(Request $request, Inventory $inventory): RedirectResponse
+    {
+        $this->authorize('update', $inventory);
+
+        $validated = $request->validate([
+            'new_quantity_on_hand' => ['required', 'integer', 'min:0'],
+            'reason' => ['required', 'string', 'min:3', 'max:500'],
+        ]);
+
+        try {
+            $oldQuantity = $inventory->quantity_on_hand;
+            $this->inventoryService->adjustStock(
+                $inventory,
+                (int) $validated['new_quantity_on_hand'],
+                $validated['reason'],
+                (int) Auth::id()
+            );
+
+            return redirect()->back()->with(
+                'success',
+                "Inventory stock adjusted from {$oldQuantity} to {$validated['new_quantity_on_hand']} units with audit reason logged."
+            );
+        } catch (InvalidArgumentException $e) {
+            return redirect()->back()->withErrors(['error' => $e->getMessage()]);
         }
-
-        // Filter by Location Type
-        if ($request->filled('location_type')) {
-            $query->whereHas('location', fn ($q) => $q->where('type', $request->location_type));
-        }
-
-        // Filter by Stock Health
-        if ($request->filled('stock_status')) {
-            match ($request->stock_status) {
-                'out_of_stock' => $query->whereRaw('(quantity_on_hand - quantity_reserved) <= 0'),
-                'low_stock' => $query->whereRaw('(quantity_on_hand - quantity_reserved) > 0')
-                    ->whereRaw('(quantity_on_hand - quantity_reserved) <= low_stock_threshold'),
-                'in_stock' => $query->whereRaw('(quantity_on_hand - quantity_reserved) > low_stock_threshold'),
-                default => null,
-            };
-        }
-
-        // Quick Commerce candidate
-        if ($request->filled('quick_available')) {
-            $val = $request->quick_available;
-            if ($val === '1' || $val === 'true') {
-                $query->where('is_quick_available', true);
-            } elseif ($val === '0' || $val === 'false') {
-                $query->where('is_quick_available', false);
-            }
-        }
-
-        // Search by Product title, SKU, location name, or Seller business name
-        if ($request->filled('search')) {
-            $search = trim((string) $request->search);
-            $query->where(function ($q) use ($search) {
-                $q->whereHas('variant', function ($vq) use ($search) {
-                    $vq->where('sku', 'like', "%{$search}%")
-                        ->orWhereHas('product', fn ($pq) => $pq->where('title', 'like', "%{$search}%"));
-                })->orWhereHas('location', function ($lq) use ($search) {
-                    $lq->where('name', 'like', "%{$search}%")
-                       ->orWhereHas('seller', fn ($sq) => $sq->where('business_name', 'like', "%{$search}%"));
-                });
-            });
-        }
-
-        return $query;
     }
 
     /**
@@ -114,59 +120,17 @@ class InventoryController extends Controller
     {
         $this->authorize('viewAny', Inventory::class);
 
-        $filename = 'global-inventory-' . now()->format('Ymd-His') . '.csv';
-        $headers = [
-            'Content-Type' => 'text/csv; charset=UTF-8',
-            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
-        ];
+        return $this->inventoryService->exportInventoryCsv($request);
+    }
 
-        $query = $this->buildInventoryQuery($request);
+    /**
+     * Export stock movement ledger to CSV.
+     */
+    public function exportMovements(Request $request): StreamedResponse
+    {
+        $this->authorize('viewAny', Inventory::class);
 
-        return response()->stream(function () use ($query) {
-            $handle = fopen('php://output', 'w');
-            // UTF-8 BOM
-            fprintf($handle, chr(0xEF).chr(0xBB).chr(0xBF));
-            fputcsv($handle, [
-                'Inventory ID',
-                'SKU',
-                'Product Title',
-                'Merchant Business',
-                'Location Name',
-                'Location Type',
-                'Quantity On Hand',
-                'Quantity Reserved',
-                'Quantity Available',
-                'Low Stock Threshold',
-                'Stock Health',
-                'Quick Commerce Eligible',
-                'Last Updated',
-            ]);
-
-            $query->chunk(200, function ($inventories) use ($handle) {
-                foreach ($inventories as $inv) {
-                    $available = $inv->quantity_on_hand - $inv->quantity_reserved;
-                    $status = $available <= 0 ? 'Out of Stock' : ($available <= $inv->low_stock_threshold ? 'Low Stock' : 'In Stock');
-
-                    fputcsv($handle, [
-                        $inv->id,
-                        $inv->variant?->sku ?? 'N/A',
-                        $inv->variant?->product?->title ?? 'N/A',
-                        $inv->location?->seller?->business_name ?? 'OneStall Direct',
-                        $inv->location?->name ?? 'N/A',
-                        strtoupper((string) ($inv->location?->type?->value ?? $inv->location?->type ?? 'N/A')),
-                        $inv->quantity_on_hand,
-                        $inv->quantity_reserved,
-                        max(0, $available),
-                        $inv->low_stock_threshold,
-                        $status,
-                        $inv->is_quick_available ? 'Yes' : 'No',
-                        $inv->updated_at?->toDateTimeString() ?? '',
-                    ]);
-                }
-            });
-
-            fclose($handle);
-        }, 200, $headers);
+        return $this->inventoryService->exportMovementsCsv($request);
     }
 
     /**

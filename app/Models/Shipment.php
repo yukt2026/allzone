@@ -38,6 +38,11 @@ class Shipment extends Model
         'charges' => 'decimal:2',
     ];
 
+    public function getAwbNumberAttribute(): ?string
+    {
+        return $this->awb;
+    }
+
     public function fulfilmentOrder(): BelongsTo
     {
         return $this->belongsTo(FulfilmentOrder::class);

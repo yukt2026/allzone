@@ -70,6 +70,11 @@ class FulfilmentOrder extends Model
         return $this->isSlaBreached();
     }
 
+    public function getAwbNumberAttribute(): ?string
+    {
+        return $this->shipment?->awb;
+    }
+
     public function order(): BelongsTo
     {
         return $this->belongsTo(Order::class);

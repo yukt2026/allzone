@@ -33,6 +33,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'webhook/payment/*',
             'api/webhook/payment/*',
             'api/v1/cargo/webhook',
+            'api/v1/shiprocket/webhook',
+            'api/v1/webhooks/shiprocket',
             'api/v1/integrations/*',
             'api/storefront/location/*',
         ]);

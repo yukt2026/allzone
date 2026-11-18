@@ -60,8 +60,9 @@ class ShiprocketLogisticsProvider implements LogisticsProvider
             $shipmentNumber = 'SR-SHP-' . date('Ymd') . '-' . strtoupper(Str::random(6));
 
             // Origin / Pickup address
-            $pickupLocationName = substr($store?->name ?? $seller?->company_name ?? (setting('name', 'ALLZONE') . ' Hub'), 0, 35);
-            $originPincode = $store?->pincode ?? '560038';
+            $defaultPickup = $seller?->defaultPickupLocation;
+            $pickupLocationName = substr($defaultPickup?->shiprocket_pickup_name ?? $defaultPickup?->nickname ?? $store?->name ?? $seller?->company_name ?? (setting('name', 'ALLZONE') . ' Hub'), 0, 35);
+            $originPincode = $defaultPickup?->pincode ?? $store?->pincode ?? '560038';
 
             // Destination address
             $destAddress = $order?->customerAddress;
@@ -116,23 +117,24 @@ class ShiprocketLogisticsProvider implements LogisticsProvider
                 'order_items' => $orderItems,
                 'payment_method' => $isCod ? 'COD' : 'Prepaid',
                 'sub_total' => (float) $fulfilmentOrder->subtotal,
-                'length' => 10,
-                'breadth' => 10,
-                'height' => 10,
-                'weight' => $totalWeightKg,
+                'length' => (float) ($options['length'] ?? 10),
+                'breadth' => (float) ($options['breadth'] ?? 10),
+                'height' => (float) ($options['height'] ?? 10),
+                'weight' => max(0.05, (float) ($options['weight'] ?? $totalWeightKg)),
             ];
 
             $apiResult = $this->client->createOrder($payload);
 
             $shipmentId = $apiResult['shipment_id'] ?? null;
             $awbCode = $apiResult['awb_code'] ?? null;
-            $courierName = $apiResult['courier_name'] ?? ($options['courier'] ?? 'Shiprocket Surface');
+            $courierName = $options['courier_name'] ?? ($apiResult['courier_name'] ?? ($options['courier'] ?? 'Shiprocket Surface'));
             $labelUrl = $apiResult['label_url'] ?? null;
 
             // If AWB was not auto-assigned at creation, request it
             if (!$awbCode && $shipmentId) {
                 try {
-                    $awbRes = $this->client->generateAwb($shipmentId);
+                    $courierId = !empty($options['courier_id']) ? (int) $options['courier_id'] : null;
+                    $awbRes = $this->client->generateAwb($shipmentId, $courierId);
                     $awbCode = $awbRes['awb_code'] ?? $awbCode;
                     $courierName = $awbRes['courier_name'] ?? $courierName;
                 } catch (\Throwable $e) {
@@ -161,7 +163,7 @@ class ShiprocketLogisticsProvider implements LogisticsProvider
                 'pickup_status' => 'pending',
                 'label_url' => $labelUrl,
                 'cod_amount' => $codAmount,
-                'weight' => $totalWeightKg,
+                'weight' => max(0.05, (float) ($options['weight'] ?? $totalWeightKg)),
                 'charges' => (float) ($options['charges'] ?? 85.00),
             ]);
 

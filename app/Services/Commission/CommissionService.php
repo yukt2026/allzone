@@ -19,21 +19,49 @@ class CommissionService
 {
     /**
      * Resolve the active commission rule by strict priority order:
-     * 1. Seller-specific override rule
-     * 2. Promotional rule within active dates
-     * 3. Category-specific rule
-     * 4. Global default rule
+     * 1. Product-specific exception rule (highest priority)
+     * 2. Seller-specific override rule
+     * 3. Promotional rule within active dates
+     * 4. Category-specific rule
+     * 5. Global default rule
+     * 6. Platform setting fallback
      *
      * @param int|null $sellerId
      * @param int|null $categoryId
      * @param Carbon|null $date
+     * @param int|null $productId
      * @return array{rule: ?CommissionRule, tier: string, rate: float, fixed_fee: float}
      */
-    public function resolveRule(?int $sellerId = null, ?int $categoryId = null, ?Carbon $date = null): array
+    public function resolveRule(?int $sellerId = null, ?int $categoryId = null, ?Carbon $date = null, ?int $productId = null): array
     {
         $evalDate = $date ?? Carbon::now();
 
-        // 1. Priority 1: Seller-specific rule
+        // 1. Priority 1: Product-specific exception rule
+        if ($productId) {
+            $productRule = CommissionRule::query()
+                ->where('scope', CommissionRuleScope::PRODUCT)
+                ->where('product_id', $productId)
+                ->where('is_active', true)
+                ->where(function ($q) use ($evalDate) {
+                    $q->whereNull('starts_at')->orWhere('starts_at', '<=', $evalDate);
+                })
+                ->where(function ($q) use ($evalDate) {
+                    $q->whereNull('ends_at')->orWhere('ends_at', '>=', $evalDate);
+                })
+                ->orderByDesc('priority')
+                ->first();
+
+            if ($productRule) {
+                return [
+                    'rule' => $productRule,
+                    'tier' => 'product',
+                    'rate' => (float) $productRule->percent,
+                    'fixed_fee' => (float) $productRule->fixed_fee,
+                ];
+            }
+        }
+
+        // 2. Priority 2: Seller-specific rule
         if ($sellerId) {
             $sellerRule = CommissionRule::query()
                 ->where('scope', CommissionRuleScope::SELLER)
@@ -70,7 +98,7 @@ class CommissionService
             }
         }
 
-        // 2. Priority 2: Promotional rule within dates
+        // 3. Priority 3: Promotional rule within dates
         $promoRule = CommissionRule::query()
             ->where('scope', CommissionRuleScope::PROMO)
             ->where('is_active', true)
@@ -90,7 +118,7 @@ class CommissionService
             ];
         }
 
-        // 3. Priority 3: Category-specific rule
+        // 4. Priority 4: Category-specific rule
         if ($categoryId) {
             $categoryRule = CommissionRule::query()
                 ->where('scope', CommissionRuleScope::CATEGORY)
@@ -124,7 +152,7 @@ class CommissionService
             }
         }
 
-        // 4. Priority 4: Global default rule from commission_rules table
+        // 5. Priority 5: Global default rule from commission_rules table
         $globalRule = CommissionRule::query()
             ->where('scope', CommissionRuleScope::GLOBAL)
             ->where('is_active', true)
@@ -146,7 +174,7 @@ class CommissionService
             ];
         }
 
-        // 5. Priority 5: Fallback to platform database setting
+        // 6. Priority 6: Fallback to platform database setting
         $fallbackRate = (float) Setting::get('default_commission_pct', config('allzone.default_commission_pct', config('onestall.default_commission_pct', 10.00)));
 
         return [
@@ -186,9 +214,10 @@ class CommissionService
         ?int $sellerId = null,
         ?int $categoryId = null,
         float $shippingAdjustment = 0.00,
-        ?Carbon $date = null
+        ?Carbon $date = null,
+        ?int $productId = null
     ): array {
-        $resolved = $this->resolveRule($sellerId, $categoryId, $date);
+        $resolved = $this->resolveRule($sellerId, $categoryId, $date, $productId);
 
         $rate = $resolved['rate'];
         $fixedFee = $resolved['fixed_fee'];
@@ -212,12 +241,13 @@ class CommissionService
         $netPayable = max(0.00, round($baseAmount + $shippingAdjustment - $totalCommission - $gatewayFee, 2));
 
         $tierLabels = [
-            'seller' => 'Seller-Specific Rule Override (Priority 1)',
-            'seller_override_column' => 'Seller Profile Override Rate (Priority 1)',
-            'promo' => 'Active Promotional Campaign Window (Priority 2)',
-            'category' => 'Category-Specific Rule (Priority 3)',
-            'global' => 'Global Commission Rule (Priority 4)',
-            'setting_fallback' => 'Platform Settings Fallback (Priority 5)',
+            'product' => 'Product-Specific Exception Rule (Priority 1)',
+            'seller' => 'Seller-Specific Rule Override (Priority 2)',
+            'seller_override_column' => 'Seller Profile Override Rate (Priority 2)',
+            'promo' => 'Active Promotional Campaign Window (Priority 3)',
+            'category' => 'Category-Specific Rule (Priority 4)',
+            'global' => 'Global Commission Rule (Priority 5)',
+            'setting_fallback' => 'Platform Settings Fallback (Priority 6)',
         ];
 
         return [
@@ -251,6 +281,7 @@ class CommissionService
             $sellerId = $fo->seller_id;
             $firstItem = $fo->items()->with('product.category')->first();
             $categoryId = $firstItem?->product?->category_id;
+            $productId = $firstItem?->product_id;
 
             $baseAmount = (float) $fo->subtotal;
             $shippingAdjustment = 0.00;
@@ -260,7 +291,7 @@ class CommissionService
                 $shippingAdjustment = (float) $fo->delivery_fee;
             }
 
-            $calculation = $this->calculate($baseAmount, $sellerId, $categoryId, $shippingAdjustment);
+            $calculation = $this->calculate($baseAmount, $sellerId, $categoryId, $shippingAdjustment, null, $productId);
 
             // Update FulfilmentOrder values
             $fo->commission_amount = $calculation['total_commission'];

@@ -23,6 +23,8 @@ class Review extends Model
         'media',
         'is_verified_purchase',
         'status',
+        'seller_response',
+        'seller_responded_at',
     ];
 
     protected $casts = [
@@ -30,6 +32,7 @@ class Review extends Model
         'media' => 'array',
         'is_verified_purchase' => 'boolean',
         'status' => ReviewStatus::class,
+        'seller_responded_at' => 'datetime',
     ];
 
     public function product(): BelongsTo
@@ -45,5 +48,15 @@ class Review extends Model
     public function scopeApproved(Builder $query): Builder
     {
         return $query->where('status', ReviewStatus::APPROVED);
+    }
+
+    public function scopeForSeller(Builder $query, int $sellerId): Builder
+    {
+        return $query->whereHas('product', fn ($q) => $q->where('seller_id', $sellerId));
+    }
+
+    public function hasSellerResponse(): bool
+    {
+        return !empty($this->seller_response);
     }
 }

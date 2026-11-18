@@ -8,9 +8,13 @@ use App\Enums\ProductStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Seller\ProductRequest;
 use App\Models\Brand;
+use App\Models\CatalogImport;
 use App\Models\Category;
 use App\Models\Product;
+use App\Models\ProductAttribute;
 use App\Models\ProductVariant;
+use App\Models\Store;
+use App\Services\Integration\CatalogImportService;
 use App\Services\Seller\SellerProductService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -23,20 +27,19 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 class ProductController extends Controller
 {
     public function __construct(
-        protected SellerProductService $productService
+        protected SellerProductService $productService,
+        protected CatalogImportService $catalogImportService
     ) {}
 
     /**
      * Display Image Bulk Upload screen (Screenshot 5).
      */
-    public function bulkUploadView(Request $request): View
+    public function bulkUploadView(Request $request)
     {
         $seller = Auth::user()?->seller;
         abort_if(!$seller, 403);
 
-        return view('seller.products.bulk-upload', [
-            'seller' => $seller,
-        ]);
+        return redirect()->route('seller.products.create', ['tab' => 'bulk']);
     }
 
     /**
@@ -80,9 +83,9 @@ class ProductController extends Controller
     }
 
     /**
-     * Show form to create a new product.
+     * Show catalog overview, single product creation wizard, or bulk catalog upload.
      */
-    public function create(): View
+    public function create(Request $request): View
     {
         $seller = Auth::user()?->seller;
         abort_if(!$seller, 403);
@@ -94,10 +97,145 @@ class ProductController extends Controller
             })->orderBy('name')->get(['id', 'name', 'is_verified']);
         });
 
+        $attributes = ProductAttribute::with('values')->orderBy('name')->get();
+
+        $totalProducts = Product::where('seller_id', $seller->id)->count();
+        $draftCount = Product::where('seller_id', $seller->id)->where('status', ProductStatus::DRAFT->value)->count();
+        $pendingCount = Product::where('seller_id', $seller->id)->where('status', ProductStatus::PENDING_REVIEW->value)->count();
+        $activeCount = Product::where('seller_id', $seller->id)->where('status', ProductStatus::ACTIVE->value)->count();
+        $rejectedCount = Product::where('seller_id', $seller->id)->where('status', ProductStatus::REJECTED->value)->count();
+        $bulkUploadsCount = CatalogImport::where('seller_id', $seller->id)->count();
+        $singleUploadsCount = $totalProducts;
+
+        $tab = $request->query('tab', 'overview');
+        $filter = $request->query('filter', 'all');
+
+        $bulkImports = CatalogImport::where('seller_id', $seller->id)->latest()->paginate(10, ['*'], 'bulk_page')->withQueryString();
+
+        $recentUploadsQuery = Product::where('seller_id', $seller->id)
+            ->with(['category', 'brand', 'variants.inventories'])
+            ->latest();
+
+        if ($filter === 'active') {
+            $recentUploadsQuery->where('status', ProductStatus::ACTIVE);
+        } elseif ($filter === 'pending') {
+            $recentUploadsQuery->where('status', ProductStatus::PENDING_REVIEW);
+        } elseif ($filter === 'rejected') {
+            $recentUploadsQuery->where('status', ProductStatus::REJECTED);
+        } elseif ($filter === 'draft') {
+            $recentUploadsQuery->where('status', ProductStatus::DRAFT);
+        }
+
+        $recentUploads = $recentUploadsQuery->paginate(10)->withQueryString();
+
+        $previewImport = null;
+        if ($request->query('preview_id')) {
+            $previewImport = CatalogImport::where('seller_id', $seller->id)->find($request->query('preview_id'));
+        }
+
         return view('seller.products.create', [
             'seller' => $seller,
             'categories' => $categories,
             'brands' => $brands,
+            'attributes' => $attributes,
+            'tab' => $tab,
+            'filter' => $filter,
+            'totalProducts' => $totalProducts,
+            'draftCount' => $draftCount,
+            'pendingCount' => $pendingCount,
+            'activeCount' => $activeCount,
+            'rejectedCount' => $rejectedCount,
+            'bulkUploadsCount' => $bulkUploadsCount,
+            'singleUploadsCount' => $singleUploadsCount,
+            'recentUploads' => $recentUploads,
+            'bulkImports' => $bulkImports,
+            'previewImport' => $previewImport,
+        ]);
+    }
+
+    /**
+     * Download standard prefilled CSV template for bulk product upload.
+     */
+    public function downloadTemplateCsv(): StreamedResponse
+    {
+        $csv = $this->catalogImportService->generateTemplateCsv();
+
+        return response()->streamDownload(function () use ($csv) {
+            echo $csv;
+        }, 'allzone_catalog_template.csv', [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+        ]);
+    }
+
+    /**
+     * Handle bulk CSV upload, file validation, and dry-run preview.
+     */
+    public function bulkUploadPreview(Request $request)
+    {
+        $seller = Auth::user()?->seller;
+        abort_if(!$seller, 403);
+
+        $request->validate([
+            'file' => ['required', 'file', 'mimes:csv,txt', 'max:10240'],
+        ]);
+
+        $store = $seller->stores->first() ?: Store::firstOrCreate(
+            ['seller_id' => $seller->id],
+            ['name' => $seller->business_name, 'slug' => \Illuminate\Support\Str::slug($seller->business_name)]
+        );
+
+        $result = $this->catalogImportService->uploadAndPreview($store, $request->file('file'));
+
+        if ($request->expectsJson() || $request->isJson()) {
+            return response()->json([
+                'success' => true,
+                'import_id' => $result['import']->id,
+                'total_rows' => $result['total_rows'],
+                'valid_count' => $result['valid_count'],
+                'failed_count' => $result['failed_count'],
+                'errors' => $result['errors'],
+                'preview_rows' => $result['preview_rows'],
+            ]);
+        }
+
+        return redirect()->route('seller.products.create', [
+            'tab' => 'bulk',
+            'preview_id' => $result['import']->id,
+        ])->with('info', "Catalog file analyzed: {$result['valid_count']} valid rows ready for import, {$result['failed_count']} errors detected.");
+    }
+
+    /**
+     * Confirm and execute bulk import for a validated catalog import batch.
+     */
+    public function bulkImportConfirm(Request $request, CatalogImport $import)
+    {
+        $seller = Auth::user()?->seller;
+        abort_if(!$seller || $import->seller_id !== $seller->id, 403);
+
+        $result = $this->catalogImportService->confirmImport($import);
+
+        if ($request->expectsJson() || $request->isJson()) {
+            return response()->json($result);
+        }
+
+        return redirect()->route('seller.products.create', ['tab' => 'overview'])
+            ->with($result['success'] ? 'success' : 'error', $result['message']);
+    }
+
+    /**
+     * Download CSV report containing row-level errors for an import batch.
+     */
+    public function bulkImportErrors(CatalogImport $import): StreamedResponse
+    {
+        $seller = Auth::user()?->seller;
+        abort_if(!$seller || $import->seller_id !== $seller->id, 403);
+
+        $csv = $this->catalogImportService->generateErrorReportCsv($import);
+
+        return response()->streamDownload(function () use ($csv) {
+            echo $csv;
+        }, "allzone_import_errors_batch_{$import->id}.csv", [
+            'Content-Type' => 'text/csv; charset=UTF-8',
         ]);
     }
 

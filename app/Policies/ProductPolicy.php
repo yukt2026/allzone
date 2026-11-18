@@ -11,12 +11,14 @@ class ProductPolicy extends BasePolicy
 {
     public function viewAny(User $user): bool
     {
-        return $user->hasRole('admin') || $user->hasRole('seller_owner') || (bool) $user->seller;
+        return $user->hasRole(['super_admin', 'admin', 'support_admin', 'seller_owner'])
+            || $user->can('products.view')
+            || (bool) $user->seller;
     }
 
     public function view(User $user, Product $product): bool
     {
-        if ($user->hasRole('admin')) {
+        if ($user->hasRole(['super_admin', 'admin', 'support_admin']) || $user->can('products.view')) {
             return true;
         }
 
@@ -25,13 +27,14 @@ class ProductPolicy extends BasePolicy
 
     public function create(User $user): bool
     {
-        return $user->hasRole('admin') || ($user->seller !== null && $user->can('products.create'));
+        return $user->hasRole(['super_admin', 'admin'])
+            || ($user->seller !== null && $user->can('products.create'));
     }
 
     public function update(User $user, Product $product): bool
     {
-        if ($user->hasRole('admin')) {
-            return $user->can('products.edit');
+        if ($user->hasRole(['super_admin', 'admin']) || $user->can('products.edit')) {
+            return true;
         }
 
         return $user->seller !== null && $product->seller_id === $user->seller->id;
@@ -39,8 +42,8 @@ class ProductPolicy extends BasePolicy
 
     public function delete(User $user, Product $product): bool
     {
-        if ($user->hasRole('admin')) {
-            return $user->can('products.delete');
+        if ($user->hasRole(['super_admin', 'admin']) || $user->can('products.delete')) {
+            return true;
         }
 
         return $user->seller !== null && $product->seller_id === $user->seller->id;
@@ -48,11 +51,36 @@ class ProductPolicy extends BasePolicy
 
     public function approve(User $user, Product $product): bool
     {
-        return $user->can('products.approve');
+        return $user->hasRole(['super_admin', 'admin']) || $user->can('products.approve');
     }
 
     public function reject(User $user, Product $product): bool
     {
-        return $user->can('products.approve');
+        return $user->hasRole(['super_admin', 'admin']) || $user->can('products.approve');
+    }
+
+    public function block(User $user, Product $product): bool
+    {
+        return $user->hasRole(['super_admin', 'admin']) || $user->can('products.approve');
+    }
+
+    public function requestCorrection(User $user, Product $product): bool
+    {
+        return $user->hasRole(['super_admin', 'admin']) || $user->can('products.approve');
+    }
+
+    public function bulkApprove(User $user): bool
+    {
+        return $user->hasRole(['super_admin', 'admin']) || $user->can('products.approve');
+    }
+
+    public function bulkUpdate(User $user): bool
+    {
+        return $user->hasRole(['super_admin', 'admin']) || $user->can('products.edit');
+    }
+
+    public function export(User $user): bool
+    {
+        return $user->hasRole(['super_admin', 'admin', 'support_admin']) || $user->can('products.view');
     }
 }

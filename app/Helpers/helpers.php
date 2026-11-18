@@ -94,19 +94,19 @@ if (!function_exists('image_url')) {
         if (preg_match('#^https?://#i', $path)) {
             $parsed = parse_url($path);
             $host = strtolower($parsed['host'] ?? '');
-            // If the host is local (localhost, 127.0.0.1, etc.), normalize to current request scheme & host
+            // If the host is local (localhost, 127.0.0.1, etc.), normalize to relative root path to guarantee rendering across dev ports & IPs
             if ($host === 'localhost' || $host === '127.0.0.1' || $host === '0.0.0.0' || str_ends_with($host, '.test')) {
                 $pathPart = ltrim($parsed['path'] ?? '', '/');
-                return asset($pathPart);
+                return '/' . $pathPart;
             }
             return $path;
         }
 
         $clean = ltrim($path, '/');
         if (str_starts_with($clean, 'storage/')) {
-            return asset($clean);
+            return '/' . $clean;
         }
 
-        return asset('storage/' . $clean);
+        return '/storage/' . $clean;
     }
 }

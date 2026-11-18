@@ -16,6 +16,8 @@ use App\Models\Seller;
 use App\Models\User;
 use App\Notifications\ProductApprovedNotification;
 use App\Notifications\ProductRejectedNotification;
+use App\Notifications\ProductBlockedNotification;
+use App\Notifications\ProductCorrectionsRequestedNotification;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
@@ -447,5 +449,232 @@ class AdminCatalogueTest extends TestCase
 
         $response->assertStatus(403);
         $this->assertEquals(ProductStatus::PENDING_REVIEW, $product->fresh()->status);
+    }
+
+    public function test_admin_can_view_and_manage_catalog_standards(): void
+    {
+        // 1. View standards page
+        $res = $this->actingAs($this->adminUser)->get('/admin/catalogue/standards');
+        $res->assertStatus(200);
+        $res->assertSee('Units of Measure');
+        $res->assertSee('Tax Configuration & GST Slabs', false);
+        $res->assertSee('Specification Standards');
+        $res->assertSee('Image Requirements & QC', false);
+
+        // 2. Add custom unit of measure
+        $unitRes = $this->actingAs($this->adminUser)->post('/admin/catalogue/standards/units', [
+            'code' => 'sqm',
+            'name' => 'Square Meter',
+            'symbol' => 'sq m',
+            'category' => 'Area',
+            'is_active' => 1,
+        ]);
+        $unitRes->assertRedirect();
+
+        // Check unit is reflected
+        $getRes = $this->actingAs($this->adminUser)->get('/admin/catalogue/standards?tab=units');
+        $getRes->assertSee('Square Meter');
+        $getRes->assertSee('sqm');
+
+        // 3. Update tax configuration rules
+        $taxRes = $this->actingAs($this->adminUser)->post('/admin/catalogue/standards/tax-rules', [
+            'default_tax_slab' => 18,
+            'hsn_min_digits' => 6,
+            'require_hsn_code' => 1,
+            'tax_inclusive_pricing' => 1,
+        ]);
+        $taxRes->assertRedirect();
+
+        // 4. Update image requirements
+        $imgRes = $this->actingAs($this->adminUser)->post('/admin/catalogue/standards/image-requirements', [
+            'min_width' => 1000,
+            'min_height' => 1000,
+            'recommended_ratio' => '1:1 (Square)',
+            'max_file_size_mb' => 10,
+            'min_images' => 1,
+            'max_images' => 10,
+            'background' => 'Pure white background (#FFFFFF)',
+            'prohibited' => 'No watermarks or contact numbers allowed',
+        ]);
+        $imgRes->assertRedirect();
+
+        // 5. Delete unit
+        $delRes = $this->actingAs($this->adminUser)->delete('/admin/catalogue/standards/units/sqm');
+        $delRes->assertRedirect();
+    }
+
+    public function test_admin_can_filter_moderation_queue_by_all_six_status_tabs_with_accurate_counts(): void
+    {
+        $sellerUser = User::factory()->create();
+        $seller = Seller::factory()->create(['user_id' => $sellerUser->id]);
+        $category = Category::create(['name' => 'Apparel & Fashion', 'slug' => 'apparel-fashion']);
+
+        $pPending = Product::create(['seller_id' => $seller->id, 'category_id' => $category->id, 'title' => 'Pending T-Shirt', 'slug' => 'p-pending', 'status' => ProductStatus::PENDING_REVIEW]);
+        $pActive = Product::create(['seller_id' => $seller->id, 'category_id' => $category->id, 'title' => 'Active Jeans', 'slug' => 'p-active', 'status' => ProductStatus::ACTIVE]);
+        $pRejected = Product::create(['seller_id' => $seller->id, 'category_id' => $category->id, 'title' => 'Rejected Jacket', 'slug' => 'p-rejected', 'status' => ProductStatus::REJECTED]);
+        $pBlocked = Product::create(['seller_id' => $seller->id, 'category_id' => $category->id, 'title' => 'Blocked Shoes', 'slug' => 'p-blocked', 'status' => ProductStatus::BLOCKED]);
+        $pInactive = Product::create(['seller_id' => $seller->id, 'category_id' => $category->id, 'title' => 'Inactive Belt', 'slug' => 'p-inactive', 'status' => ProductStatus::INACTIVE]);
+
+        // 1. All Products Tab
+        $resAll = $this->actingAs($this->adminUser)->get('/admin/catalogue/moderation?status=all');
+        $resAll->assertStatus(200);
+        $resAll->assertSee('Pending T-Shirt');
+        $resAll->assertSee('Active Jeans');
+        $resAll->assertSee('Rejected Jacket');
+        $resAll->assertSee('Blocked Shoes');
+        $resAll->assertSee('Inactive Belt');
+
+        // 2. Pending Review Tab
+        $resPending = $this->actingAs($this->adminUser)->get('/admin/catalogue/moderation?status=pending_review');
+        $resPending->assertStatus(200);
+        $resPending->assertSee('Pending T-Shirt');
+        $resPending->assertDontSee('Active Jeans');
+
+        // 3. Approved / Active Tab
+        $resActive = $this->actingAs($this->adminUser)->get('/admin/catalogue/moderation?status=active');
+        $resActive->assertStatus(200);
+        $resActive->assertSee('Active Jeans');
+        $resActive->assertDontSee('Pending T-Shirt');
+
+        // 4. Rejected Tab
+        $resRejected = $this->actingAs($this->adminUser)->get('/admin/catalogue/moderation?status=rejected');
+        $resRejected->assertStatus(200);
+        $resRejected->assertSee('Rejected Jacket');
+        $resRejected->assertDontSee('Active Jeans');
+
+        // 5. Blocked Tab
+        $resBlocked = $this->actingAs($this->adminUser)->get('/admin/catalogue/moderation?status=blocked');
+        $resBlocked->assertStatus(200);
+        $resBlocked->assertSee('Blocked Shoes');
+        $resBlocked->assertDontSee('Pending T-Shirt');
+
+        // 6. Inactive Tab
+        $resInactive = $this->actingAs($this->adminUser)->get('/admin/catalogue/moderation?status=inactive');
+        $resInactive->assertStatus(200);
+        $resInactive->assertSee('Inactive Belt');
+        $resInactive->assertDontSee('Active Jeans');
+    }
+
+    public function test_admin_can_block_product_according_to_policy_and_notify_seller(): void
+    {
+        Notification::fake();
+
+        $sellerUser = User::factory()->create();
+        $seller = Seller::factory()->create(['user_id' => $sellerUser->id]);
+        $category = Category::create(['name' => 'Footwear', 'slug' => 'footwear']);
+
+        $product = Product::create([
+            'seller_id' => $seller->id,
+            'category_id' => $category->id,
+            'title' => 'Counterfeit Designer Sneakers',
+            'slug' => 'counterfeit-sneakers',
+            'status' => ProductStatus::ACTIVE,
+        ]);
+
+        $response = $this->actingAs($this->adminUser)->post("/admin/catalogue/moderation/{$product->id}/block", [
+            'policy_reason' => 'Unauthorized trademark counterfeit violation of protected brand assets.',
+        ]);
+
+        $response->assertRedirect();
+        $product->refresh();
+
+        $this->assertEquals(ProductStatus::BLOCKED, $product->status);
+        $this->assertStringContainsString('Unauthorized trademark counterfeit', $product->rejection_reason);
+        Notification::assertSentTo($sellerUser, ProductBlockedNotification::class);
+    }
+
+    public function test_admin_can_request_corrections_from_seller(): void
+    {
+        Notification::fake();
+
+        $sellerUser = User::factory()->create();
+        $seller = Seller::factory()->create(['user_id' => $sellerUser->id]);
+        $category = Category::create(['name' => 'Home & Kitchen', 'slug' => 'home-kitchen']);
+
+        $product = Product::create([
+            'seller_id' => $seller->id,
+            'category_id' => $category->id,
+            'title' => 'Stainless Steel Cookware Set',
+            'slug' => 'steel-cookware-set',
+            'status' => ProductStatus::PENDING_REVIEW,
+        ]);
+
+        $response = $this->actingAs($this->adminUser)->post("/admin/catalogue/moderation/{$product->id}/request-corrections", [
+            'correction_notes' => 'Please provide 2 additional images showing the base induction plate and rectify HSN to 7323.',
+        ]);
+
+        $response->assertRedirect();
+        $product->refresh();
+
+        $this->assertEquals(ProductStatus::PENDING_REVIEW, $product->status);
+        $this->assertStringContainsString('Corrections Requested', $product->rejection_reason);
+        Notification::assertSentTo($sellerUser, ProductCorrectionsRequestedNotification::class);
+    }
+
+    public function test_admin_can_perform_bulk_status_update_and_bulk_category_reassignment(): void
+    {
+        $sellerUser = User::factory()->create();
+        $seller = Seller::factory()->create(['user_id' => $sellerUser->id]);
+        $catA = Category::create(['name' => 'Old Category', 'slug' => 'old-category']);
+        $catB = Category::create(['name' => 'New Category', 'slug' => 'new-category']);
+
+        $p1 = Product::create(['seller_id' => $seller->id, 'category_id' => $catA->id, 'title' => 'Bulk Product 1', 'slug' => 'bp-1', 'status' => ProductStatus::ACTIVE]);
+        $p2 = Product::create(['seller_id' => $seller->id, 'category_id' => $catA->id, 'title' => 'Bulk Product 2', 'slug' => 'bp-2', 'status' => ProductStatus::ACTIVE]);
+
+        // Bulk status update to inactive
+        $statusRes = $this->actingAs($this->adminUser)->post('/admin/catalogue/moderation/bulk-status', [
+            'product_ids' => [$p1->id, $p2->id],
+            'status' => 'inactive',
+            'reason' => 'Seasonal archival',
+        ]);
+        $statusRes->assertRedirect();
+        $this->assertEquals(ProductStatus::INACTIVE, $p1->fresh()->status);
+        $this->assertEquals(ProductStatus::INACTIVE, $p2->fresh()->status);
+
+        // Bulk category reassignment
+        $catRes = $this->actingAs($this->adminUser)->post('/admin/catalogue/moderation/bulk-category', [
+            'product_ids' => [$p1->id, $p2->id],
+            'category_id' => $catB->id,
+        ]);
+        $catRes->assertRedirect();
+        $this->assertEquals($catB->id, $p1->fresh()->category_id);
+        $this->assertEquals($catB->id, $p2->fresh()->category_id);
+    }
+
+    public function test_admin_can_export_products_csv_and_download_catalog_template(): void
+    {
+        $sellerUser = User::factory()->create();
+        $seller = Seller::factory()->create(['user_id' => $sellerUser->id]);
+        $category = Category::create(['name' => 'Exportables', 'slug' => 'exportables']);
+
+        $product = Product::create([
+            'seller_id' => $seller->id,
+            'category_id' => $category->id,
+            'title' => 'Exportable Smart Speaker',
+            'slug' => 'exportable-smart-speaker',
+            'status' => ProductStatus::ACTIVE,
+            'hsn_code' => '85182200',
+            'tax_percent' => 18.00,
+        ]);
+
+        ProductVariant::create([
+            'product_id' => $product->id,
+            'sku' => 'SPK-EXP-001',
+            'name' => 'Black',
+            'mrp' => 2999.00,
+            'selling_price' => 1999.00,
+            'cost_price' => 1400.00,
+            'is_default' => true,
+        ]);
+
+        // Export CSV
+        $exportRes = $this->actingAs($this->adminUser)->get('/admin/catalogue/moderation/export');
+        $exportRes->assertStatus(200);
+        $exportRes->assertHeader('content-type', 'text/csv; charset=UTF-8');
+
+        // Download Template
+        $templateRes = $this->actingAs($this->adminUser)->get('/admin/catalogue/moderation/import-template');
+        $templateRes->assertStatus(200);
+        $templateRes->assertHeader('content-type', 'text/csv; charset=UTF-8');
     }
 }

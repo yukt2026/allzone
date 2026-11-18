@@ -129,6 +129,7 @@ Route::middleware('auth')->group(function () {
     // In-App Notification Center & Channel Preferences (Blueprint Section 27)
     Route::prefix('notifications')->name('notifications.')->group(function () {
         Route::get('/', [\App\Http\Controllers\NotificationController::class, 'index'])->name('index');
+        Route::get('/{id}/go', [\App\Http\Controllers\NotificationController::class, 'goToUrl'])->name('go');
         Route::post('/preferences', [\App\Http\Controllers\NotificationController::class, 'updatePreferences'])->name('preferences.update');
         Route::post('/{id}/read', [\App\Http\Controllers\NotificationController::class, 'markAsRead'])->name('read');
         Route::post('/mark-all-read', [\App\Http\Controllers\NotificationController::class, 'markAllAsRead'])->name('mark_all_read');

@@ -4,15 +4,21 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Seller;
 
+use App\Enums\InventoryLocationType;
+use App\Enums\ProductStatus;
 use App\Http\Controllers\Controller;
+use App\Models\Category;
 use App\Models\Inventory;
 use App\Models\InventoryLocation;
+use App\Models\Product;
 use App\Models\ProductVariant;
+use App\Models\StockMovement;
 use App\Services\Inventory\InventoryService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -30,103 +36,154 @@ class InventoryController extends Controller
         $seller = Auth::user()?->seller;
         abort_if(!$seller, 403, 'No seller profile associated.');
 
+        // Ensure seller has at least one inventory location
+        $primaryLocation = InventoryLocation::firstOrCreate(
+            ['seller_id' => $seller->id],
+            [
+                'name' => ($seller->business_name ?? 'Main') . ' Warehouse',
+                'type' => InventoryLocationType::STORE,
+                'is_active' => true,
+            ]
+        );
+
         $sellerLocationIds = InventoryLocation::where('seller_id', $seller->id)->pluck('id');
 
-        $query = Inventory::query()
+        // Automatically ensure all existing seller variants have an inventory record
+        $sellerVariants = ProductVariant::whereHas('product', fn($q) => $q->where('seller_id', $seller->id))->get();
+        foreach ($sellerVariants as $v) {
+            Inventory::firstOrCreate(
+                ['variant_id' => $v->id, 'location_id' => $primaryLocation->id],
+                ['quantity_on_hand' => 0, 'quantity_reserved' => 0, 'low_stock_threshold' => 5, 'is_quick_available' => true]
+            );
+        }
+
+        $tab = $request->query('tab', 'all'); // 'all', 'active', 'out_of_stock', 'low_stock', 'pending', 'blocked', 'paused'
+        $categoryId = $request->query('category_id');
+        $storeId = $request->query('store_id');
+        $search = $request->query('search');
+        $sort = $request->query('sort', 'latest');
+
+        $baseQuery = Inventory::query()
             ->whereIn('location_id', $sellerLocationIds)
-            ->whereHas('variant.product')
+            ->whereHas('variant.product', fn($q) => $q->where('seller_id', $seller->id))
             ->with([
-                'variant.product:id,title,slug,is_quick_capable',
-                'location:id,name,type,store_id',
-                'location.store:id,name,slug',
+                'variant.product.category',
+                'location.store',
             ]);
 
-        // Filter by store outlet
-        if ($request->filled('store_id')) {
+        // Filter by Tab
+        match ($tab) {
+            'active' => $baseQuery->whereHas('variant.product', fn($pq) => $pq->where('status', ProductStatus::ACTIVE))
+                ->whereHas('variant', fn($vq) => $vq->where('is_active', true)),
+            'out_of_stock' => $baseQuery->whereRaw('(quantity_on_hand - quantity_reserved) <= 0'),
+            'low_stock' => $baseQuery->whereRaw('(quantity_on_hand - quantity_reserved) > 0')
+                ->whereRaw('(quantity_on_hand - quantity_reserved) <= low_stock_threshold'),
+            'pending' => $baseQuery->whereHas('variant.product', fn($pq) => $pq->where('status', ProductStatus::PENDING_REVIEW)),
+            'blocked' => $baseQuery->whereHas('variant.product', fn($pq) => $pq->where('status', ProductStatus::REJECTED)),
+            'paused' => $baseQuery->where(function ($q) {
+                $q->whereHas('variant.product', fn($pq) => $pq->whereIn('status', [ProductStatus::INACTIVE, ProductStatus::DRAFT]))
+                  ->orWhereHas('variant', fn($vq) => $vq->where('is_active', false));
+            }),
+            default => null, // 'all'
+        };
+
+        // Category filter
+        if ($categoryId) {
+            $baseQuery->whereHas('variant.product', fn($pq) => $pq->where('category_id', $categoryId));
+        }
+
+        // Store outlet filter
+        if ($storeId) {
             $storeLocationIds = InventoryLocation::where('seller_id', $seller->id)
-                ->where('store_id', (int) $request->store_id)
+                ->where('store_id', (int) $storeId)
                 ->pluck('id');
-            $query->whereIn('location_id', $storeLocationIds);
-        }
-
-        // Filter by specific location
-        if ($request->filled('location_id')) {
-            $query->where('location_id', (int) $request->location_id);
-        }
-
-        // Filter by stock level
-        $stockStatus = $request->input('stock_status', $request->input('filter'));
-        if (!empty($stockStatus)) {
-            match ($stockStatus) {
-                'out_of_stock' => $query->whereRaw('(quantity_on_hand - quantity_reserved) <= 0'),
-                'low_stock' => $query->whereRaw('(quantity_on_hand - quantity_reserved) > 0')
-                    ->whereRaw('(quantity_on_hand - quantity_reserved) <= low_stock_threshold'),
-                'in_stock' => $query->whereRaw('(quantity_on_hand - quantity_reserved) > low_stock_threshold'),
-                'reserved' => $query->where('quantity_reserved', '>', 0),
-                default => null,
-            };
-        }
-
-        // Filter by quick commerce availability
-        if ($request->filled('quick_available')) {
-            $query->where('is_quick_available', filter_var($request->quick_available, FILTER_VALIDATE_BOOLEAN));
+            $baseQuery->whereIn('location_id', $storeLocationIds);
         }
 
         // Search by Product title, SKU, or barcode
-        if ($request->filled('search')) {
-            $search = trim((string) $request->search);
-            $query->whereHas('variant', function ($vq) use ($search) {
-                $vq->where('sku', 'like', "%{$search}%")
-                    ->orWhere('barcode', 'like', "%{$search}%")
-                    ->orWhereHas('product', fn ($pq) => $pq->where('title', 'like', "%{$search}%"));
+        if ($search) {
+            $searchTerm = trim((string) $search);
+            $baseQuery->whereHas('variant', function ($vq) use ($searchTerm) {
+                $vq->where('sku', 'like', "%{$searchTerm}%")
+                    ->orWhere('barcode', 'like', "%{$searchTerm}%")
+                    ->orWhereHas('product', fn ($pq) => $pq->where('title', 'like', "%{$searchTerm}%"));
             });
         }
 
-        $inventories = $query->paginate(15)->withQueryString();
+        // Sorting
+        match ($sort) {
+            'stock_asc' => $baseQuery->orderByRaw('(quantity_on_hand - quantity_reserved) ASC'),
+            'stock_desc' => $baseQuery->orderByRaw('(quantity_on_hand - quantity_reserved) DESC'),
+            'sku_asc' => $baseQuery->join('product_variants', 'inventory.variant_id', '=', 'product_variants.id')->orderBy('product_variants.sku', 'ASC')->select('inventory.*'),
+            default => $baseQuery->latest('inventory.updated_at'),
+        };
 
-        // Location list for filter dropdown and transfer modal
-        $locations = InventoryLocation::where('seller_id', $seller->id)
-            ->where('is_active', true)
-            ->get(['id', 'name', 'type', 'store_id']);
+        $inventories = $baseQuery->paginate(15)->withQueryString();
 
-        // Stores owned by seller for store/outlet filtering
-        $stores = $seller->stores()->orderBy('name')->get(['id', 'name', 'slug']);
+        // Calculate KPI Aggregates across all seller inventory items
+        $allSellerInventories = Inventory::whereIn('location_id', $sellerLocationIds)
+            ->whereHas('variant.product', fn($q) => $q->where('seller_id', $seller->id))
+            ->with('variant.product')
+            ->get();
 
-        // Complete list of unique seller variants for transfer modal
-        $transferVariants = ProductVariant::whereHas('product', fn ($q) => $q->where('seller_id', $seller->id))
-            ->with('product:id,title')
-            ->orderBy('sku')
-            ->get(['id', 'product_id', 'sku', 'name']);
+        $inventoryIds = $allSellerInventories->pluck('id')->all();
 
-        // KPI aggregates
-        $allSellerInventories = Inventory::whereIn('location_id', $sellerLocationIds)->get();
-        $totalOnHand = $allSellerInventories->sum('quantity_on_hand');
-        $totalReserved = $allSellerInventories->sum('quantity_reserved');
+        $totalOnHand = (int) $allSellerInventories->sum('quantity_on_hand');
+        $totalReserved = (int) $allSellerInventories->sum('quantity_reserved');
         $totalAvailable = max(0, $totalOnHand - $totalReserved);
-        $lowStockCount = $allSellerInventories->filter(fn ($i) => ($i->quantity_on_hand - $i->quantity_reserved) > 0 && ($i->quantity_on_hand - $i->quantity_reserved) <= $i->low_stock_threshold)->count();
-        $outOfStockCount = $allSellerInventories->filter(fn ($i) => ($i->quantity_on_hand - $i->quantity_reserved) <= 0)->count();
 
-        // Build map of [variant_id][location_id] => available_quantity for transfer modal validation
-        $stockMap = [];
-        foreach ($allSellerInventories as $item) {
-            $avail = max(0, $item->quantity_on_hand - $item->quantity_reserved);
-            $stockMap[$item->variant_id][$item->location_id] = $avail;
-        }
+        $outOfStockCount = $allSellerInventories->filter(fn ($i) => ($i->quantity_on_hand - $i->quantity_reserved) <= 0)->count();
+        $lowStockCount = $allSellerInventories->filter(fn ($i) => ($i->quantity_on_hand - $i->quantity_reserved) > 0 && ($i->quantity_on_hand - $i->quantity_reserved) <= $i->low_stock_threshold)->count();
+        $inStockCount = $allSellerInventories->filter(fn ($i) => ($i->quantity_on_hand - $i->quantity_reserved) > $i->low_stock_threshold)->count();
+
+        // Unique listed products and SKUs
+        $totalProducts = Product::where('seller_id', $seller->id)->count();
+        $totalSkus = $sellerVariants->count();
+
+        // Stock changes logged in last 30 days
+        $inventoryChanges30d = StockMovement::whereIn('inventory_id', $inventoryIds)
+            ->where('created_at', '>=', now()->subDays(30))
+            ->count();
+
+        $metrics = [
+            'total_products' => $totalProducts,
+            'total_skus' => $totalSkus,
+            'in_stock_skus' => $inStockCount,
+            'low_stock_skus' => $lowStockCount,
+            'out_of_stock_skus' => $outOfStockCount,
+            'total_on_hand' => $totalOnHand,
+            'total_reserved' => $totalReserved,
+            'total_available' => $totalAvailable,
+            'inventory_changes_30d' => $inventoryChanges30d,
+        ];
+
+        // Tab counts
+        $counts = [
+            'all' => $allSellerInventories->count(),
+            'active' => $allSellerInventories->filter(fn($i) => $i->variant?->product?->status === ProductStatus::ACTIVE && $i->variant?->is_active)->count(),
+            'out_of_stock' => $outOfStockCount,
+            'low_stock' => $lowStockCount,
+            'pending' => $allSellerInventories->filter(fn($i) => $i->variant?->product?->status === ProductStatus::PENDING_REVIEW)->count(),
+            'blocked' => $allSellerInventories->filter(fn($i) => $i->variant?->product?->status === ProductStatus::REJECTED)->count(),
+            'paused' => $allSellerInventories->filter(fn($i) => in_array($i->variant?->product?->status, [ProductStatus::INACTIVE, ProductStatus::DRAFT]) || !$i->variant?->is_active)->count(),
+        ];
+
+        $categories = Category::query()->orderBy('name')->get();
+        $stores = $seller->stores()->orderBy('name')->get(['id', 'name', 'slug']);
+        $locations = InventoryLocation::where('seller_id', $seller->id)->where('is_active', true)->get(['id', 'name', 'type', 'store_id']);
 
         return view('seller.inventory.index', [
+            'tab' => $tab,
+            'counts' => $counts,
+            'metrics' => $metrics,
             'inventories' => $inventories,
-            'locations' => $locations,
+            'categories' => $categories,
             'stores' => $stores,
-            'transferVariants' => $transferVariants,
-            'stockMap' => $stockMap,
-            'filters' => $request->only(['store_id', 'location_id', 'stock_status', 'quick_available', 'search']),
-            'metrics' => [
-                'total_on_hand' => $totalOnHand,
-                'total_reserved' => $totalReserved,
-                'total_available' => $totalAvailable,
-                'low_stock_count' => $lowStockCount,
-                'out_of_stock_count' => $outOfStockCount,
-            ],
+            'locations' => $locations,
+            'search' => $search,
+            'categoryId' => $categoryId,
+            'storeId' => $storeId,
+            'sort' => $sort,
         ]);
     }
 
@@ -136,17 +193,21 @@ class InventoryController extends Controller
     public function update(Request $request, Inventory $inventory): JsonResponse|RedirectResponse
     {
         $seller = Auth::user()?->seller;
-        abort_if(!$seller || $inventory->location->seller_id !== $seller->id, 403);
+        abort_if(!$seller || $inventory->location->seller_id !== $seller->id, 403, 'Unauthorized inventory record.');
 
         $validated = $request->validate([
             'quantity_on_hand' => ['required', 'integer', 'min:0'],
             'low_stock_threshold' => ['required', 'integer', 'min:1'],
+            'reason' => ['nullable', 'string', 'max:255'],
             'is_quick_available' => ['nullable', 'boolean'],
         ]);
 
         $newQty = (int) $validated['quantity_on_hand'];
-        if ($newQty !== $inventory->quantity_on_hand) {
-            $this->inventoryService->adjust($inventory, $newQty, 'Inline quick edit via seller inventory table');
+        $oldQty = (int) $inventory->quantity_on_hand;
+
+        if ($newQty !== $oldQty) {
+            $reason = $validated['reason'] ?? "Stock adjusted from {$oldQty} to {$newQty} by merchant";
+            $this->inventoryService->adjust($inventory, $newQty, $reason, null, Auth::id());
         }
 
         $inventory->update([
@@ -174,12 +235,65 @@ class InventoryController extends Controller
     }
 
     /**
+     * Bulk stock update (add stock or set fixed stock).
+     */
+    public function bulkUpdate(Request $request): JsonResponse|RedirectResponse
+    {
+        $seller = Auth::user()?->seller;
+        abort_if(!$seller, 403, 'Unauthorized seller profile.');
+
+        $validated = $request->validate([
+            'inventory_ids' => ['required', 'array', 'min:1'],
+            'inventory_ids.*' => ['required', 'integer'],
+            'action_type' => ['required', 'in:add_stock,set_stock'],
+            'quantity' => ['required', 'integer', 'min:0'],
+            'reason' => ['nullable', 'string', 'max:255'],
+        ]);
+
+        $sellerLocationIds = InventoryLocation::where('seller_id', $seller->id)->pluck('id');
+        $inventories = Inventory::whereIn('id', $validated['inventory_ids'])
+            ->whereIn('location_id', $sellerLocationIds)
+            ->with('variant')
+            ->get();
+
+        $actionType = $validated['action_type'];
+        $qty = (int) $validated['quantity'];
+        $reason = $validated['reason'] ?? ($actionType === 'add_stock' ? "Bulk inward replenishment (+{$qty} units)" : "Bulk stock level adjustment (Set to {$qty} units)");
+        $userId = Auth::id();
+        $updatedCount = 0;
+
+        DB::transaction(function () use ($inventories, $actionType, $qty, $reason, $userId, &$updatedCount) {
+            foreach ($inventories as $inv) {
+                if ($actionType === 'add_stock') {
+                    if ($qty > 0) {
+                        $this->inventoryService->restock($inv, $qty, $reason, null, $userId);
+                        $updatedCount++;
+                    }
+                } else {
+                    $this->inventoryService->adjust($inv, $qty, $reason, null, $userId);
+                    $updatedCount++;
+                }
+            }
+        });
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => "Successfully updated stock for {$updatedCount} items.",
+                'updated_count' => $updatedCount,
+            ]);
+        }
+
+        return back()->with('success', "Bulk inventory update applied to {$updatedCount} items.");
+    }
+
+    /**
      * Retrieve stock movements history for an inventory item.
      */
     public function movements(Inventory $inventory): JsonResponse
     {
         $seller = Auth::user()?->seller;
-        abort_if(!$seller || $inventory->location->seller_id !== $seller->id, 403);
+        abort_if(!$seller || $inventory->location->seller_id !== $seller->id, 403, 'Unauthorized inventory record.');
 
         $movements = $inventory->movements()
             ->with('creator:id,name')
@@ -199,8 +313,11 @@ class InventoryController extends Controller
         return response()->json([
             'success' => true,
             'sku' => $inventory->variant->sku,
-            'product_title' => $inventory->variant->product->title,
+            'product_title' => $inventory->variant->product?->title,
             'location' => $inventory->location->name,
+            'current_on_hand' => $inventory->quantity_on_hand,
+            'current_available' => $inventory->available_quantity,
+            'current_reserved' => $inventory->quantity_reserved,
             'movements' => $movements,
         ]);
     }
@@ -269,7 +386,6 @@ class InventoryController extends Controller
             return back()->withErrors(['csv_file' => 'CSV file is empty.']);
         }
 
-        // Clean headers: lowercase and trimmed
         $header = array_map(fn ($h) => strtolower(trim((string) $h)), $header);
         $skuCol = array_search('sku', $header, true);
         $qtyCol = array_search('quantity_on_hand', $header, true);
@@ -294,7 +410,7 @@ class InventoryController extends Controller
         while (($row = fgetcsv($handle)) !== false) {
             $rowNum++;
             if (empty(array_filter($row))) {
-                continue; // Skip blank rows
+                continue;
             }
 
             $sku = strtoupper(trim((string) ($row[$skuCol] ?? '')));
@@ -312,7 +428,6 @@ class InventoryController extends Controller
                 continue;
             }
 
-            // Verify variant belongs to seller
             $variant = ProductVariant::where('sku', $sku)
                 ->whereHas('product', fn ($q) => $q->where('seller_id', $seller->id))
                 ->first();
@@ -322,14 +437,12 @@ class InventoryController extends Controller
                 continue;
             }
 
-            // Verify location belongs to seller
             $location = InventoryLocation::where('seller_id', $seller->id)->find($locId);
             if (!$location) {
                 $errors[] = "Row {$rowNum}: Location ID {$locId} does not exist or does not belong to your store.";
                 continue;
             }
 
-            // Upsert inventory & record adjustment
             $inv = Inventory::firstOrCreate(
                 ['variant_id' => $variant->id, 'location_id' => $location->id],
                 ['quantity_on_hand' => 0, 'quantity_reserved' => 0, 'low_stock_threshold' => $threshold]
@@ -364,8 +477,8 @@ class InventoryController extends Controller
         return response()->stream(function () {
             $handle = fopen('php://output', 'w');
             fputcsv($handle, ['sku', 'location_id', 'quantity_on_hand', 'low_stock_threshold']);
-            fputcsv($handle, ['MILK-500ML', '1', '100', '10']);
-            fputcsv($handle, ['GHEE-1L', '1', '50', '5']);
+            fputcsv($handle, ['SHIRT-BLK-M', '1', '100', '5']);
+            fputcsv($handle, ['JEANS-BLU-32', '1', '50', '5']);
             fclose($handle);
         }, 200, $headers);
     }
@@ -382,74 +495,41 @@ class InventoryController extends Controller
 
         $query = Inventory::query()
             ->whereIn('location_id', $sellerLocationIds)
-            ->whereHas('variant.product')
+            ->whereHas('variant.product', fn($q) => $q->where('seller_id', $seller->id))
             ->with([
-                'variant.product:id,title,slug,is_quick_capable',
-                'location:id,name,type,store_id',
-                'location.store:id,name,slug',
+                'variant.product.category',
+                'location.store',
             ]);
 
-        // Filter by store outlet
-        if ($request->filled('store_id')) {
-            $storeLocationIds = InventoryLocation::where('seller_id', $seller->id)
-                ->where('store_id', (int) $request->store_id)
-                ->pluck('id');
-            $query->whereIn('location_id', $storeLocationIds);
-        }
-
-        // Filter by specific location
-        if ($request->filled('location_id')) {
-            $query->where('location_id', (int) $request->location_id);
-        }
-
-        // Filter by stock level
-        $stockStatus = $request->input('stock_status', $request->input('filter'));
-        if (!empty($stockStatus)) {
-            match ($stockStatus) {
-                'out_of_stock' => $query->whereRaw('(quantity_on_hand - quantity_reserved) <= 0'),
-                'low_stock' => $query->whereRaw('(quantity_on_hand - quantity_reserved) > 0')
-                    ->whereRaw('(quantity_on_hand - quantity_reserved) <= low_stock_threshold'),
-                'in_stock' => $query->whereRaw('(quantity_on_hand - quantity_reserved) > low_stock_threshold'),
-                'reserved' => $query->where('quantity_reserved', '>', 0),
-                default => null,
-            };
-        }
-
-        // Filter by quick commerce availability
-        if ($request->filled('quick_available')) {
-            $query->where('is_quick_available', filter_var($request->quick_available, FILTER_VALIDATE_BOOLEAN));
-        }
-
-        // Search
-        if ($request->filled('search')) {
-            $search = trim((string) $request->search);
-            $query->whereHas('variant', function ($vq) use ($search) {
-                $vq->where('sku', 'like', "%{$search}%")
-                    ->orWhere('barcode', 'like', "%{$search}%")
-                    ->orWhereHas('product', fn ($pq) => $pq->where('title', 'like', "%{$search}%"));
-            });
-        }
+        $tab = $request->query('tab', 'all');
+        match ($tab) {
+            'active' => $query->whereHas('variant.product', fn($pq) => $pq->where('status', ProductStatus::ACTIVE)),
+            'out_of_stock' => $query->whereRaw('(quantity_on_hand - quantity_reserved) <= 0'),
+            'low_stock' => $query->whereRaw('(quantity_on_hand - quantity_reserved) > 0')->whereRaw('(quantity_on_hand - quantity_reserved) <= low_stock_threshold'),
+            'pending' => $query->whereHas('variant.product', fn($pq) => $pq->where('status', ProductStatus::PENDING_REVIEW)),
+            'blocked' => $query->whereHas('variant.product', fn($pq) => $pq->where('status', ProductStatus::REJECTED)),
+            'paused' => $query->whereHas('variant.product', fn($pq) => $pq->whereIn('status', [ProductStatus::INACTIVE, ProductStatus::DRAFT])),
+            default => null,
+        };
 
         $filename = 'inventory-balances-' . now()->format('Y-m-d-His') . '.csv';
 
         return response()->streamDownload(function () use ($query) {
             $handle = fopen('php://output', 'w');
-            // Write UTF-8 BOM
-            fwrite($handle, "\xEF\xBB\xBF");
+            fwrite($handle, "\xEF\xBB\xBF"); // UTF-8 BOM
 
             fputcsv($handle, [
                 'Product Title',
-                'Variant Name',
                 'SKU',
-                'Barcode',
+                'Variation',
+                'Category',
                 'Store Outlet',
                 'Location Hub',
-                'Location Type',
-                'On Hand',
-                'Reserved',
-                'Available',
+                'Current Stock (On Hand)',
+                'Reserved Quantity',
+                'Available Quantity',
                 'Low Stock Threshold',
-                'Quick Commerce',
+                'Product Status',
                 'Stock Health',
             ]);
 
@@ -459,22 +539,21 @@ class InventoryController extends Controller
                     $status = match (true) {
                         $available <= 0 => 'Out of Stock',
                         $available <= $inv->low_stock_threshold => 'Low Stock Alert',
-                        default => 'Healthy',
+                        default => 'In Stock',
                     };
 
                     fputcsv($handle, [
                         $inv->variant?->product?->title ?? 'N/A',
-                        $inv->variant?->name ?? 'Default',
                         $inv->variant?->sku ?? 'N/A',
-                        $inv->variant?->barcode ?? '',
+                        $inv->variant?->name ?? 'Default',
+                        $inv->variant?->product?->category?->name ?? 'General',
                         $inv->location?->store?->name ?? 'Default Store',
                         $inv->location?->name ?? 'N/A',
-                        strtoupper($inv->location?->type?->value ?? 'STORE'),
                         $inv->quantity_on_hand,
                         $inv->quantity_reserved,
                         max(0, $available),
                         $inv->low_stock_threshold,
-                        $inv->is_quick_available ? 'YES' : 'NO',
+                        $inv->variant?->product?->status?->label() ?? 'Active',
                         $status,
                     ]);
                 }

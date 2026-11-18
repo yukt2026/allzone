@@ -11,12 +11,12 @@ class OrderPolicy extends BasePolicy
 {
     public function viewAny(User $user): bool
     {
-        return $user->can('orders.view');
+        return $user->hasRole(['super_admin', 'admin', 'support_admin']) || $user->can('orders.view');
     }
 
     public function view(User $user, Order $order): bool
     {
-        if ($user->can('orders.view') && $user->hasAnyRole(['admin', 'support_admin'])) {
+        if ($user->hasRole(['super_admin', 'admin', 'support_admin']) || $user->can('orders.view')) {
             return true;
         }
 
@@ -25,10 +25,20 @@ class OrderPolicy extends BasePolicy
 
     public function cancel(User $user, Order $order): bool
     {
-        if ($user->can('orders.cancel')) {
+        if ($user->hasRole(['super_admin', 'admin']) || $user->can('orders.cancel')) {
             return true;
         }
 
         return $order->customer_id === $user->customer?->id;
+    }
+
+    public function override(User $user, Order $order): bool
+    {
+        return $user->hasRole(['super_admin', 'admin']) || $user->can('orders.edit');
+    }
+
+    public function export(User $user): bool
+    {
+        return $user->hasRole(['super_admin', 'admin', 'support_admin']) || $user->can('orders.view');
     }
 }

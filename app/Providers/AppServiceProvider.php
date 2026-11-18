@@ -142,6 +142,12 @@ class AppServiceProvider extends ServiceProvider
             $view->with('navCategories', $navCategories);
         });
 
+        // Explicit Policy Mappings
+        Gate::policy(\App\Models\Customer::class, \App\Policies\CustomerPolicy::class);
+        Gate::policy(\App\Models\Seller::class, \App\Policies\SellerPolicy::class);
+        Gate::policy(\App\Models\Product::class, \App\Policies\ProductPolicy::class);
+        Gate::policy(\App\Models\Order::class, \App\Policies\OrderPolicy::class);
+
         // Horizon authorization gate (when enabled via config)
         if ((config('allzone.enable_horizon') ?? config('onestall.enable_horizon', false)) && class_exists(\Laravel\Horizon\Horizon::class)) {
             Gate::define('viewHorizon', function ($user = null) {

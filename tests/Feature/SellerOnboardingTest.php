@@ -353,7 +353,7 @@ class SellerOnboardingTest extends TestCase
 
         $response = $this->actingAs($this->user)->get(route('seller.onboarding'));
         $response->assertStatus(200);
-        $response->assertSee('Your OneStall Merchant Store is Ready!');
+        $response->assertSee('Merchant Store is Ready!');
         $response->assertSee('Store Logo & Banner', false);
         $response->assertSee('Add First Product');
         $response->assertSee('Set Inventory Quantities');

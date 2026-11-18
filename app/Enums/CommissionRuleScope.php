@@ -9,6 +9,7 @@ enum CommissionRuleScope: string
     case GLOBAL = 'global';
     case CATEGORY = 'category';
     case SELLER = 'seller';
+    case PRODUCT = 'product';
     case PROMO = 'promo';
 
     public function label(): string
@@ -17,6 +18,7 @@ enum CommissionRuleScope: string
             self::GLOBAL => 'Global Default',
             self::CATEGORY => 'Category Specific',
             self::SELLER => 'Seller Specific',
+            self::PRODUCT => 'Product Specific Exception',
             self::PROMO => 'Promotional Window',
         };
     }

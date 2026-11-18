@@ -37,6 +37,17 @@ class AdminLoginRequest extends FormRequest
         if (!Auth::attempt($credentials, $remember)) {
             RateLimiter::hit($this->throttleKey());
 
+            if (function_exists('activity')) {
+                activity('security')
+                    ->event('failed_login')
+                    ->withProperties([
+                        'ip' => $this->ip(),
+                        'user_agent' => $this->userAgent(),
+                        'attempted_email' => (string) $this->input('email'),
+                    ])
+                    ->log("Failed administrator login attempt for '{$this->input('email')}'");
+            }
+
             throw ValidationException::withMessages([
                 'email' => trans('auth.failed'),
             ]);
@@ -44,9 +55,32 @@ class AdminLoginRequest extends FormRequest
 
         // Verify that authenticated user actually has admin access
         $user = Auth::user();
-        if (!$user || !$user->hasAnyRole(['super_admin', 'admin', 'support_admin'])) {
+        $allowedRoles = [
+            'super_admin',
+            'admin',
+            'operations_admin',
+            'support_admin',
+            'seller_support',
+            'catalog_manager',
+            'finance_admin',
+            'finance_manager',
+            'support_staff',
+        ];
+
+        if (!$user || !$user->hasAnyRole($allowedRoles)) {
             Auth::logout();
             RateLimiter::hit($this->throttleKey());
+
+            if (function_exists('activity')) {
+                activity('security')
+                    ->event('unauthorized_admin_access')
+                    ->withProperties([
+                        'ip' => $this->ip(),
+                        'user_agent' => $this->userAgent(),
+                        'attempted_email' => (string) $this->input('email'),
+                    ])
+                    ->log("Unauthorized non-admin role attempted administrative access: '{$this->input('email')}'");
+            }
 
             throw ValidationException::withMessages([
                 'email' => 'Access denied. You do not possess administrator credentials.',
@@ -60,6 +94,16 @@ class AdminLoginRequest extends FormRequest
     {
         if (!RateLimiter::tooManyAttempts($this->throttleKey(), 5)) {
             return;
+        }
+
+        if (function_exists('activity')) {
+            activity('security')
+                ->event('account_lockout')
+                ->withProperties([
+                    'ip' => $this->ip(),
+                    'attempted_email' => (string) $this->input('email'),
+                ])
+                ->log("Administrator account rate limit lockout triggered for '{$this->input('email')}'");
         }
 
         event(new Lockout($this));

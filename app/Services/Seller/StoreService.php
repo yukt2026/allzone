@@ -365,7 +365,6 @@ class StoreService
                 'quick_max_orders' => (int) ($data['quick_max_orders'] ?? setting('quick_default_max_concurrent_orders', 15)),
                 'quick_prep_time_minutes' => (int) ($data['quick_prep_time_minutes'] ?? setting('quick_default_prep_time_minutes', 10)),
                 'quick_order_timeout_seconds' => (int) ($data['quick_order_timeout_seconds'] ?? setting('quick_order_timeout_seconds', 120)),
-                'quick_auto_assign_rider' => (bool) ($data['quick_auto_assign_rider'] ?? true),
                 'accepts_pickup' => (bool) ($data['accepts_pickup'] ?? true),
                 'category_ids' => $data['category_ids'] ?? null,
             ]);

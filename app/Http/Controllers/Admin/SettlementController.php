@@ -165,10 +165,22 @@ class SettlementController extends Controller
     }
 
     /**
+     * Authorize financial payout / settlement modification operations.
+     */
+    protected function authorizeFinancialOperation(): void
+    {
+        $user = Auth::user();
+        if (!$user || (!$user->hasAnyRole(['super_admin', 'admin', 'finance_admin', 'finance_manager']) && !$user->can('settlements.process'))) {
+            abort(403, 'Unauthorized. Only Finance Managers and Super Administrators can process or adjust seller settlements.');
+        }
+    }
+
+    /**
      * Trigger manual batch settlement generation.
      */
     public function generate(Request $request): RedirectResponse
     {
+        $this->authorizeFinancialOperation();
         $sellerId = $request->input('seller_id') ? (int) $request->input('seller_id') : null;
         $periodEnd = $request->input('period_end') ? Carbon::parse($request->input('period_end')) : null;
 
@@ -188,6 +200,8 @@ class SettlementController extends Controller
      */
     public function approve(SellerSettlement $settlement): RedirectResponse
     {
+        $this->authorizeFinancialOperation();
+
         try {
             $this->settlementService->approveSettlement($settlement, Auth::id());
             return back()->with('success', "Settlement #{$settlement->settlement_number} approved for processing.");
@@ -201,6 +215,8 @@ class SettlementController extends Controller
      */
     public function markPaid(Request $request, SellerSettlement $settlement): RedirectResponse
     {
+        $this->authorizeFinancialOperation();
+
         $request->validate([
             'reference' => ['required', 'string', 'max:100'],
         ]);
@@ -214,10 +230,31 @@ class SettlementController extends Controller
     }
 
     /**
+     * Mark settlement payout failed with reason.
+     */
+    public function fail(Request $request, SellerSettlement $settlement): RedirectResponse
+    {
+        $this->authorizeFinancialOperation();
+
+        $request->validate([
+            'reason' => ['required', 'string', 'max:500'],
+        ]);
+
+        try {
+            $this->settlementService->markFailed($settlement, $request->input('reason'), Auth::id());
+            return back()->with('success', "Settlement #{$settlement->settlement_number} marked as payout failed.");
+        } catch (\Throwable $e) {
+            return back()->with('error', $e->getMessage());
+        }
+    }
+
+    /**
      * Hold settlement with reason.
      */
     public function hold(Request $request, SellerSettlement $settlement): RedirectResponse
     {
+        $this->authorizeFinancialOperation();
+
         $request->validate([
             'reason' => ['required', 'string', 'max:500'],
         ]);
@@ -235,6 +272,8 @@ class SettlementController extends Controller
      */
     public function release(Request $request, SellerSettlement $settlement): RedirectResponse
     {
+        $this->authorizeFinancialOperation();
+
         $note = $request->input('note');
 
         try {
@@ -250,6 +289,8 @@ class SettlementController extends Controller
      */
     public function addAdjustment(Request $request, SellerSettlement $settlement): RedirectResponse
     {
+        $this->authorizeFinancialOperation();
+
         $validated = $request->validate([
             'amount' => ['required', 'numeric'],
             'reason' => ['required', 'string', 'max:255'],

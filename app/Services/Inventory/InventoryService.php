@@ -272,6 +272,25 @@ class InventoryService
     }
 
     /**
+     * Automatically commit all active reservations for a given order reference
+     * upon final delivery or fulfillment completion.
+     */
+    public function commitForOrder(string $orderRef, ?Model $order = null): int
+    {
+        $reservations = InventoryReservation::where('order_ref', $orderRef)
+            ->where('status', ReservationStatus::ACTIVE)
+            ->get();
+
+        $count = 0;
+        foreach ($reservations as $res) {
+            $this->commitSale($res, $order);
+            $count++;
+        }
+
+        return $count;
+    }
+
+    /**
      * Transfer stock between two locations owned by the same seller.
      */
     public function transfer(

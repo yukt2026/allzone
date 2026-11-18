@@ -77,6 +77,30 @@ class Customer extends Model
     }
 
     /**
+     * Payments linked to customer orders.
+     */
+    public function payments(): \Illuminate\Database\Eloquent\Relations\HasManyThrough
+    {
+        return $this->hasManyThrough(Payment::class, Order::class);
+    }
+
+    /**
+     * Product and merchant reviews authored by customer.
+     */
+    public function reviews(): HasMany
+    {
+        return $this->hasMany(Review::class, 'user_id', 'user_id');
+    }
+
+    /**
+     * Support tickets raised by customer.
+     */
+    public function supportTickets(): HasMany
+    {
+        return $this->hasMany(SupportTicket::class, 'user_id', 'user_id');
+    }
+
+    /**
      * Accessor for active status derived from user.
      */
     public function getIsActiveAttribute(): bool

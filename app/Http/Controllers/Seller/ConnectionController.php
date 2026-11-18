@@ -67,7 +67,8 @@ class ConnectionController extends Controller
 
         $imports = CatalogImport::where('seller_id', $seller->id)
             ->latest()
-            ->paginate(10);
+            ->paginate(10)
+            ->withQueryString();
 
         return view('seller.connections.csv', [
             'seller' => $seller,
@@ -159,7 +160,7 @@ class ConnectionController extends Controller
             ->where('type', StoreConnectionType::WOOCOMMERCE)
             ->first();
 
-        $syncLogs = $connection ? $connection->syncLogs()->paginate(15) : collect();
+        $syncLogs = $connection ? $connection->syncLogs()->paginate(15)->withQueryString() : collect();
 
         return view('seller.connections.woocommerce', [
             'seller' => $seller,
@@ -250,7 +251,7 @@ class ConnectionController extends Controller
             ->where('type', StoreConnectionType::SHOPIFY)
             ->first();
 
-        $syncLogs = $connection ? $connection->syncLogs()->paginate(15) : collect();
+        $syncLogs = $connection ? $connection->syncLogs()->paginate(15)->withQueryString() : collect();
 
         return view('seller.connections.shopify', [
             'seller' => $seller,
@@ -339,7 +340,7 @@ class ConnectionController extends Controller
             ->where('type', StoreConnectionType::CUSTOM_API)
             ->first();
 
-        $syncLogs = $connection ? $connection->syncLogs()->paginate(15) : collect();
+        $syncLogs = $connection ? $connection->syncLogs()->paginate(15)->withQueryString() : collect();
 
         return view('seller.connections.custom-api', [
             'seller' => $seller,

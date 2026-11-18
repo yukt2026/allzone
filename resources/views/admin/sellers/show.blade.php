@@ -6,9 +6,9 @@
     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-2">
         <div>
             <div class="flex items-center space-x-2 text-xs text-slate-500 dark:text-slate-400 mb-1.5">
-                <a href="{{ route('admin.dashboard') }}" class="hover:text-indigo-600 transition">Command Central</a>
+                <a href="{{ route('admin.dashboard') }}" class="hover:text-emerald-600 transition">Command Central</a>
                 <span>&bull;</span>
-                <a href="{{ route('admin.sellers.index') }}" class="hover:text-indigo-600 transition">Sellers</a>
+                <a href="{{ route('admin.sellers.index') }}" class="hover:text-emerald-600 transition">Sellers</a>
                 <span>&bull;</span>
                 <span class="font-bold text-slate-700 dark:text-slate-300">{{ $seller->business_name }}</span>
             </div>
@@ -29,7 +29,7 @@
             </p>
         </div>
 
-        <!-- Quick Top Action Buttons based on status -->
+        <!-- Quick Top Action Buttons based on status & staff permissions -->
         <div class="flex flex-wrap items-center gap-2">
             @can('approve', $seller)
                 @if($seller->status === \App\Enums\SellerStatus::PENDING || $seller->status === \App\Enums\SellerStatus::KYC_SUBMITTED || $seller->status === \App\Enums\SellerStatus::REJECTED)
@@ -37,7 +37,7 @@
                         @csrf
                         <button 
                             type="submit" 
-                            onclick="return confirm('Approve this merchant account? This will initialize their default storefront, assign seller_owner role, and send an approval email.')"
+                            onclick="return confirm('Approve this merchant account? This will activate their storefronts, assign seller_owner role, and send an approval notification.')"
                             class="px-4 py-2 text-xs font-bold rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs transition-all flex items-center"
                         >
                             <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
@@ -54,6 +54,28 @@
                         Reject Application
                     </button>
                 @endif
+            @endcan
+
+            @can('requestDocuments', $seller)
+                <button 
+                    type="button" 
+                    @click="$dispatch('open-modal', 'request-docs-modal')"
+                    class="px-3.5 py-2 text-xs font-bold rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 hover:bg-amber-100 border border-amber-200 dark:border-amber-800 transition-all flex items-center"
+                >
+                    <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                    Request Documents
+                </button>
+            @endcan
+
+            @can('updateCommission', $seller)
+                <button 
+                    type="button" 
+                    @click="$dispatch('open-modal', 'edit-settings-modal')"
+                    class="px-3.5 py-2 text-xs font-bold rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 border border-slate-200 dark:border-slate-700 transition-all flex items-center"
+                >
+                    <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                    Settings
+                </button>
             @endcan
 
             @can('suspend', $seller)
@@ -100,7 +122,7 @@
         </div>
     @endif
 
-    <!-- 9 Navigation Tabs Bar -->
+    <!-- 12 Navigation Tabs Bar -->
     <div class="border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 rounded-2xl p-1.5 shadow-xs">
         <div class="overflow-x-auto scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-700">
             <nav class="flex space-x-1 sm:space-x-1.5 min-w-max p-1" aria-label="Seller detail navigation tabs">
@@ -121,9 +143,14 @@
                             'badge' => $seller->documents->count(),
                             'svg' => '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>'
                         ],
+                        'pickup' => [
+                            'label' => 'Pickup Locations', 
+                            'badge' => $pickupLocations->count(),
+                            'svg' => '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>'
+                        ],
                         'bank' => [
                             'label' => 'Bank Details', 
-                            'badge' => null,
+                            'badge' => $bankAccounts->count(),
                             'svg' => '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>'
                         ],
                         'stores' => [
@@ -141,10 +168,20 @@
                             'badge' => $seller->fulfilmentOrders()->count(),
                             'svg' => '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0"/></svg>'
                         ],
+                        'payments' => [
+                            'label' => 'Payments & Settlements', 
+                            'badge' => $settlements->total(),
+                            'svg' => '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>'
+                        ],
                         'commission' => [
                             'label' => 'Commission Override', 
                             'badge' => null,
                             'svg' => '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>'
+                        ],
+                        'tickets' => [
+                            'label' => 'Support Tickets', 
+                            'badge' => $tickets->total(),
+                            'svg' => '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"/></svg>'
                         ],
                         'activity' => [
                             'label' => 'Activity Log', 
@@ -160,7 +197,7 @@
                         id="tab-btn-{{ $key }}"
                         @click="setTab('{{ $key }}')"
                         :class="activeTab === '{{ $key }}' 
-                            ? 'bg-indigo-600 text-white shadow-xs font-bold' 
+                            ? 'bg-emerald-600 text-white shadow-xs font-bold' 
                             : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 font-medium'"
                         class="px-3.5 py-2 rounded-xl text-xs transition-all flex items-center space-x-1.5 shrink-0 focus:outline-hidden"
                     >
@@ -171,7 +208,7 @@
                         @if($tab['badge'] !== null)
                             <span 
                                 :class="activeTab === '{{ $key }}' 
-                                    ? 'bg-indigo-700/80 text-white border-transparent' 
+                                    ? 'bg-emerald-700/80 text-white border-transparent' 
                                     : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700'"
                                 class="px-1.5 py-0.5 rounded-full text-[10px] font-mono font-bold border transition-colors ml-1"
                             >
@@ -188,8 +225,8 @@
     <!-- TAB 1: OVERVIEW -->
     <!-- ========================================== -->
     <div x-show="activeTab === 'overview'" class="space-y-6">
-        <!-- 5 Key Stats Cards -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        <!-- 6 Key Performance Metric Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
             <x-stat-card 
                 label="Total GMV" 
                 :value="'₹' . number_format($stats['total_gmv'], 2)" 
@@ -205,18 +242,25 @@
                 color="emerald"
             />
             <x-stat-card 
-                label="Connected Stores" 
-                :value="number_format($stats['stores_count'])" 
-                change="Outlets" 
+                label="Fulfilment Rate" 
+                :value="$stats['fulfilment_rate'] . '%'" 
+                :change="$stats['delivered_orders'] . ' delivered'" 
+                changeType="up" 
+                color="sky"
+            />
+            <x-stat-card 
+                label="Return Rate" 
+                :value="$stats['return_rate'] . '%'" 
+                :change="$stats['returns_count'] . ' claims'" 
                 changeType="neutral" 
                 color="amber"
             />
             <x-stat-card 
-                label="Catalogue Items" 
-                :value="number_format($stats['products_count'])" 
-                change="Active SKUs" 
+                label="Customer Rating" 
+                :value="$stats['avg_rating'] > 0 ? number_format($stats['avg_rating'], 1) . ' ★' : 'No ratings'" 
+                change="Platform Reviews" 
                 changeType="neutral" 
-                color="sky"
+                color="indigo"
             />
             <x-stat-card 
                 label="Pending Payout" 
@@ -229,8 +273,8 @@
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <!-- Merchant Profile Summary -->
-            <div class="lg:col-span-2">
-                <x-card title="Merchant Summary & Owner Details" subtitle="Primary account holder credentials and contact information">
+            <div class="lg:col-span-2 space-y-6">
+                <x-card title="Merchant Summary & Owner Credentials" subtitle="Primary account holder credentials and statutory identification">
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
                         <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700">
                             <span class="text-slate-400 font-medium block">Owner Account</span>
@@ -240,7 +284,7 @@
                         </div>
 
                         <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700">
-                            <span class="text-slate-400 font-medium block">Commission Rate</span>
+                            <span class="text-slate-400 font-medium block">Commission Plan</span>
                             <span class="font-bold text-slate-900 dark:text-white text-sm mt-0.5 block">
                                 {{ $seller->commission_override !== null ? $seller->commission_override . '% (Custom Override)' : setting('default_commission_pct', 10) . '% (Platform Default)' }}
                             </span>
@@ -262,6 +306,50 @@
                         </div>
                     </div>
                 </x-card>
+
+                <!-- Default Pickup Address Quick Card -->
+                @php
+                    $defaultPickup = $pickupLocations->firstWhere('is_default', true) ?? $pickupLocations->first();
+                @endphp
+                <x-card title="Default Warehouse / Pickup Address" subtitle="Primary logistics dispatch point for courier pickups">
+                    @if($defaultPickup)
+                        <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/60 dark:bg-slate-800/40 text-xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                            <div class="space-y-1">
+                                <div class="flex items-center space-x-2">
+                                    <span class="font-bold text-slate-900 dark:text-white text-sm">{{ $defaultPickup->nickname }}</span>
+                                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                                        Default Pickup
+                                    </span>
+                                    @if($defaultPickup->is_verified)
+                                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-sky-100 text-sky-800 border border-sky-200">
+                                            Address Verified
+                                        </span>
+                                    @endif
+                                </div>
+                                <div class="text-slate-600 dark:text-slate-400">
+                                    {{ $defaultPickup->address_line1 }}, {{ $defaultPickup->address_line2 ? $defaultPickup->address_line2 . ', ' : '' }}{{ $defaultPickup->city }}, {{ $defaultPickup->state }} - <strong class="font-mono text-slate-900 dark:text-white">{{ $defaultPickup->pincode }}</strong>
+                                </div>
+                                <div class="text-[11px] text-slate-500 flex items-center space-x-3 pt-0.5">
+                                    <span>Contact: <strong class="text-slate-700 dark:text-slate-300">{{ $defaultPickup->contact_person }}</strong> ({{ $defaultPickup->contact_phone }})</span>
+                                    @if($defaultPickup->shiprocket_pickup_name)
+                                        <span>&bull; Shiprocket Code: <strong class="font-mono text-indigo-600">{{ $defaultPickup->shiprocket_pickup_name }}</strong></span>
+                                    @endif
+                                </div>
+                            </div>
+                            <button 
+                                type="button" 
+                                @click="setTab('pickup')"
+                                class="px-3 py-1.5 text-xs font-semibold rounded-xl bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 text-slate-700 dark:text-slate-200 transition shrink-0"
+                            >
+                                View All Pickup Locations &rarr;
+                            </button>
+                        </div>
+                    @else
+                        <div class="text-xs text-slate-400 py-3 text-center">
+                            No pickup warehouse registered yet. The seller needs to add a pickup address for shipping serviceability.
+                        </div>
+                    @endif
+                </x-card>
             </div>
 
             <!-- Stores Mini Card -->
@@ -271,7 +359,7 @@
                         @forelse($seller->stores as $store)
                             <div class="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/40 text-xs space-y-2">
                                 <div class="flex items-center justify-between">
-                                    <a href="{{ route('admin.stores.show', $store) }}" class="font-bold text-slate-900 dark:text-white hover:text-indigo-600 transition">
+                                    <a href="{{ route('admin.stores.show', $store) }}" class="font-bold text-slate-900 dark:text-white hover:text-emerald-600 transition">
                                         {{ $store->name }}
                                     </a>
                                     <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300">
@@ -279,10 +367,10 @@
                                     </span>
                                 </div>
                                 <div class="flex items-center justify-between text-[11px]">
-                                    <a href="{{ route('store.show', $store->slug) }}" target="_blank" class="text-indigo-600 dark:text-indigo-400 font-mono hover:underline">
+                                    <a href="{{ route('store.show', $store->slug) }}" target="_blank" class="text-emerald-600 dark:text-emerald-400 font-mono hover:underline">
                                         /store/{{ $store->slug }} ↗
                                     </a>
-                                    <a href="{{ route('admin.stores.show', $store) }}" class="font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700">
+                                    <a href="{{ route('admin.stores.show', $store) }}" class="font-bold text-emerald-600 dark:text-emerald-400 hover:text-emerald-700">
                                         Manage &rarr;
                                     </a>
                                 </div>
@@ -362,6 +450,19 @@
     <!-- ========================================== -->
     <div x-show="activeTab === 'documents'" class="space-y-6">
         <x-card title="Uploaded KYC Verification Proofs" subtitle="Review statutory identity, PAN, GST, FSSAI licenses, and cancelled cheques">
+            <div class="flex justify-end pb-3">
+                @can('requestDocuments', $seller)
+                    <button 
+                        type="button" 
+                        @click="$dispatch('open-modal', 'request-docs-modal')"
+                        class="px-3.5 py-1.5 text-xs font-bold rounded-xl bg-amber-500 hover:bg-amber-600 text-white shadow-xs transition flex items-center"
+                    >
+                        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                        Request Additional Document
+                    </button>
+                @endcan
+            </div>
+
             <div class="overflow-x-auto -mx-6">
                 <table class="w-full text-left text-xs border-collapse">
                     <thead>
@@ -404,7 +505,7 @@
                                         <a 
                                             href="{{ route('admin.sellers.documents.download', [$seller, $doc]) }}" 
                                             target="_blank"
-                                            class="px-2.5 py-1 text-xs font-semibold rounded-lg bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 border border-indigo-200 dark:border-indigo-800 transition"
+                                            class="px-2.5 py-1 text-xs font-semibold rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 border border-emerald-200 dark:border-emerald-800 transition"
                                         >
                                             Download
                                         </a>
@@ -448,18 +549,98 @@
     </div>
 
     <!-- ========================================== -->
-    <!-- TAB 4: BANK DETAILS -->
+    <!-- TAB 4: PICKUP LOCATIONS / WAREHOUSES -->
+    <!-- ========================================== -->
+    <div x-show="activeTab === 'pickup'" class="space-y-6">
+        <x-card title="Warehouse & Pickup Facilities" subtitle="Pickup locations configured for logistics dispatches and shipping partner integrations">
+            <div class="space-y-4">
+                @forelse($pickupLocations as $loc)
+                    <div class="p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/40 flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+                        <div class="space-y-2 text-xs flex-1">
+                            <div class="flex flex-wrap items-center gap-2">
+                                <span class="text-base font-bold text-slate-900 dark:text-white">{{ $loc->nickname }}</span>
+                                @if($loc->is_default)
+                                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                        Default Pickup
+                                    </span>
+                                @endif
+                                @if($loc->is_verified)
+                                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-sky-50 text-sky-700 border border-sky-200">
+                                        Verified
+                                    </span>
+                                @else
+                                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                                        Unverified
+                                    </span>
+                                @endif
+                                @if($loc->is_serviceable)
+                                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                        Serviceable
+                                    </span>
+                                @endif
+                            </div>
+
+                            <div class="text-slate-700 dark:text-slate-300 leading-relaxed">
+                                {{ $loc->address_line1 }}
+                                @if($loc->address_line2), {{ $loc->address_line2 }}@endif
+                                <br>
+                                {{ $loc->city }}, {{ $loc->state }} - <strong class="font-mono text-slate-900 dark:text-white">{{ $loc->pincode }}</strong>, {{ $loc->country ?? 'India' }}
+                            </div>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1 text-slate-500 text-[11px]">
+                                <div>Contact: <strong class="text-slate-800 dark:text-slate-200">{{ $loc->contact_person }}</strong></div>
+                                <div>Phone: <span class="font-mono">{{ $loc->contact_phone }}</span></div>
+                                <div>Email: <span class="font-mono">{{ $loc->contact_email ?? 'N/A' }}</span></div>
+                            </div>
+
+                            @if($loc->gstin || $loc->shiprocket_pickup_name)
+                                <div class="flex flex-wrap items-center gap-4 pt-1 font-mono text-[11px] text-slate-500">
+                                    @if($loc->gstin)
+                                        <span>Location GSTIN: <strong class="text-slate-800 dark:text-slate-200">{{ $loc->gstin }}</strong></span>
+                                    @endif
+                                    @if($loc->shiprocket_pickup_name)
+                                        <span>Shiprocket Code: <strong class="text-emerald-600 dark:text-emerald-400">{{ $loc->shiprocket_pickup_name }}</strong></span>
+                                    @endif
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+                @empty
+                    <div class="text-xs text-slate-400 text-center py-8">
+                        No pickup addresses registered for this seller.
+                    </div>
+                @endforelse
+            </div>
+        </x-card>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- TAB 5: BANK DETAILS -->
     <!-- ========================================== -->
     <div x-show="activeTab === 'bank'" class="space-y-6">
         <x-card title="Disbursement Bank Accounts" subtitle="Direct bank payout accounts for automated weekly settlements">
+            @cannot('viewSensitive', $seller)
+                <div class="mb-4 p-4 rounded-xl bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800 text-xs text-amber-900 dark:text-amber-200 flex items-start space-x-3">
+                    <svg class="w-5 h-5 text-amber-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                    <div>
+                        <strong class="font-bold">Restricted Financial Access:</strong> Full account numbers and sensitive payout credentials are confidential and masked for your staff role. Contact Finance Administration if verification requires full credentials.
+                    </div>
+                </div>
+            @else
+                <div class="mb-4 p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-xs text-emerald-900 dark:text-emerald-200 flex items-center space-x-2">
+                    <svg class="w-4 h-4 text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                    <span><strong>Staff Clearance:</strong> You have authorized clearance to view unmasked banking information for financial governance and audit compliance.</span>
+                </div>
+            @endcannot
+
             <div class="space-y-4">
-                @forelse($seller->bankAccounts as $bank)
+                @forelse($bankAccounts as $bank)
                     <div class="p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/40 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                         <div class="space-y-1.5 text-xs">
                             <div class="flex items-center space-x-2">
                                 <span class="text-base font-bold text-slate-900 dark:text-white">{{ $bank->bank_name }}</span>
                                 @if($bank->is_primary)
-                                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
                                         Primary Account
                                     </span>
                                 @endif
@@ -481,7 +662,14 @@
                                     $rawAcc = (string) $bank->account_no;
                                     $masked = strlen($rawAcc) > 4 ? str_repeat('•', strlen($rawAcc) - 4) . ' ' . substr($rawAcc, -4) : $rawAcc;
                                 @endphp
-                                <div>Masked Account No: <span class="font-mono font-bold text-slate-900 dark:text-white">{{ $masked }}</span></div>
+                                <div>
+                                    Account No: 
+                                    @can('viewSensitive', $seller)
+                                        <span class="font-mono font-bold text-slate-900 dark:text-white">{{ $rawAcc }}</span>
+                                    @else
+                                        <span class="font-mono font-bold text-slate-900 dark:text-white">{{ $masked }}</span>
+                                    @endcan
+                                </div>
                                 <div>Branch: {{ $bank->branch_name ?? 'Main Branch' }}</div>
                             </div>
                         </div>
@@ -516,7 +704,7 @@
     </div>
 
     <!-- ========================================== -->
-    <!-- TAB 5: STORES -->
+    <!-- TAB 6: STORES -->
     <!-- ========================================== -->
     <div x-show="activeTab === 'stores'" class="space-y-6">
         <x-card title="Digital Storefronts & Physical Outlets" subtitle="Store profiles, locations, delivery radius, and timings">
@@ -531,15 +719,15 @@
                                         {{ $store->status->label() }}
                                     </span>
                                     @if($store->is_onestall_owned)
-                                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-100 dark:bg-indigo-950/60 text-indigo-800 dark:text-indigo-300">
+                                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300">
                                             {{ setting('name', 'ALLZONE') }} Direct
                                         </span>
                                     @endif
                                 </div>
-                                <div class="text-xs text-indigo-600 dark:text-indigo-400 font-mono mt-0.5">/store/{{ $store->slug }}</div>
+                                <div class="text-xs text-emerald-600 dark:text-emerald-400 font-mono mt-0.5">/store/{{ $store->slug }}</div>
                             </div>
                             <div class="flex items-center space-x-2">
-                                <a href="{{ route('admin.stores.show', $store) }}" class="px-3 py-1.5 text-xs font-bold rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs transition flex items-center">
+                                <a href="{{ route('admin.stores.show', $store) }}" class="px-3 py-1.5 text-xs font-bold rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs transition flex items-center">
                                     <span>Store Console</span>
                                     <svg class="w-3.5 h-3.5 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                                 </a>
@@ -575,7 +763,7 @@
     </div>
 
     <!-- ========================================== -->
-    <!-- TAB 6: PRODUCTS -->
+    <!-- TAB 7: PRODUCTS -->
     <!-- ========================================== -->
     <div x-show="activeTab === 'products'" class="space-y-6">
         <x-card title="Product Catalogue Listings" subtitle="Products and SKU variants owned by this merchant">
@@ -616,11 +804,11 @@
                                 </td>
                                 <td class="py-3 px-6 text-right">
                                     <div class="inline-flex items-center space-x-2">
-                                        <a href="{{ route('admin.catalogue.moderation.show', $product) }}" class="px-2.5 py-1 text-xs font-bold rounded-lg bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 border border-indigo-200 dark:border-indigo-800 transition">
+                                        <a href="{{ route('admin.catalogue.moderation.show', $product) }}" class="px-2.5 py-1 text-xs font-bold rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 border border-emerald-200 dark:border-emerald-800 transition">
                                             Moderate
                                         </a>
                                         @if($product->slug)
-                                            <a href="{{ route('product.show', $product->slug) }}" target="_blank" class="px-2 py-1 text-xs text-slate-500 hover:text-indigo-600 transition" title="Open Public Page">
+                                            <a href="{{ route('product.show', $product->slug) }}" target="_blank" class="px-2 py-1 text-xs text-slate-500 hover:text-emerald-600 transition" title="Open Public Page">
                                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
                                             </a>
                                         @endif
@@ -645,7 +833,7 @@
     </div>
 
     <!-- ========================================== -->
-    <!-- TAB 7: ORDERS -->
+    <!-- TAB 8: ORDERS -->
     <!-- ========================================== -->
     <div x-show="activeTab === 'orders'" class="space-y-6">
         <x-card title="Fulfilment Orders Dispatches" subtitle="Orders routed to this merchant's inventory locations">
@@ -666,18 +854,12 @@
                     <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
                         @forelse($orders as $order)
                             <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-850/50">
-                                <td class="py-3 px-6 font-mono font-bold text-indigo-600 dark:text-indigo-400">
+                                <td class="py-3 px-6 font-mono font-bold text-emerald-600 dark:text-emerald-400">
                                     <a href="{{ $order->order_id ? route('admin.orders.show', $order->order_id) : '#' }}" class="hover:underline">
                                         #{{ $order->id }}
                                     </a>
                                     <div class="text-[10px] text-slate-400 font-sans">
-                                        @if($order->order_id)
-                                            <a href="{{ route('admin.orders.show', $order->order_id) }}" class="hover:underline hover:text-indigo-600">
-                                                Parent: {{ $order->order?->order_number ?? 'N/A' }}
-                                            </a>
-                                        @else
-                                            Parent: {{ $order->order?->order_number ?? 'N/A' }}
-                                        @endif
+                                        Parent: {{ $order->order?->order_number ?? 'N/A' }}
                                     </div>
                                 </td>
                                 <td class="py-3 px-4">
@@ -685,14 +867,14 @@
                                         $fType = $order->fulfilment_type instanceof \BackedEnum ? $order->fulfilment_type->value : (string) $order->fulfilment_type;
                                         $fLabel = $order->fulfilment_type instanceof \App\Enums\FulfilmentType ? $order->fulfilment_type->label() : ($fType === 'quick' ? 'Quick Commerce' : ($fType === 'pickup' ? 'Store Pickup' : 'Standard Delivery'));
                                     @endphp
-                                    <span class="px-2 py-0.5 rounded-md text-[10px] font-bold {{ $fType === 'quick' ? 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300' : 'bg-indigo-100 text-indigo-800 dark:bg-indigo-950/60 dark:text-indigo-300' }}">
+                                    <span class="px-2 py-0.5 rounded-md text-[10px] font-bold {{ $fType === 'quick' ? 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300' : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300' }}">
                                         {{ $fLabel }}
                                     </span>
                                 </td>
                                 <td class="py-3 px-4 text-right font-mono font-bold text-slate-900 dark:text-white">
                                     ₹{{ number_format((float) $order->subtotal, 2) }}
                                 </td>
-                                <td class="py-3 px-4 text-right font-mono text-indigo-600 dark:text-indigo-400">
+                                <td class="py-3 px-4 text-right font-mono text-slate-600 dark:text-slate-300">
                                     ₹{{ number_format((float) $order->commission_amount, 2) }}
                                 </td>
                                 <td class="py-3 px-4 text-right font-mono font-extrabold text-emerald-600 dark:text-emerald-400">
@@ -718,7 +900,7 @@
                                 </td>
                                 <td class="py-3 px-6 text-right">
                                     @if($order->order_id)
-                                        <a href="{{ route('admin.orders.show', $order->order_id) }}" class="px-2.5 py-1 text-xs font-bold rounded-lg bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 border border-indigo-200 dark:border-indigo-800 transition">
+                                        <a href="{{ route('admin.orders.show', $order->order_id) }}" class="px-2.5 py-1 text-xs font-bold rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 border border-emerald-200 dark:border-emerald-800 transition">
                                             View Order
                                         </a>
                                     @else
@@ -744,14 +926,93 @@
     </div>
 
     <!-- ========================================== -->
-    <!-- TAB 8: COMMISSION OVERRIDE -->
+    <!-- TAB 9: PAYMENTS & SETTLEMENTS -->
+    <!-- ========================================== -->
+    <div x-show="activeTab === 'payments'" class="space-y-6">
+        <x-card title="Disbursements & Settlement Ledger" subtitle="Periodic payout cycles, commission withholdings, and net payable distributions">
+            <div class="overflow-x-auto -mx-6">
+                <table class="w-full text-left text-xs border-collapse">
+                    <thead>
+                        <tr class="border-b border-slate-200 dark:border-slate-800 text-slate-400 uppercase font-semibold">
+                            <th class="py-2.5 px-6">Settlement #</th>
+                            <th class="py-2.5 px-4">Period</th>
+                            <th class="py-2.5 px-4 text-right">Gross Sales</th>
+                            <th class="py-2.5 px-4 text-right">Commission</th>
+                            <th class="py-2.5 px-4 text-right">Tax / Adjustments</th>
+                            <th class="py-2.5 px-4 text-right">Net Payable</th>
+                            <th class="py-2.5 px-4 text-center">Status</th>
+                            <th class="py-2.5 px-4 text-right">Paid Date</th>
+                            <th class="py-2.5 px-6 text-right">Reference</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                        @forelse($settlements as $settlement)
+                            <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-850/50">
+                                <td class="py-3 px-6 font-mono font-bold text-slate-900 dark:text-white">
+                                    {{ $settlement->settlement_number ?? '#' . $settlement->id }}
+                                </td>
+                                <td class="py-3 px-4 text-slate-600 dark:text-slate-300">
+                                    {{ $settlement->period_start?->format('M d') }} - {{ $settlement->period_end?->format('M d, Y') }}
+                                </td>
+                                <td class="py-3 px-4 text-right font-mono font-bold text-slate-900 dark:text-white">
+                                    ₹{{ number_format((float) $settlement->gross, 2) }}
+                                </td>
+                                <td class="py-3 px-4 text-right font-mono text-rose-600 dark:text-rose-400">
+                                    -₹{{ number_format((float) $settlement->commission, 2) }}
+                                </td>
+                                <td class="py-3 px-4 text-right font-mono text-slate-500">
+                                    ₹{{ number_format((float) ($settlement->tax_on_commission + $settlement->adjustments), 2) }}
+                                </td>
+                                <td class="py-3 px-4 text-right font-mono font-extrabold text-emerald-600 dark:text-emerald-400">
+                                    ₹{{ number_format((float) $settlement->net, 2) }}
+                                </td>
+                                <td class="py-3 px-4 text-center">
+                                    @php
+                                        $sBadgeClass = match($settlement->status instanceof \BackedEnum ? $settlement->status->value : (string)$settlement->status) {
+                                            'completed' => 'bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300',
+                                            'pending' => 'bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-950/60 dark:text-amber-300',
+                                            'on_hold' => 'bg-rose-100 text-rose-800 border-rose-200 dark:bg-rose-950/60 dark:text-rose-300',
+                                            'processing' => 'bg-sky-100 text-sky-800 border-sky-200 dark:bg-sky-950/60 dark:text-sky-300',
+                                            default => 'bg-slate-100 text-slate-800 border-slate-200',
+                                        };
+                                    @endphp
+                                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold border {{ $sBadgeClass }}">
+                                        {{ ucfirst($settlement->status instanceof \BackedEnum ? $settlement->status->value : (string)$settlement->status) }}
+                                    </span>
+                                </td>
+                                <td class="py-3 px-4 text-right text-slate-500 text-[11px]">
+                                    {{ $settlement->paid_at ? $settlement->paid_at->format('M d, Y') : 'Unpaid' }}
+                                </td>
+                                <td class="py-3 px-6 text-right font-mono text-[11px] text-slate-500">
+                                    {{ $settlement->reference ?? '—' }}
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="9" class="py-8 text-center text-slate-400">
+                                    No settlement records generated for this seller yet.
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="border-t border-slate-100 dark:border-slate-800 pt-3 mt-4">
+                <x-pagination :paginator="$settlements" />
+            </div>
+        </x-card>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- TAB 10: COMMISSION -->
     <!-- ========================================== -->
     <div x-show="activeTab === 'commission'" class="space-y-6">
         <x-card title="Merchant Commission Agreement" subtitle="Configure custom platform rake override percentage for this seller">
             <div class="max-w-xl space-y-4">
                 <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-300">
-                    <p class="font-bold text-slate-900 dark:text-white mb-1">Rule 2 Compliance Note:</p>
-                    <p>Platform default commission is dynamically retrieved from platform settings (<strong class="text-indigo-600">{{ setting('default_commission_pct', 10) }}%</strong>). Setting an override here takes absolute precedence for all standard and quick commerce fulfilments for this merchant.</p>
+                    <p class="font-bold text-slate-900 dark:text-white mb-1">Commission Policy Rules:</p>
+                    <p>Platform default commission is dynamically configured in system settings (<strong class="text-emerald-600">{{ setting('default_commission_pct', 10) }}%</strong>). Setting an override percentage here applies exclusively to all fulfilled orders dispatched by this merchant.</p>
                 </div>
 
                 <form method="POST" action="{{ route('admin.sellers.commission.update', $seller) }}" class="space-y-4">
@@ -769,7 +1030,7 @@
                                 name="commission_override" 
                                 value="{{ old('commission_override', $seller->commission_override) }}"
                                 placeholder="e.g. 8.50 (leave empty for platform default)"
-                                class="w-full py-2.5 px-3.5 pr-8 text-xs font-mono font-bold rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                                class="w-full py-2.5 px-3.5 pr-8 text-xs font-mono font-bold rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
                             />
                             <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-slate-400 font-bold text-xs">%</div>
                         </div>
@@ -789,17 +1050,149 @@
                     </div>
 
                     <div class="flex items-center space-x-3 pt-2">
-                        <button type="submit" class="px-4 py-2 text-xs font-bold rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs transition">
+                        <button type="submit" class="px-4 py-2 text-xs font-bold rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs transition">
                             Save Commission Override
                         </button>
                     </div>
                 </form>
             </div>
         </x-card>
+
+        <!-- Commission Deduction Ledger Entries -->
+        <x-card title="Commission Deduction Ledger" subtitle="Historical fee calculations deducted from merchant dispatches">
+            <div class="overflow-x-auto -mx-6">
+                <table class="w-full text-left text-xs border-collapse">
+                    <thead>
+                        <tr class="border-b border-slate-200 dark:border-slate-800 text-slate-400 uppercase font-semibold">
+                            <th class="py-2.5 px-6">Entry ID</th>
+                            <th class="py-2.5 px-4">Date</th>
+                            <th class="py-2.5 px-4">Fulfilment Order #</th>
+                            <th class="py-2.5 px-4 text-right">Base Amount</th>
+                            <th class="py-2.5 px-4 text-right">Commission</th>
+                            <th class="py-2.5 px-4 text-right">Tax on Commission</th>
+                            <th class="py-2.5 px-4 text-right">Net Payable</th>
+                            <th class="py-2.5 px-6">Notes / Rule</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                        @forelse($commissionEntries as $entry)
+                            <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-850/50">
+                                <td class="py-3 px-6 font-mono font-bold text-slate-900 dark:text-white">
+                                    #{{ $entry->id }}
+                                </td>
+                                <td class="py-3 px-4 text-slate-500">
+                                    {{ $entry->created_at->format('M d, Y') }}
+                                </td>
+                                <td class="py-3 px-4 font-mono text-emerald-600 dark:text-emerald-400">
+                                    #{{ $entry->fulfilment_order_id }}
+                                </td>
+                                <td class="py-3 px-4 text-right font-mono font-bold text-slate-900 dark:text-white">
+                                    ₹{{ number_format((float) $entry->base_amount, 2) }}
+                                </td>
+                                <td class="py-3 px-4 text-right font-mono text-rose-600 dark:text-rose-400">
+                                    -₹{{ number_format((float) $entry->commission, 2) }}
+                                </td>
+                                <td class="py-3 px-4 text-right font-mono text-slate-500">
+                                    ₹{{ number_format((float) $entry->tax_on_commission, 2) }}
+                                </td>
+                                <td class="py-3 px-4 text-right font-mono font-extrabold text-emerald-600 dark:text-emerald-400">
+                                    ₹{{ number_format((float) $entry->net_payable, 2) }}
+                                </td>
+                                <td class="py-3 px-6 text-slate-500 text-[11px]">
+                                    {{ $entry->notes ?? ($entry->entry_type ?? 'Standard Commission') }}
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="8" class="py-8 text-center text-slate-400">
+                                    No commission deduction ledger entries recorded yet.
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="border-t border-slate-100 dark:border-slate-800 pt-3 mt-4">
+                <x-pagination :paginator="$commissionEntries" />
+            </div>
+        </x-card>
     </div>
 
     <!-- ========================================== -->
-    <!-- TAB 9: ACTIVITY AUDIT LOG -->
+    <!-- TAB 11: SUPPORT TICKETS -->
+    <!-- ========================================== -->
+    <div x-show="activeTab === 'tickets'" class="space-y-6">
+        <x-card title="Support Inquiries & Merchant Communications" subtitle="Dispute resolution, onboarding questions, and ticket history">
+            <div class="overflow-x-auto -mx-6">
+                <table class="w-full text-left text-xs border-collapse">
+                    <thead>
+                        <tr class="border-b border-slate-200 dark:border-slate-800 text-slate-400 uppercase font-semibold">
+                            <th class="py-2.5 px-6">Ticket #</th>
+                            <th class="py-2.5 px-4">Subject</th>
+                            <th class="py-2.5 px-4">Category</th>
+                            <th class="py-2.5 px-4 text-center">Priority</th>
+                            <th class="py-2.5 px-4 text-center">Status</th>
+                            <th class="py-2.5 px-4">Assigned To</th>
+                            <th class="py-2.5 px-4 text-right">Created</th>
+                            <th class="py-2.5 px-6 text-right">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                        @forelse($tickets as $ticket)
+                            <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-850/50">
+                                <td class="py-3 px-6 font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                                    <a href="{{ route('admin.support.show', $ticket) }}" class="hover:underline">
+                                        {{ $ticket->ticket_number ?? '#' . $ticket->id }}
+                                    </a>
+                                </td>
+                                <td class="py-3 px-4 font-bold text-slate-900 dark:text-white max-w-xs truncate">
+                                    {{ $ticket->subject }}
+                                </td>
+                                <td class="py-3 px-4 text-slate-600 dark:text-slate-300">
+                                    {{ $ticket->categoryRelation?->name ?? ($ticket->category ?? 'General') }}
+                                </td>
+                                <td class="py-3 px-4 text-center">
+                                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold border {{ method_exists($ticket->priority, 'badgeClass') ? $ticket->priority->badgeClass() : 'bg-slate-100 text-slate-700 border-slate-200' }}">
+                                        {{ $ticket->priority instanceof \BackedEnum ? ucfirst($ticket->priority->value) : ucfirst((string)$ticket->priority) }}
+                                    </span>
+                                </td>
+                                <td class="py-3 px-4 text-center">
+                                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold border {{ method_exists($ticket->status, 'badgeClass') ? $ticket->status->badgeClass() : 'bg-slate-100 text-slate-700 border-slate-200' }}">
+                                        {{ $ticket->status instanceof \BackedEnum ? ucfirst(str_replace('_', ' ', $ticket->status->value)) : ucfirst(str_replace('_', ' ', (string)$ticket->status)) }}
+                                    </span>
+                                </td>
+                                <td class="py-3 px-4 text-slate-600 dark:text-slate-300">
+                                    {{ $ticket->assignedAgent?->name ?? 'Unassigned' }}
+                                </td>
+                                <td class="py-3 px-4 text-right text-slate-400 text-[11px]">
+                                    {{ $ticket->created_at->format('M d, Y') }}
+                                </td>
+                                <td class="py-3 px-6 text-right">
+                                    <a href="{{ route('admin.support.show', $ticket) }}" class="px-2.5 py-1 text-xs font-bold rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 border border-emerald-200 dark:border-emerald-800 transition">
+                                        View Ticket
+                                    </a>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="8" class="py-8 text-center text-slate-400">
+                                    No support tickets registered for this merchant account.
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="border-t border-slate-100 dark:border-slate-800 pt-3 mt-4">
+                <x-pagination :paginator="$tickets" />
+            </div>
+        </x-card>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- TAB 12: ACTIVITY AUDIT LOG -->
     <!-- ========================================== -->
     <div x-show="activeTab === 'activity'" class="space-y-6">
         <x-card title="Merchant Audit Trail & Governance Log" subtitle="Comprehensive activity history with before/after state snapshots">
@@ -906,6 +1299,143 @@
         </form>
     </x-modal>
 
+    <!-- Request Additional Documents Modal -->
+    <x-modal name="request-docs-modal" title="Request Additional Verification Documents" size="md">
+        <form method="POST" action="{{ route('admin.sellers.request_documents', $seller) }}" class="space-y-4">
+            @csrf
+            <div>
+                <p class="text-xs text-slate-500 mb-3 leading-relaxed">
+                    Specify the verification proof required from <strong>{{ $seller->business_name }}</strong>. An official notification will be dispatched to their merchant dashboard.
+                </p>
+
+                <div class="space-y-3">
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1">
+                            Document Type <span class="text-rose-500">*</span>
+                        </label>
+                        <select 
+                            name="document_type" 
+                            required 
+                            class="w-full p-2.5 text-xs rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
+                        >
+                            @foreach(\App\Enums\SellerDocumentType::cases() as $docType)
+                                <option value="{{ $docType->value }}">{{ $docType->label() }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1">
+                            Specific Instructions / Requirements <span class="text-rose-500">*</span>
+                        </label>
+                        <textarea 
+                            name="instructions" 
+                            rows="3" 
+                            required 
+                            minlength="5"
+                            placeholder="Explain what the merchant must upload (e.g. Please upload GST 3B return showing active status)..." 
+                            class="w-full p-2.5 text-xs rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
+                        ></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-end space-x-2 pt-2">
+                <button type="button" @click="$dispatch('close-modal', 'request-docs-modal')" class="px-3 py-1.5 text-xs text-slate-600 hover:text-slate-900">
+                    Cancel
+                </button>
+                <button type="submit" class="px-4 py-2 text-xs font-bold rounded-xl bg-amber-500 hover:bg-amber-600 text-white shadow-xs transition">
+                    Submit Document Request
+                </button>
+            </div>
+        </form>
+    </x-modal>
+
+    <!-- Update Seller Settings Modal -->
+    <x-modal name="edit-settings-modal" title="Update Merchant Operational Settings" size="md">
+        <form method="POST" action="{{ route('admin.sellers.settings.update', $seller) }}" class="space-y-4">
+            @csrf
+            <div class="space-y-3 text-xs">
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1">
+                        Seller Operating Model / Type <span class="text-rose-500">*</span>
+                    </label>
+                    <select 
+                        name="seller_type" 
+                        required 
+                        class="w-full p-2.5 text-xs rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
+                    >
+                        @foreach(\App\Enums\SellerType::cases() as $type)
+                            <option value="{{ $type->value }}" {{ $seller->seller_type === $type ? 'selected' : '' }}>
+                                {{ $type->label() }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1">
+                        Commission Override (%)
+                    </label>
+                    <input 
+                        type="number" 
+                        step="0.01" 
+                        min="0" 
+                        max="100" 
+                        name="commission_override" 
+                        value="{{ old('commission_override', $seller->commission_override) }}"
+                        placeholder="Leave blank for platform default ({{ setting('default_commission_pct', 10) }}%)"
+                        class="w-full p-2.5 text-xs rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-mono"
+                    />
+                </div>
+
+                <div class="pt-2 space-y-2">
+                    <label class="flex items-center space-x-2 cursor-pointer">
+                        <input 
+                            type="checkbox" 
+                            name="accepts_quick_commerce" 
+                            value="1" 
+                            {{ $seller->stores->contains('accepts_quick_commerce', true) ? 'checked' : '' }}
+                            class="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                        />
+                        <span class="text-slate-800 dark:text-slate-200 font-semibold">Enable Quick Commerce (10-30 min hyper-local fulfilment)</span>
+                    </label>
+                    <label class="flex items-center space-x-2 cursor-pointer">
+                        <input 
+                            type="checkbox" 
+                            name="accepts_pickup" 
+                            value="1" 
+                            {{ $seller->stores->contains('accepts_pickup', true) ? 'checked' : '' }}
+                            class="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                        />
+                        <span class="text-slate-800 dark:text-slate-200 font-semibold">Enable Store Self-Pickup</span>
+                    </label>
+                </div>
+
+                <div class="pt-2">
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1">
+                        Internal Governance Note / Reason
+                    </label>
+                    <textarea 
+                        name="remarks" 
+                        rows="2" 
+                        placeholder="Internal rationale for audit log..." 
+                        class="w-full p-2.5 text-xs rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
+                    ></textarea>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-end space-x-2 pt-2">
+                <button type="button" @click="$dispatch('close-modal', 'edit-settings-modal')" class="px-3 py-1.5 text-xs text-slate-600 hover:text-slate-900">
+                    Cancel
+                </button>
+                <button type="submit" class="px-4 py-2 text-xs font-bold rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs transition">
+                    Save Changes
+                </button>
+            </div>
+        </form>
+    </x-modal>
+
     <!-- Document Viewer Modal -->
     <x-modal name="doc-viewer-modal" title="KYC Proof Viewer" size="lg">
         <div class="space-y-4">
@@ -914,7 +1444,7 @@
                     <span class="font-bold text-slate-900 dark:text-white block" x-text="docViewerTitle"></span>
                     <span class="text-slate-400 font-mono text-[11px]" x-text="docViewerPath"></span>
                 </div>
-                <a :href="docViewerPath" target="_blank" class="px-3 py-1 text-xs font-bold rounded-lg bg-indigo-600 text-white hover:bg-indigo-700">
+                <a :href="docViewerPath" target="_blank" class="px-3 py-1 text-xs font-bold rounded-lg bg-emerald-600 text-white hover:bg-emerald-700">
                     Open File
                 </a>
             </div>
@@ -922,7 +1452,7 @@
             <div class="w-full h-80 rounded-xl bg-slate-100 dark:bg-slate-950 flex flex-col items-center justify-center p-6 text-center text-slate-400 text-xs border border-dashed border-slate-300 dark:border-slate-800">
                 <svg class="w-12 h-12 text-slate-300 dark:text-slate-700 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                 <p class="font-bold text-slate-700 dark:text-slate-300">Document Security Enclave</p>
-                <p class="mt-1 max-w-sm">Stored on encrypted S3 / private local storage. Click "Open File" to inspect the high-resolution original scan.</p>
+                <p class="mt-1 max-w-sm">Stored on encrypted private storage. Click "Open File" to inspect the high-resolution original scan.</p>
             </div>
         </div>
     </x-modal>

@@ -11,8 +11,16 @@ export const apiUrl = (endpoint) => {
     if (typeof window !== 'undefined' && typeof window.apiUrl === 'function' && window.apiUrl !== apiUrl) {
         return window.apiUrl(endpoint);
     }
-    const base = window.appConfig?.baseUrl || document.querySelector('meta[name="base-url"]')?.getAttribute('content') || '';
+    let base = window.appConfig?.baseUrl || document.querySelector('meta[name="base-url"]')?.getAttribute('content') || '';
     if (endpoint.startsWith('http://') || endpoint.startsWith('https://')) return endpoint;
+    if (typeof window !== 'undefined' && (base.startsWith('http://') || base.startsWith('https://'))) {
+        try {
+            const u = new URL(base, window.location.href);
+            base = u.pathname.replace(/\/+$/, '');
+        } catch (e) {
+            base = '';
+        }
+    }
     const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
     return `${base}${cleanEndpoint}`;
 };
@@ -61,7 +69,8 @@ Alpine.store('cart', {
     async fetchSummary() {
         try {
             const res = await fetch(apiUrl('/api/storefront/cart/summary'), {
-                headers: { 'Accept': 'application/json' }
+                headers: { 'Accept': 'application/json' },
+                credentials: 'same-origin'
             });
             const data = await res.json();
             if (data && data.cart) {

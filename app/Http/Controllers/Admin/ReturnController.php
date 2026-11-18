@@ -9,7 +9,7 @@ use App\Enums\ReturnStatus;
 use App\Http\Controllers\Controller;
 use App\Models\OrderReturn;
 use App\Models\Seller;
-use App\Services\Order\ReturnService;
+use App\Services\Admin\AdminReturnService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -19,81 +19,195 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 class ReturnController extends Controller
 {
     public function __construct(
-        protected ReturnService $returnService
+        protected AdminReturnService $adminReturnService
     ) {}
 
     /**
-     * Display the global returns and RMA oversight console.
+     * Display centralized Returns, RTO, and Refund dashboard and registry.
      */
     public function index(Request $request): View
     {
-        $query = OrderReturn::query()
-            ->with([
-                'orderItem.variant.product',
-                'orderItem.fulfilmentOrder.seller',
-                'orderItem.fulfilmentOrder.order.user',
-            ])
-            ->latest('id');
+        $statusTab = $request->query('status', 'all');
+        $viewTab = $request->query('view', 'returns'); // 'returns', 'rto', 'analytics'
 
-        // Filter: Status
-        if ($status = $request->query('status')) {
-            if ($status !== 'all') {
-                $query->where('status', $status);
-            }
+        $metrics = $this->adminReturnService->getReturnMetrics();
+        $returnReasons = $this->adminReturnService->getReturnReasonsDistribution();
+        $productTrends = $this->adminReturnService->getProductReturnTrends(6);
+
+        $sellers = Seller::orderBy('business_name')->get(['id', 'business_name', 'legal_name']);
+
+        if ($viewTab === 'rto' || $statusTab === 'rto') {
+            $rtoShipments = $this->adminReturnService->buildRtoQuery()->paginate(15)->withQueryString();
+            $returns = null;
+        } else {
+            $returns = $this->adminReturnService->buildReturnsQuery($request->all())->paginate(15)->withQueryString();
+            $rtoShipments = null;
         }
 
-        // Filter: QC Status
-        if ($qcStatus = $request->query('qc_status')) {
-            if ($qcStatus !== 'all') {
-                $query->where('qc_status', $qcStatus);
-            }
-        }
-
-        // Filter: Seller
-        if ($sellerId = $request->query('seller_id')) {
-            $query->whereHas('orderItem.fulfilmentOrder', fn($foq) => $foq->where('seller_id', $sellerId));
-        }
-
-        // Search: RMA, Order Number, Waybill, Product Title
-        if ($search = $request->query('search')) {
-            $query->where(function ($q) use ($search) {
-                $q->where('return_number', 'like', "%{$search}%")
-                  ->orWhere('pickup_waybill', 'like', "%{$search}%")
-                  ->orWhereHas('orderItem', fn($iq) => $iq->where('title', 'like', "%{$search}%"))
-                  ->orWhereHas('orderItem.fulfilmentOrder.order', fn($oq) => $oq->where('order_number', 'like', "%{$search}%"))
-                  ->orWhereHas('orderItem.fulfilmentOrder.order.user', fn($uq) => $uq->where('name', 'like', "%{$search}%")->orWhere('email', 'like', "%{$search}%"));
-            });
-        }
-
-        $returns = $query->paginate(20)->withQueryString();
-
-        $metrics = [
-            'total_returns' => OrderReturn::count(),
-            'pending_review' => OrderReturn::where('status', ReturnStatus::REQUESTED)->count(),
-            'in_transit' => OrderReturn::whereIn('status', [ReturnStatus::REVERSE_PICKUP_SCHEDULED, ReturnStatus::PICKED_UP])->count(),
-            'disputed_qc' => OrderReturn::where('qc_status', QCStatus::FAILED)->count(),
-            'total_refunded_value' => (float) OrderReturn::where('status', ReturnStatus::REFUNDED)->sum('refund_amount'),
-        ];
-
-        $sellers = Seller::orderBy('business_name')->get(['id', 'business_name']);
-
-        return view('admin.returns.index', compact('returns', 'metrics', 'sellers'));
+        return view('admin.returns.index', compact(
+            'metrics',
+            'returns',
+            'rtoShipments',
+            'returnReasons',
+            'productTrends',
+            'sellers',
+            'statusTab',
+            'viewTab'
+        ));
     }
 
     /**
-     * Show return dispute & resolution console.
+     * Detailed Return & Dispute Inspection Console.
      */
     public function show(OrderReturn $return): View
     {
         $return->load([
-            'orderItem.variant.product',
-            'orderItem.fulfilmentOrder.order.user',
-            'orderItem.fulfilmentOrder.seller',
+            'orderItem.variant.product.media',
+            'orderItem.fulfilmentOrder.order.customer.user',
+            'orderItem.fulfilmentOrder.order.payments',
+            'orderItem.fulfilmentOrder.seller.user',
+            'orderItem.fulfilmentOrder.store',
             'pickupShipment.tracking',
             'refund',
         ]);
 
         return view('admin.returns.show', compact('return'));
+    }
+
+    /**
+     * Approve return request with optional Shiprocket reverse pickup.
+     */
+    public function approve(Request $request, OrderReturn $return): RedirectResponse
+    {
+        $notes = $request->input('notes') ?? $request->input('remarks') ?? 'Return approved by administrator.';
+        if (strlen((string) $notes) < 3) {
+            $notes = 'Return approved by administrator.';
+        }
+
+        try {
+            $this->adminReturnService->approveReturn(
+                $return,
+                (string) $notes,
+                Auth::user(),
+                $request->boolean('schedule_pickup', $request->boolean('schedule_reverse_pickup', true))
+            );
+
+            return back()->with('success', "Return #{$return->return_number} has been approved.");
+        } catch (\Throwable $e) {
+            return back()->with('error', "Approval failed: " . $e->getMessage());
+        }
+    }
+
+    /**
+     * Reject return request with mandatory reason.
+     */
+    public function reject(Request $request, OrderReturn $return): RedirectResponse
+    {
+        $reason = $request->input('reason') ?? $request->input('notes') ?? $request->input('rejection_reason');
+
+        if (!$reason || strlen(trim((string) $reason)) < 3) {
+            return back()->with('error', 'A valid rejection reason must be provided (minimum 3 characters).');
+        }
+
+        try {
+            $this->adminReturnService->rejectReturn($return, (string) $reason, Auth::user());
+
+            return back()->with('success', "Return #{$return->return_number} has been rejected.");
+        } catch (\Throwable $e) {
+            return back()->with('error', "Rejection failed: " . $e->getMessage());
+        }
+    }
+
+    /**
+     * Request additional information or photo evidence from customer.
+     */
+    public function requestInfo(Request $request, OrderReturn $return): RedirectResponse
+    {
+        $validated = $request->validate([
+            'instructions' => ['required', 'string', 'min:5', 'max:1000'],
+        ]);
+
+        try {
+            $this->adminReturnService->requestAdditionalInfo($return, $validated['instructions'], Auth::user());
+
+            return back()->with('success', "Information request recorded for Return #{$return->return_number}.");
+        } catch (\Throwable $e) {
+            return back()->with('error', "Action failed: " . $e->getMessage());
+        }
+    }
+
+    /**
+     * Record Quality Control inspection outcome.
+     */
+    public function recordQc(Request $request, OrderReturn $return): RedirectResponse
+    {
+        $validated = $request->validate([
+            'outcome' => ['required', 'in:passed,failed'],
+            'qc_notes' => ['nullable', 'string', 'max:1000'],
+            'is_resellable' => ['nullable', 'boolean'],
+        ]);
+
+        try {
+            $this->adminReturnService->recordQcOutcome(
+                $return,
+                $validated['outcome'],
+                $validated['qc_notes'] ?? null,
+                $request->boolean('is_resellable', true),
+                Auth::user()
+            );
+
+            return back()->with('success', "QC outcome ({$validated['outcome']}) recorded for Return #{$return->return_number}.");
+        } catch (\Throwable $e) {
+            return back()->with('error', "QC record failed: " . $e->getMessage());
+        }
+    }
+
+    /**
+     * Initiate eligible refund through Razorpay (Online) or verified Payout (COD/Manual).
+     */
+    public function initiateRefund(Request $request, OrderReturn $return): RedirectResponse
+    {
+        $user = Auth::user();
+        if (!$user || (!$user->hasAnyRole(['super_admin', 'admin', 'finance_admin', 'finance_manager']) && !$user->can('payments.refund'))) {
+            abort(403, 'Unauthorized. Only Finance Managers and Super Administrators can execute refunds.');
+        }
+
+        $validated = $request->validate([
+            'amount' => ['nullable', 'numeric', 'min:1'],
+            'mode' => ['nullable', 'string', 'in:original,wallet,cod_payout'],
+            'payout_reference' => ['nullable', 'string', 'max:100'],
+            'confirm_cod_payout' => ['nullable', 'boolean'],
+            'is_resellable' => ['nullable', 'boolean'],
+            'notes' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        try {
+            $this->adminReturnService->processRefund($return, $validated, Auth::user());
+
+            return back()->with('success', "Refund of ₹{$return->refund_amount} executed successfully for Return #{$return->return_number}.");
+        } catch (\Throwable $e) {
+            return back()->with('error', "Refund processing failed: " . $e->getMessage());
+        }
+    }
+
+    /**
+     * Update return status manually with audit log.
+     */
+    public function updateStatus(Request $request, OrderReturn $return): RedirectResponse
+    {
+        $validated = $request->validate([
+            'status' => ['required', 'string'],
+            'note' => ['required', 'string', 'min:3', 'max:500'],
+        ]);
+
+        try {
+            $newStatus = ReturnStatus::from($validated['status']);
+            $this->adminReturnService->updateReturnStatus($return, $newStatus, $validated['note'], Auth::user());
+
+            return back()->with('success', "Return status updated to {$newStatus->label()}.");
+        } catch (\Throwable $e) {
+            return back()->with('error', "Status update failed: " . $e->getMessage());
+        }
     }
 
     /**
@@ -106,47 +220,19 @@ class ReturnController extends Controller
             'notes' => ['required', 'string', 'max:1000'],
         ]);
 
-        try {
-            $this->returnService->adminOverride(
-                $return,
-                $validated['action'],
-                ['notes' => $validated['notes']],
-                Auth::user()
-            );
-
-            return back()->with('success', "Dispute overridden: Return #{$return->return_number} has been marked as {$validated['action']}d.");
-        } catch (\Throwable $e) {
-            return back()->with('error', $e->getMessage());
+        if ($validated['action'] === 'approve') {
+            return $this->approve($request, $return);
         }
+
+        return $this->reject($request, $return);
     }
 
     /**
-     * Admin Force-Refund Override (Bypasses seller delays or resolves dispute in customer's favor).
+     * Admin Force-Refund Override (Bypasses delays or executes immediate refund).
      */
     public function forceRefund(Request $request, OrderReturn $return): RedirectResponse
     {
-        $validated = $request->validate([
-            'amount' => ['nullable', 'numeric', 'min:0'],
-            'is_resellable' => ['nullable', 'boolean'],
-            'notes' => ['required', 'string', 'max:1000'],
-        ]);
-
-        try {
-            $this->returnService->adminOverride(
-                $return,
-                'force_refund',
-                [
-                    'amount' => !empty($validated['amount']) ? (float) $validated['amount'] : null,
-                    'is_resellable' => $request->boolean('is_resellable', false),
-                    'notes' => $validated['notes'],
-                ],
-                Auth::user()
-            );
-
-            return back()->with('success', "Administrative force-refund executed for Return #{$return->return_number}.");
-        } catch (\Throwable $e) {
-            return back()->with('error', $e->getMessage());
-        }
+        return $this->initiateRefund($request, $return);
     }
 
     /**
@@ -154,7 +240,7 @@ class ReturnController extends Controller
      */
     public function export(Request $request): StreamedResponse
     {
-        $filename = 'returns-report-' . now()->format('Ymd-His') . '.csv';
+        $filename = 'allzone-returns-report-' . now()->format('Ymd-His') . '.csv';
         $headers = [
             'Content-Type' => 'text/csv; charset=utf-8',
             'Content-Disposition' => "attachment; filename=\"{$filename}\"",
@@ -167,29 +253,30 @@ class ReturnController extends Controller
                 'Order Number',
                 'Customer Name',
                 'Customer Email',
+                'Customer Phone',
                 'Seller',
                 'Item Title',
                 'SKU',
                 'Quantity',
                 'Refund Amount',
                 'Refund Mode',
-                'Reason',
+                'Return Reason',
                 'Status',
                 'QC Status',
                 'Resellable',
-                'Waybill',
+                'Shiprocket Waybill',
                 'Created At',
                 'Refunded At',
             ]);
 
             OrderReturn::with([
                 'orderItem.fulfilmentOrder.seller',
-                'orderItem.fulfilmentOrder.order.user',
+                'orderItem.fulfilmentOrder.order.customer.user',
             ])->chunk(150, function ($returns) use ($handle) {
                 foreach ($returns as $r) {
                     $item = $r->orderItem;
                     $order = $item?->fulfilmentOrder?->order;
-                    $user = $order?->user;
+                    $user = $order?->customer?->user ?? $order?->user;
                     $seller = $item?->fulfilmentOrder?->seller;
 
                     fputcsv($handle, [
@@ -197,6 +284,7 @@ class ReturnController extends Controller
                         $order?->order_number ?? 'N/A',
                         $user?->name ?? 'N/A',
                         $user?->email ?? 'N/A',
+                        $user?->phone ?? 'N/A',
                         $seller?->business_name ?? $seller?->legal_name ?? 'N/A',
                         $item?->title ?? 'N/A',
                         $item?->sku ?? 'N/A',

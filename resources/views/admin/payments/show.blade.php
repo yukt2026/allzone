@@ -87,9 +87,29 @@
                     <span class="text-slate-400">Created At:</span>
                     <span class="font-mono">{{ $payment->created_at->format('d M Y, h:i:s A') }}</span>
                 </div>
-                <div class="flex justify-between py-1">
+                <div class="flex justify-between py-1 border-b border-slate-100 dark:border-slate-800/60">
                     <span class="text-slate-400">Gateway Verified At:</span>
                     <span class="font-mono">{{ $payment->verified_at ? $payment->verified_at->format('d M Y, h:i:s A') : 'Pending / Not Verified' }}</span>
+                </div>
+                <div class="flex justify-between py-1 border-b border-slate-100 dark:border-slate-800/60">
+                    <span class="text-slate-400">Razorpay Signature:</span>
+                    <span class="font-mono text-[10px] select-all max-w-xs truncate">{{ $payment->gateway_signature ?? 'Verified via Server Webhook' }}</span>
+                </div>
+                <div class="flex justify-between items-center py-1">
+                    <span class="text-slate-400">Reconciliation:</span>
+                    <div class="flex items-center space-x-2">
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold border {{ $payment->reconciliation_status instanceof \App\Enums\ReconciliationStatus ? $payment->reconciliation_status->badgeClass() : 'bg-slate-100 text-slate-800' }}">
+                            {{ $payment->reconciliation_status instanceof \App\Enums\ReconciliationStatus ? $payment->reconciliation_status->label() : ($payment->reconciliation_status ?? 'Pending') }}
+                        </span>
+                        @if($payment->reconciliation_status !== \App\Enums\ReconciliationStatus::RECONCILED && $payment->status === \App\Enums\PaymentStatus::PAID)
+                            <form method="POST" action="{{ route('admin.payments.reconcile', $payment) }}" class="inline">
+                                @csrf
+                                <button type="submit" class="px-2 py-0.5 rounded bg-emerald-600 text-white font-bold text-[10px] hover:bg-emerald-700 transition">
+                                    Reconcile Now
+                                </button>
+                            </form>
+                        @endif
+                    </div>
                 </div>
             </div>
         </div>

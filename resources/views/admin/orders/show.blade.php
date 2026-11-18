@@ -1,7 +1,7 @@
 @extends('layouts.dashboard', ['portal' => 'admin', 'title' => 'Admin Order Console #' . $order->order_number])
 
 @section('content')
-<div class="space-y-6" x-data="{ assignModalFoId: null }">
+<div class="space-y-6" x-data="{ cancelSubOrderId: null, cancelSubOrderNumber: '' }">
 
     <!-- Page Header & Action Bar -->
     <x-page-header 
@@ -14,13 +14,13 @@
         </x-slot>
 
         <x-slot name="actions">
-            <div class="flex items-center space-x-2">
+            <div class="flex flex-wrap items-center gap-2">
                 <a 
                     href="{{ route('admin.orders.invoice', $order) }}" 
-                    class="px-3.5 py-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:text-indigo-600 text-xs font-bold transition shadow-xs flex items-center space-x-1.5"
+                    class="px-3.5 py-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:text-emerald-600 text-xs font-bold transition shadow-xs flex items-center space-x-1.5"
                 >
                     <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                    <span>Download Invoice</span>
+                    <span>Download Invoice PDF</span>
                 </a>
 
                 <button 
@@ -33,14 +33,71 @@
 
                 <button 
                     type="button" 
+                    @click="$dispatch('open-modal', 'dispute-modal')"
+                    class="px-3.5 py-2 rounded-xl bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/60 dark:hover:bg-amber-900/60 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800 text-xs font-bold transition flex items-center space-x-1.5 cursor-pointer"
+                >
+                    <span>⚖️ Dispute Resolution</span>
+                </button>
+
+                @if(!in_array($order->status, [\App\Enums\OrderStatus::CANCELLED, \App\Enums\OrderStatus::DELIVERED]))
+                    <button 
+                        type="button" 
+                        @click="$dispatch('open-modal', 'cancel-order-modal')"
+                        class="px-3.5 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/60 dark:hover:bg-rose-900/60 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-800 text-xs font-bold transition cursor-pointer"
+                    >
+                        Cancel Order
+                    </button>
+                @endif
+
+                <button 
+                    type="button" 
                     @click="$dispatch('open-modal', 'override-status-modal')"
-                    class="px-3.5 py-2 rounded-xl bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-400 border border-rose-200 dark:border-rose-800 hover:bg-rose-100 text-xs font-bold transition cursor-pointer"
+                    class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-900 text-white dark:bg-slate-700 dark:hover:bg-slate-600 text-xs font-bold transition cursor-pointer"
                 >
                     Override Status
                 </button>
             </div>
         </x-slot>
     </x-page-header>
+
+    <!-- Exceptions & Risk Alert Banner (if applicable) -->
+    @php
+        $hasSlaBreach = $order->fulfilmentOrders->contains(fn($fo) => $fo->is_sla_breached);
+        $hasRto = $order->fulfilmentOrders->some(fn($fo) => $fo->shipments->some(fn($s) => $s->status === 'rto' || $s->rtoCases->isNotEmpty()));
+        $fraudAssessment = $order->fraudAssessment;
+        $isHighRisk = $fraudAssessment && in_array(strtolower($fraudAssessment->risk_level ?? ''), ['high', 'critical']);
+    @endphp
+
+    @if($hasSlaBreach || $hasRto || $isHighRisk)
+        <div class="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div class="flex items-center space-x-3">
+                <span class="text-2xl">⚠️</span>
+                <div>
+                    <h4 class="text-xs font-bold text-amber-900 dark:text-amber-200 uppercase tracking-wider">
+                        Operational Exception / Risk Detected
+                    </h4>
+                    <p class="text-xs text-amber-800/90 dark:text-amber-300">
+                        @if($hasSlaBreach)
+                            <span class="font-semibold">&bull; Merchant SLA Breach:</span> One or more vendor packages exceeded dispatch deadline.
+                        @endif
+                        @if($hasRto)
+                            <span class="font-semibold">&bull; Logistics RTO:</span> Consignment returned to origin or undelivered by courier.
+                        @endif
+                        @if($isHighRisk)
+                            <span class="font-semibold">&bull; High Risk Order:</span> Fraud assessment flagged score {{ $fraudAssessment->score ?? 'N/A' }} ({{ $fraudAssessment->reasons ?? 'Anomalous pattern' }}).
+                        @endif
+                    </p>
+                </div>
+            </div>
+            <button 
+                type="button" 
+                @click="$dispatch('open-modal', 'dispute-modal')" 
+                class="px-3 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold transition shrink-0"
+            >
+                Log Intervention
+            </button>
+        </div>
+    @endif
 
     <!-- Master Order Info Grid -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -52,7 +109,7 @@
             </div>
             <div class="text-xs text-slate-500 space-y-1">
                 @if($email = $order->customer?->user?->email)
-                    <div>Email: <a href="mailto:{{ $email }}" class="text-indigo-600 dark:text-indigo-400 font-bold hover:underline">{{ $email }}</a></div>
+                    <div>Email: <a href="mailto:{{ $email }}" class="text-emerald-600 dark:text-emerald-400 font-bold hover:underline">{{ $email }}</a></div>
                 @endif
                 @if($phone = ($order->address_snapshot['phone'] ?? $order->customer?->user?->phone))
                     <div>Phone: <a href="tel:{{ $phone }}" class="text-slate-800 dark:text-slate-200 font-bold hover:underline font-mono">{{ $phone }}</a></div>
@@ -74,7 +131,7 @@
                 <span class="font-bold uppercase text-slate-900 dark:text-white">{{ $order->payment_method->value ?? 'Online' }}</span>
             </div>
             <div class="flex items-center justify-between text-xs">
-                <span class="text-slate-500">Status</span>
+                <span class="text-slate-500">Payment Status</span>
                 <span class="px-2 py-0.5 rounded-full font-bold text-[10px] {{ $order->payment_status === \App\Enums\PaymentStatus::PAID ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-400' : 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-400' }}">
                     {{ strtoupper(str_replace('_', ' ', $order->payment_status->value ?? 'Pending')) }}
                 </span>
@@ -84,11 +141,16 @@
                     <div>Gateway: <strong>{{ strtoupper($payment->gateway) }}</strong></div>
                     <div>Gateway Order ID: {{ $payment->gateway_order_id ?? 'N/A' }}</div>
                     <div>Gateway Payment ID: {{ $payment->gateway_payment_id ?? 'N/A' }}</div>
+                    <div>Transaction Status: <span class="uppercase text-emerald-600 font-bold">{{ $payment->status }}</span></div>
+                </div>
+            @else
+                <div class="pt-2 border-t border-slate-100 dark:border-slate-800 text-[11px] text-slate-400">
+                    No gateway transaction record attached.
                 </div>
             @endif
         </div>
 
-        <!-- Price Breakdown -->
+        <!-- Financial Reconciliation & Taxes -->
         <div class="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-xs space-y-2">
             <div class="text-xs font-black uppercase tracking-wider text-slate-400 mb-1">Financial Reconciliation</div>
             <div class="flex justify-between text-xs text-slate-600 dark:text-slate-300">
@@ -105,15 +167,41 @@
                     <span>-{{ format_currency((float) $order->discount) }}</span>
                 </div>
             @endif
-            @if((float) $order->tax > 0)
-                <div class="flex justify-between text-xs text-slate-600 dark:text-slate-300">
-                    <span>Taxes</span>
-                    <span>{{ format_currency((float) $order->tax) }}</span>
+
+            <!-- GST Breakdown -->
+            @php
+                $originState = 'karnataka';
+                $destState = strtolower(trim((string) ($order->address_snapshot['state'] ?? 'karnataka')));
+                $isInterState = ($originState !== $destState && !empty($destState));
+                $taxAmount = (float) $order->tax;
+            @endphp
+            @if($taxAmount > 0)
+                <div class="pt-1 border-t border-slate-100 dark:border-slate-800 space-y-1">
+                    <div class="flex justify-between text-xs text-slate-500 font-semibold">
+                        <span>GST Total</span>
+                        <span>{{ format_currency($taxAmount) }}</span>
+                    </div>
+                    @if($isInterState)
+                        <div class="flex justify-between text-[11px] text-slate-400 pl-2 font-mono">
+                            <span>IGST (Inter-state)</span>
+                            <span>{{ format_currency($taxAmount) }}</span>
+                        </div>
+                    @else
+                        <div class="flex justify-between text-[11px] text-slate-400 pl-2 font-mono">
+                            <span>CGST (50%)</span>
+                            <span>{{ format_currency($taxAmount / 2) }}</span>
+                        </div>
+                        <div class="flex justify-between text-[11px] text-slate-400 pl-2 font-mono">
+                            <span>SGST (50%)</span>
+                            <span>{{ format_currency($taxAmount / 2) }}</span>
+                        </div>
+                    @endif
                 </div>
             @endif
+
             <div class="pt-2 border-t border-slate-200 dark:border-slate-700 flex justify-between text-sm font-black text-slate-900 dark:text-white">
                 <span>Order Total</span>
-                <span class="text-indigo-600 dark:text-indigo-400">{{ format_currency((float) $order->total) }}</span>
+                <span class="text-emerald-600 dark:text-emerald-400">{{ format_currency((float) $order->total) }}</span>
             </div>
         </div>
     </div>
@@ -123,7 +211,7 @@
         <div class="bg-amber-500/10 border border-amber-500/20 rounded-3xl p-6 space-y-2">
             <div class="text-xs font-black uppercase tracking-wider text-amber-600 dark:text-amber-400 flex items-center space-x-1.5">
                 <span>📌</span>
-                <span>Internal Administrative Notes</span>
+                <span>Internal Administrative Notes &amp; Dispute Logs</span>
             </div>
             <div class="text-xs text-slate-700 dark:text-slate-200 whitespace-pre-line leading-relaxed font-mono">
                 {{ $order->notes }}
@@ -131,11 +219,11 @@
         </div>
     @endif
 
-    <!-- Split Fulfilment Packages -->
+    <!-- Split Fulfilment Packages (Multi-vendor sub-orders) -->
     <div class="space-y-4">
         <div class="flex items-center justify-between">
             <h3 class="text-base font-black text-slate-900 dark:text-white tracking-tight">
-                Split Fulfilment Packages ({{ $order->fulfilmentOrders->count() }})
+                Multi-Vendor Packages ({{ $order->fulfilmentOrders->count() }})
             </h3>
             <span class="text-xs text-slate-400">Independent merchant shipments &amp; Shiprocket logistics routing</span>
         </div>
@@ -144,13 +232,14 @@
             @foreach($order->fulfilmentOrders as $fo)
                 @php
                     $isQuick = $fo->fulfilment_type === \App\Enums\FulfilmentType::QUICK;
-                    $shipment = $fo->shipment;
+                    $shipment = $fo->shipments->first() ?? $fo->shipment ?? null;
+                    $sellerUser = $fo->seller?->user;
                 @endphp
                 <div class="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden">
                     <!-- Package Header Bar -->
                     <div class="bg-slate-50 dark:bg-slate-800/60 px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3 text-xs">
-                        <div class="flex items-center space-x-3">
-                            <span class="font-bold text-slate-900 dark:text-white text-sm">
+                        <div class="flex flex-wrap items-center gap-3">
+                            <span class="font-black text-slate-900 dark:text-white text-sm">
                                 Package #{{ $fo->fulfilment_order_number }}
                             </span>
                             @if($isQuick)
@@ -162,42 +251,72 @@
                                     📦 Standard Logistics
                                 </span>
                             @endif
-                            <span class="text-slate-400">
-                                Seller: <strong class="text-slate-700 dark:text-slate-300">{{ $fo->seller?->business_name }}</strong> &bull; Store: <strong class="text-slate-700 dark:text-slate-300">{{ $fo->store?->name ?? 'Main Hub' }}</strong>
+                            <span class="text-slate-500">
+                                Seller: <strong class="text-slate-800 dark:text-slate-200">{{ $fo->seller?->business_name ?? 'Vendor' }}</strong>
+                                @if($fo->seller?->legal_name)
+                                    <span class="text-slate-400 font-normal">({{ $fo->seller->legal_name }})</span>
+                                @endif
+                                &bull; Store: <strong class="text-slate-800 dark:text-slate-200">{{ $fo->store?->name ?? 'Main Hub' }}</strong>
                             </span>
                         </div>
 
                         <div class="flex items-center space-x-3">
-                            <span class="text-slate-400 font-mono text-[11px]">Package Status:</span>
-                            <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-400 capitalize">
+                            <span class="text-slate-400 font-mono text-[11px]">Sub-Order Status:</span>
+                            <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold {{ $fo->status === 'cancelled' ? 'bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-400' : 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400' }} capitalize">
                                 {{ str_replace('_', ' ', $fo->status) }}
                             </span>
+
+                            @if($fo->status !== 'cancelled' && $fo->status !== 'delivered')
+                                <button 
+                                    type="button" 
+                                    @click="cancelSubOrderId = {{ $fo->id }}; cancelSubOrderNumber = '{{ $fo->fulfilment_order_number }}'; $dispatch('open-modal', 'cancel-sub-order-modal')"
+                                    class="px-2.5 py-1 rounded-lg text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/50 text-[11px] font-bold transition"
+                                >
+                                    Cancel Package
+                                </button>
+                            @endif
                         </div>
                     </div>
 
                     <!-- Logistics / Shiprocket Ribbon -->
                     @if($shipment && $shipment->awb)
-                        <div class="px-6 py-2.5 bg-slate-50/80 dark:bg-slate-850 border-b border-slate-100 dark:border-slate-800 flex flex-wrap items-center justify-between gap-2 text-xs" x-data="{ copiedAwb: false }">
+                        <div class="px-6 py-3 bg-slate-50/80 dark:bg-slate-850 border-b border-slate-100 dark:border-slate-800 flex flex-wrap items-center justify-between gap-2 text-xs" x-data="{ copiedAwb: false }">
                             <div class="flex items-center space-x-2">
                                 <span class="text-slate-500 font-semibold">🚚 Shiprocket Courier:</span>
                                 <strong class="text-slate-800 dark:text-slate-200">{{ $shipment->courier ?? 'Shiprocket Express' }}</strong>
                                 <span class="text-slate-400">&bull;</span>
                                 <span class="text-slate-500 font-semibold">AWB Tracking:</span>
-                                <span class="font-mono font-bold text-indigo-600">{{ $shipment->awb }}</span>
+                                <span class="font-mono font-bold text-emerald-600">{{ $shipment->awb }}</span>
                                 <button 
                                     type="button" 
                                     @click="navigator.clipboard.writeText('{{ $shipment->awb }}'); copiedAwb = true; setTimeout(() => copiedAwb = false, 2000)"
-                                    class="text-[10px] text-slate-400 hover:text-indigo-600 underline cursor-pointer"
+                                    class="text-[10px] text-slate-400 hover:text-emerald-600 underline cursor-pointer"
                                     x-text="copiedAwb ? 'Copied!' : 'Copy'"
                                 ></button>
                             </div>
                             <div class="flex items-center space-x-3 text-[11px] text-slate-500">
-                                <span>Status: <strong class="text-slate-700 dark:text-slate-300 uppercase">{{ $shipment->status?->value ?? 'Dispatched' }}</strong></span>
+                                <span>Status: <strong class="text-slate-700 dark:text-slate-300 uppercase">{{ $shipment->status?->value ?? $shipment->status ?? 'Dispatched' }}</strong></span>
                                 @if($shipment->label_url)
-                                    <a href="{{ $shipment->label_url }}" target="_blank" class="text-indigo-600 font-bold hover:underline">Download Label</a>
+                                    <a href="{{ $shipment->label_url }}" target="_blank" class="text-emerald-600 font-bold hover:underline">Shipping Label &nearr;</a>
                                 @endif
                             </div>
                         </div>
+
+                        <!-- Tracking Events Timeline (if available) -->
+                        @if($shipment->tracking && $shipment->tracking->isNotEmpty())
+                            <div class="px-6 py-3 bg-slate-100/50 dark:bg-slate-800/30 border-b border-slate-100 dark:border-slate-800 text-xs">
+                                <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">Shipment Milestone Tracking</div>
+                                <div class="flex flex-wrap items-center gap-4">
+                                    @foreach($shipment->tracking->sortByDesc('event_time')->take(3) as $trk)
+                                        <div class="flex items-center space-x-1.5 text-[11px]">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                            <span class="font-semibold text-slate-700 dark:text-slate-200">{{ $trk->status }}</span>
+                                            <span class="text-slate-400 font-mono text-[10px]">({{ $trk->location ?? 'Hub' }}) &bull; {{ $trk->event_time?->format('d M h:i A') ?? $trk->created_at->format('d M h:i A') }}</span>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
+                        @endif
                     @else
                         <div class="px-6 py-2.5 bg-slate-50/50 dark:bg-slate-800/40 border-b border-slate-100 dark:border-slate-800 flex flex-wrap items-center justify-between gap-2 text-xs">
                             <div class="flex items-center space-x-2 text-slate-500">
@@ -215,7 +334,7 @@
                         <table class="w-full text-left text-xs">
                             <thead class="border-b border-slate-100 dark:border-slate-800 text-[10px] uppercase font-bold text-slate-400">
                                 <tr>
-                                    <th class="pb-2">Item</th>
+                                    <th class="pb-2">Product Item</th>
                                     <th class="pb-2">SKU</th>
                                     <th class="pb-2 text-center">Qty</th>
                                     <th class="pb-2 text-right">Price</th>
@@ -225,25 +344,89 @@
                             <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
                                 @foreach($fo->items as $item)
                                     <tr>
-                                        <td class="py-2.5 font-bold text-slate-900 dark:text-white">
-                                            {{ $item->title }}
+                                        <td class="py-3">
+                                            <div class="font-bold text-slate-900 dark:text-white">
+                                                {{ $item->title }}
+                                            </div>
                                             @if($item->variant_name && $item->variant_name !== 'Default')
-                                                <span class="text-[11px] text-slate-400 font-normal">({{ $item->variant_name }})</span>
+                                                <div class="text-[11px] text-slate-400 font-normal">Variant: {{ $item->variant_name }}</div>
                                             @endif
                                         </td>
-                                        <td class="py-2.5 font-mono text-slate-400">{{ $item->sku }}</td>
-                                        <td class="py-2.5 text-center font-bold">{{ $item->qty }}</td>
-                                        <td class="py-2.5 text-right">{{ format_currency((float) $item->price) }}</td>
-                                        <td class="py-2.5 text-right font-bold text-slate-900 dark:text-white">{{ format_currency((float) $item->total) }}</td>
+                                        <td class="py-3 font-mono text-slate-400">{{ $item->sku }}</td>
+                                        <td class="py-3 text-center font-bold">{{ $item->qty }}</td>
+                                        <td class="py-3 text-right">{{ format_currency((float) $item->price) }}</td>
+                                        <td class="py-3 text-right font-bold text-slate-900 dark:text-white">{{ format_currency((float) $item->total) }}</td>
                                     </tr>
                                 @endforeach
                             </tbody>
                         </table>
+
+                        <!-- Sub-order Package Financial Summary -->
+                        <div class="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex flex-wrap items-center justify-between gap-4 text-xs font-medium text-slate-500">
+                            <div>
+                                Subtotal: <strong class="text-slate-900 dark:text-white">{{ format_currency((float) $fo->subtotal) }}</strong>
+                            </div>
+                            <div>
+                                Commission: <strong class="text-slate-900 dark:text-white">{{ format_currency((float) $fo->commission_amount) }}</strong>
+                            </div>
+                            <div>
+                                Delivery Fee: <strong class="text-slate-900 dark:text-white">{{ format_currency((float) $fo->delivery_fee) }}</strong>
+                            </div>
+                            <div class="font-bold text-emerald-600 dark:text-emerald-400">
+                                Seller Payable: {{ format_currency((float) $fo->seller_payable) }}
+                            </div>
+                        </div>
                     </div>
                 </div>
             @endforeach
         </div>
     </div>
+
+    <!-- Returns & Customer RMA Section (if any items have returns) -->
+    @php
+        $orderReturns = $order->fulfilmentOrders->flatMap->items->flatMap->returns;
+    @endphp
+    @if($orderReturns->isNotEmpty())
+        <div class="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-xs space-y-4">
+            <div class="flex items-center justify-between">
+                <div class="text-xs font-black uppercase tracking-wider text-slate-400">Customer Returns &amp; RMA Claims ({{ $orderReturns->count() }})</div>
+            </div>
+
+            <div class="space-y-3">
+                @foreach($orderReturns as $ret)
+                    <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-700/60 flex flex-wrap items-center justify-between gap-4 text-xs">
+                        <div class="space-y-1">
+                            <div class="flex items-center space-x-2">
+                                <span class="font-bold text-slate-900 dark:text-white">RMA #{{ $ret->return_number }}</span>
+                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-400 uppercase">
+                                    {{ $ret->status }}
+                                </span>
+                            </div>
+                            <div class="text-slate-600 dark:text-slate-300">
+                                Reason: <strong>{{ $ret->reason }}</strong> &bull; Amount: <strong class="text-slate-900 dark:text-white">{{ format_currency((float) $ret->refund_amount) }}</strong>
+                            </div>
+                            @if($ret->customer_notes)
+                                <div class="text-[11px] text-slate-400 italic font-mono">
+                                    "{{ $ret->customer_notes }}"
+                                </div>
+                            @endif
+                        </div>
+
+                        <div class="flex items-center space-x-2">
+                            @if(in_array($ret->status, ['requested', 'pending']))
+                                <form method="POST" action="{{ route('admin.orders.approve_return', [$order, $ret]) }}">
+                                    @csrf
+                                    <button type="submit" class="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition">
+                                        Approve Return
+                                    </button>
+                                </form>
+                            @endif
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        </div>
+    @endif
 
     <!-- Complete Audit History Trail -->
     <div class="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-xs space-y-4">
@@ -252,12 +435,12 @@
         <div class="space-y-3">
             @forelse($order->statusHistory()->latest()->get() as $log)
                 <div class="flex items-start space-x-3 p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-700/60 text-xs">
-                    <span class="w-2.5 h-2.5 rounded-full {{ str_contains($log->note, '[ADMIN OVERRIDE]') ? 'bg-rose-500' : 'bg-indigo-500' }} mt-1 shrink-0"></span>
+                    <span class="w-2.5 h-2.5 rounded-full {{ str_contains($log->note, '[ADMIN OVERRIDE]') || str_contains($log->note, 'CANCEL') ? 'bg-rose-500' : 'bg-emerald-500' }} mt-1 shrink-0"></span>
                     <div class="flex-1 space-y-0.5">
                         <div class="flex items-center justify-between font-bold text-slate-900 dark:text-white">
                             <span>
                                 {{ $log->from_status ? ucwords(str_replace('_', ' ', $log->from_status)) . ' → ' : '' }}
-                                <span class="text-indigo-600 dark:text-indigo-400 capitalize">{{ str_replace('_', ' ', $log->to_status) }}</span>
+                                <span class="text-emerald-600 dark:text-emerald-400 capitalize">{{ str_replace('_', ' ', $log->to_status) }}</span>
                             </span>
                             <span class="text-[11px] text-slate-400 font-mono font-normal">{{ $log->created_at->format('d M Y, h:i A') }}</span>
                         </div>
@@ -331,14 +514,14 @@
     <x-modal name="note-modal" size="md">
         <x-slot name="header">
             <div class="flex items-center space-x-2">
-                <span class="text-indigo-500">📝</span>
+                <span class="text-emerald-500">📝</span>
                 <h3 class="text-base font-bold text-slate-900 dark:text-white">Add Internal Administrative Note</h3>
             </div>
         </x-slot>
 
         <form id="addNoteForm" method="POST" action="{{ route('admin.orders.add_note', $order) }}" class="space-y-4">
             @csrf
-            <p class="text-xs text-slate-500">Internal notes are visible exclusively to {{ setting('name', 'ALLZONE') }} admins and support staff.</p>
+            <p class="text-xs text-slate-500">Internal notes are visible exclusively to {{ setting('name', 'ALLZONE') }} admins and staff.</p>
 
             <div>
                 <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Note Details</label>
@@ -347,7 +530,7 @@
                     required 
                     rows="4" 
                     placeholder="E.g., Customer phoned regarding dispatch timeline..." 
-                    class="w-full text-xs font-medium p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
+                    class="w-full text-xs font-medium p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500"
                 ></textarea>
             </div>
         </form>
@@ -363,13 +546,152 @@
             <button 
                 form="addNoteForm"
                 type="submit" 
-                class="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-xs transition"
+                class="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs transition"
             >
                 Save Note
             </button>
         </x-slot>
     </x-modal>
 
+    <!-- Cancel Entire Order Modal -->
+    <x-modal name="cancel-order-modal" size="md">
+        <x-slot name="header">
+            <div class="flex items-center space-x-2">
+                <span class="text-rose-600">❌</span>
+                <h3 class="text-base font-bold text-slate-900 dark:text-white">Cancel Entire Order</h3>
+            </div>
+        </x-slot>
+
+        <form id="cancelOrderForm" method="POST" action="{{ route('admin.orders.cancel', $order) }}" class="space-y-4">
+            @csrf
+            <p class="text-xs text-rose-600 dark:text-rose-400 font-semibold">
+                Warning: This will abort the master order and all undelivered vendor sub-order packages.
+            </p>
+
+            <div>
+                <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Mandatory Cancellation Reason</label>
+                <textarea 
+                    name="reason" 
+                    required 
+                    rows="3" 
+                    placeholder="Reason for order cancellation (e.g., customer request, payment issue, fraud prevention)..." 
+                    class="w-full text-xs font-medium p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-rose-500"
+                ></textarea>
+            </div>
+        </form>
+
+        <x-slot name="footer">
+            <button 
+                type="button" 
+                @click="$dispatch('close-modal', 'cancel-order-modal')" 
+                class="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-bold transition"
+            >
+                Keep Order
+            </button>
+            <button 
+                form="cancelOrderForm"
+                type="submit" 
+                class="px-5 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-xs transition"
+            >
+                Confirm Cancellation
+            </button>
+        </x-slot>
+    </x-modal>
+
+    <!-- Cancel Sub-Order Package Modal -->
+    <x-modal name="cancel-sub-order-modal" size="md">
+        <x-slot name="header">
+            <div class="flex items-center space-x-2">
+                <span class="text-rose-600">📦❌</span>
+                <h3 class="text-base font-bold text-slate-900 dark:text-white">
+                    Cancel Package <span x-text="'#' + cancelSubOrderNumber"></span>
+                </h3>
+            </div>
+        </x-slot>
+
+        <form 
+            id="cancelSubOrderForm" 
+            method="POST" 
+            :action="'{{ url('admin/orders/fulfilment-orders') }}/' + cancelSubOrderId + '/cancel'" 
+            class="space-y-4"
+        >
+            @csrf
+            <p class="text-xs text-slate-500">
+                Cancel only this vendor's consignment package. Other merchant packages in this order will remain active.
+            </p>
+
+            <div>
+                <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Mandatory Cancellation Reason</label>
+                <textarea 
+                    name="reason" 
+                    required 
+                    rows="3" 
+                    placeholder="Reason for package cancellation..." 
+                    class="w-full text-xs font-medium p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-rose-500"
+                ></textarea>
+            </div>
+        </form>
+
+        <x-slot name="footer">
+            <button 
+                type="button" 
+                @click="$dispatch('close-modal', 'cancel-sub-order-modal')" 
+                class="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-bold transition"
+            >
+                Close
+            </button>
+            <button 
+                form="cancelSubOrderForm"
+                type="submit" 
+                class="px-5 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-xs transition"
+            >
+                Cancel Package
+            </button>
+        </x-slot>
+    </x-modal>
+
+    <!-- Dispute Resolution Modal -->
+    <x-modal name="dispute-modal" size="md">
+        <x-slot name="header">
+            <div class="flex items-center space-x-2">
+                <span class="text-amber-500">⚖️</span>
+                <h3 class="text-base font-bold text-slate-900 dark:text-white">Order Dispute &amp; Exception Resolution</h3>
+            </div>
+        </x-slot>
+
+        <form id="resolveDisputeForm" method="POST" action="{{ route('admin.orders.resolve_dispute', $order) }}" class="space-y-4">
+            @csrf
+            <p class="text-xs text-slate-500">Record administrative findings, mediation between merchant and customer, or concession decisions.</p>
+
+            <div>
+                <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Resolution Summary</label>
+                <textarea 
+                    name="resolution" 
+                    required 
+                    rows="4" 
+                    placeholder="Record the dispute details, buyer agreement, and agreed remedy..." 
+                    class="w-full text-xs font-medium p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-amber-500"
+                ></textarea>
+            </div>
+        </form>
+
+        <x-slot name="footer">
+            <button 
+                type="button" 
+                @click="$dispatch('close-modal', 'dispute-modal')" 
+                class="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-bold transition"
+            >
+                Cancel
+            </button>
+            <button 
+                form="resolveDisputeForm"
+                type="submit" 
+                class="px-5 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold shadow-xs transition"
+            >
+                Record Resolution
+            </button>
+        </x-slot>
+    </x-modal>
 
 </div>
 @endsection

@@ -1,282 +1,619 @@
-@extends('layouts.dashboard', ['portal' => 'seller', 'title' => 'Returns & RTO Orders - Meesho Supplier Hub'])
+@extends('layouts.dashboard', ['portal' => 'seller', 'title' => 'Returns & RTO Orders - ALLZONE Supplier Hub'])
 
 @section('content')
-<div class="space-y-5 max-w-7xl mx-auto pb-12" x-data="{
-    mainTab: '{{ request('view', 'overview') }}', // 'overview', 'tracking', 'claim'
-    trackingSubTab: 'in_transit'
+<div class="space-y-6" x-data="{
+    activeTab: '{{ $tab ?? 'overview' }}'
 }">
-    <!-- Top Header & Search Bar (Screenshot 4) -->
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <h1 class="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
-            Return/RTO Orders
-        </h1>
 
-        <div class="flex items-center space-x-3 text-xs">
-            <a href="#" class="flex items-center space-x-1.5 text-slate-700 font-semibold hover:text-slate-900">
-                <span class="text-rose-600">▶</span>
-                <span>How it works?</span>
-            </a>
-            <div class="relative">
-                <input 
-                    type="text" 
-                    placeholder="Search by Order ID, SKU or AWB Number" 
-                    class="py-1.5 pl-3 pr-8 bg-white border border-slate-300 rounded-lg text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-indigo-500 w-64"
-                />
-                <svg class="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-            </div>
-        </div>
-    </div>
+    <!-- Page Header & Action Bar -->
+    <x-page-header 
+        title="Returns & RTO Management" 
+        subtitle="Track customer returns, courier non-delivery returns (RTO), reverse shipping costs, and product quality trends."
+        :breadcrumbs="['Seller Studio' => route('seller.dashboard'), 'Returns & RTO' => '#']"
+    >
+        <x-slot name="badge">
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-800 dark:bg-amber-950/60 dark:text-amber-400 border border-amber-200 dark:border-amber-800">
+                <span class="w-2 h-2 rounded-full bg-amber-500 mr-1.5"></span>
+                Reverse Logistics &amp; RMA
+            </span>
+        </x-slot>
 
-    <!-- Main Navigation Tabs: Overview, Return Tracking, Claim Tracking -->
-    <div class="border-b border-slate-200 flex items-center space-x-8 text-xs font-bold">
-        <a 
-            href="{{ route('seller.returns.index', ['view' => 'overview']) }}"
-            class="pb-3 border-b-2 transition {{ request('view', 'overview') === 'overview' ? 'border-[#53389e] text-[#53389e] font-black' : 'border-transparent text-slate-500 hover:text-slate-800' }}"
-        >
-            Overview
-        </a>
-        <a 
-            href="{{ route('seller.returns.index', ['view' => 'tracking']) }}"
-            class="pb-3 border-b-2 transition {{ request('view') === 'tracking' ? 'border-[#53389e] text-[#53389e] font-black' : 'border-transparent text-slate-500 hover:text-slate-800' }}"
-        >
-            Return Tracking
-        </a>
-        <a 
-            href="{{ route('seller.claims.index') }}"
-            class="pb-3 border-b-2 transition {{ request('view') === 'claim' ? 'border-[#53389e] text-[#53389e] font-black' : 'border-transparent text-slate-500 hover:text-slate-800' }}"
-        >
-            Claim Tracking
-        </a>
-    </div>
-
-    @if(request('view') === 'tracking')
-        <!-- RETURN TRACKING VIEW (Screenshot 5) -->
-        <div class="bg-white rounded-xl border border-slate-200/90 shadow-2xs overflow-hidden">
-            <!-- Tracking Sub-tabs -->
-            <div class="flex items-center space-x-2 border-b border-slate-200 px-4 pt-2 overflow-x-auto text-xs font-bold scrollbar-none">
-                @foreach(['In transit', 'Out for Delivery', 'Delivered', 'Lost', 'No Return No Charge', 'Disposed', 'Return Partner Rating'] as $sub)
-                    <button 
-                        @click="trackingSubTab = '{{ Str::snake($sub) }}'" 
-                        :class="trackingSubTab === '{{ Str::snake($sub) }}' ? 'border-[#53389e] text-[#53389e] font-black' : 'border-transparent text-slate-500 hover:text-slate-800'"
-                        class="py-3 px-4 border-b-2 transition whitespace-nowrap"
-                    >
-                        {{ $sub }}
-                        @if($sub === 'No Return No Charge' || $sub === 'Return Partner Rating')
-                            <span class="ml-1 px-1.5 py-0.2 rounded text-[9px] font-black uppercase bg-[#d63384] text-white">NEW</span>
-                        @endif
-                    </button>
-                @endforeach
-            </div>
-
-            <!-- Tracking Filters Bar -->
-            <div class="p-3.5 bg-slate-50/50 border-b border-slate-200 flex flex-wrap items-center justify-between gap-3 text-xs">
-                <div class="flex flex-wrap items-center gap-2">
-                    <span class="text-slate-500 font-semibold text-[11px]">Filter by:</span>
-                    <select class="py-1.5 px-3 bg-white border border-slate-300 rounded-lg text-xs font-medium text-slate-700">
-                        <option>Return Created</option>
-                    </select>
-                    <select class="py-1.5 px-3 bg-white border border-slate-300 rounded-lg text-xs font-medium text-slate-700">
-                        <option>Category</option>
-                    </select>
-                    <select class="py-1.5 px-3 bg-white border border-slate-300 rounded-lg text-xs font-medium text-slate-700">
-                        <option>Expected Delivery Date</option>
-                    </select>
-                    <select class="py-1.5 px-3 bg-white border border-slate-300 rounded-lg text-xs font-medium text-slate-700">
-                        <option>All Filters</option>
-                    </select>
-                </div>
-                <div class="text-xs font-semibold text-slate-500">
-                    🗐 0/0 files ready
-                </div>
-            </div>
-
-            <!-- In-Transit Tracking Table (Matching Screenshot 5) -->
-            <div class="overflow-x-auto">
-                <table class="w-full text-left text-xs">
-                    <thead class="bg-slate-50 text-slate-500 uppercase font-semibold text-[10px] border-b border-slate-200">
-                        <tr>
-                            <th class="p-3">Product Details</th>
-                            <th class="p-3">Suborder ID</th>
-                            <th class="p-3">Return Reason</th>
-                            <th class="p-3">Return Shipping Fee</th>
-                            <th class="p-3">Created/Picked Up Date</th>
-                            <th class="p-3">Expected Delivery</th>
-                            <th class="p-3">AWB Number</th>
-                            <th class="p-3 text-right">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-slate-100">
-                        <!-- Mock row 1 -->
-                        <tr class="hover:bg-slate-50 transition">
-                            <td class="p-3">
-                                <div class="font-bold text-slate-900">Kids Remote Control Sports Car Toy with 27MHz RC Controller White</div>
-                                <div class="text-[10px] text-slate-500">SKU ID: 1011152963 &bull; Free Size</div>
-                            </td>
-                            <td class="p-3 font-mono text-[11px] text-slate-600">351309845164_1</td>
-                            <td class="p-3 text-slate-400">N/A</td>
-                            <td class="p-3 font-bold text-slate-800">₹0 <span class="block text-[9px] text-purple-700 bg-purple-50 px-1 rounded w-max mt-0.5">Courier Return (RTO)</span></td>
-                            <td class="p-3 text-slate-700">16 Nov'26</td>
-                            <td class="p-3 text-emerald-700 font-semibold">25 Dec'26 <span class="text-[10px] block">🚚 On time</span></td>
-                            <td class="p-3">
-                                <div class="flex items-center space-x-1 text-indigo-700 font-mono font-bold">
-                                    <span>📍</span>
-                                    <span>VL0086067967542</span>
-                                </div>
-                                <span class="px-1.5 py-0.2 rounded bg-slate-200 text-slate-700 text-[10px] font-semibold mt-1 inline-block">Valmo</span>
-                            </td>
-                            <td class="p-3 text-right">
-                                <button type="button" class="px-3 py-1.5 border border-slate-300 rounded font-bold text-xs hover:bg-slate-50">View Details</button>
-                            </td>
-                        </tr>
-                        <!-- Mock row 2 -->
-                        <tr class="hover:bg-slate-50 transition">
-                            <td class="p-3">
-                                <div class="font-bold text-slate-900">Gyro Gun Launcher Toy Set with 4 Flying Discs &amp; 2 Light-Up Spinning Tops</div>
-                                <div class="text-[10px] text-slate-500">SKU ID: OX GU UNO 26 &bull; Free Size</div>
-                            </td>
-                            <td class="p-3 font-mono text-[11px] text-slate-600">350275349202_1</td>
-                            <td class="p-3 text-slate-400">N/A</td>
-                            <td class="p-3 font-bold text-slate-800">₹0 <span class="block text-[9px] text-purple-700 bg-purple-50 px-1 rounded w-max mt-0.5">Courier Return (RTO)</span></td>
-                            <td class="p-3 text-slate-700">13 Nov'26</td>
-                            <td class="p-3 text-emerald-700 font-semibold">22 Dec'26 <span class="text-[10px] block">🚚 On time</span></td>
-                            <td class="p-3">
-                                <div class="flex items-center space-x-1 text-indigo-700 font-mono font-bold">
-                                    <span>📍</span>
-                                    <span>VL0086043229645</span>
-                                </div>
-                                <span class="px-1.5 py-0.2 rounded bg-slate-200 text-slate-700 text-[10px] font-semibold mt-1 inline-block">Valmo</span>
-                            </td>
-                            <td class="p-3 text-right">
-                                <button type="button" class="px-3 py-1.5 border border-slate-300 rounded font-bold text-xs hover:bg-slate-50">View Details</button>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-    @else
-        <!-- OVERVIEW VIEW (Screenshot 4) -->
-        <div class="bg-white rounded-xl border border-slate-200/90 p-5 shadow-2xs">
-            <div class="flex items-center justify-between mb-4">
-                <div class="flex items-center space-x-3">
-                    <h2 class="text-sm font-bold text-slate-900">Summary</h2>
-                    <span class="text-xs text-slate-400">(01 Oct'26 - 28 Oct'26)</span>
-                    <select class="py-1 px-2 border border-slate-200 rounded text-xs font-semibold text-slate-700">
-                        <option>Last 1 Month</option>
-                    </select>
-                </div>
-                <a href="#" class="text-xs font-bold text-[#53389e] flex items-center space-x-1 hover:underline">
-                    <span>📈</span>
-                    <span>View Trend</span>
+        <x-slot name="actions">
+            <div class="flex items-center gap-2">
+                <a 
+                    href="{{ route('seller.returns.export', ['tab' => $tab ?? 'overview']) }}" 
+                    class="px-3.5 py-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:text-indigo-600 text-xs font-bold transition shadow-2xs flex items-center gap-1.5"
+                >
+                    <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                    <span>Export {{ $tab === 'rto' ? 'RTO' : 'Returns' }} (CSV)</span>
+                </a>
+                <a 
+                    href="{{ route('seller.claims.index') }}" 
+                    class="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-white dark:text-slate-900 text-white text-xs font-bold transition shadow-2xs"
+                >
+                    Claims Console &rarr;
                 </a>
             </div>
+        </x-slot>
+    </x-page-header>
 
-            <!-- Summary KPI Metric Cards (Screenshot 4) -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 p-4 rounded-xl border border-slate-150 bg-slate-50/40">
-                <!-- Customer Return -->
-                <div>
-                    <div class="text-xs text-slate-500 font-medium">Customer Return</div>
-                    <div class="text-[11px] text-slate-400">Return Rate</div>
-                    <div class="flex items-baseline space-x-2 my-1">
-                        <span class="text-2xl font-black text-slate-900">40.00%</span>
-                        <span class="text-xs font-bold text-emerald-600">&blacktriangledown; 2.86%</span>
+    <!-- 3 Main Tabs: Return Tracking, Overview, RTO Tracking -->
+    <div class="border-b border-slate-200 dark:border-slate-800 flex items-center space-x-6 text-xs font-bold">
+        <a 
+            href="{{ route('seller.returns.index', ['tab' => 'returns']) }}"
+            class="pb-3 border-b-2 transition flex items-center gap-1.5 {{ in_array($tab, ['returns', 'tracking']) ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400 font-black' : 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200' }}"
+        >
+            <span>📦 Return Tracking</span>
+            @if(($metrics['pending_approval'] ?? 0) > 0)
+                <span class="px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-400">
+                    {{ $metrics['pending_approval'] }}
+                </span>
+            @endif
+        </a>
+        <a 
+            href="{{ route('seller.returns.index', ['tab' => 'overview']) }}"
+            class="pb-3 border-b-2 transition flex items-center gap-1.5 {{ $tab === 'overview' ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400 font-black' : 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200' }}"
+        >
+            <span>📊 Overview &amp; Trends</span>
+        </a>
+        <a 
+            href="{{ route('seller.returns.index', ['tab' => 'rto']) }}"
+            class="pb-3 border-b-2 transition flex items-center gap-1.5 {{ $tab === 'rto' ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400 font-black' : 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200' }}"
+        >
+            <span>🚚 RTO Tracking</span>
+            @if(($metrics['courier_rto'] ?? 0) > 0)
+                <span class="px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-400">
+                    {{ $metrics['courier_rto'] }}
+                </span>
+            @endif
+        </a>
+    </div>
+
+    @if(($tab ?? 'overview') === 'overview')
+        <!-- OVERVIEW TAB -->
+
+        <!-- KPI Metric Cards Grid -->
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5">
+            <!-- Customer Return Rate -->
+            <div class="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-slate-200 dark:border-slate-800 shadow-2xs">
+                <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Customer Return Rate</div>
+                <div class="text-2xl font-black text-rose-600 dark:text-rose-400 mt-1">{{ $metrics['customer_return_rate'] }}%</div>
+                <div class="text-[10px] text-slate-400 mt-0.5">{{ number_format($metrics['customer_returns']) }} returned parcels</div>
+            </div>
+
+            <!-- Courier RTO Rate -->
+            <div class="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-slate-200 dark:border-slate-800 shadow-2xs">
+                <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Courier RTO Rate</div>
+                <div class="text-2xl font-black text-amber-600 mt-1">{{ $metrics['courier_rto_rate'] }}%</div>
+                <div class="text-[10px] text-slate-400 mt-0.5">{{ number_format($metrics['courier_rto']) }} non-delivery returns</div>
+            </div>
+
+            <!-- Delivered Orders -->
+            <div class="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-slate-200 dark:border-slate-800 shadow-2xs">
+                <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Delivered Orders</div>
+                <div class="text-2xl font-black text-emerald-600 mt-1">{{ number_format($metrics['delivered_orders']) }}</div>
+                <div class="text-[10px] text-emerald-600 font-semibold mt-0.5">Retained sales base</div>
+            </div>
+
+            <!-- Total Returns -->
+            <div class="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-slate-200 dark:border-slate-800 shadow-2xs">
+                <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Return Orders</div>
+                <div class="text-2xl font-black text-slate-900 dark:text-white mt-1">{{ number_format($metrics['total_returns']) }}</div>
+                <div class="text-[10px] text-slate-400 mt-0.5">{{ $metrics['pending_approval'] }} awaiting review</div>
+            </div>
+
+            <!-- Reverse Shipping Costs -->
+            <div class="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-slate-200 dark:border-slate-800 shadow-2xs">
+                <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Reverse Freight Cost</div>
+                <div class="text-2xl font-black text-indigo-600 dark:text-indigo-400 mt-1">{{ format_currency($metrics['reverse_shipping_costs']) }}</div>
+                <div class="text-[10px] text-slate-400 mt-0.5">Carrier reverse charges</div>
+            </div>
+        </div>
+
+        <!-- Return Trends & RTO Trends Charts -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Customer Return Trends Chart -->
+            <div class="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-2xs space-y-3">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <div class="text-xs font-bold uppercase tracking-wider text-slate-400">Trend Analysis</div>
+                        <h3 class="text-sm font-black text-slate-900 dark:text-white mt-0.5">Customer Return Requests (14 Days)</h3>
                     </div>
-                    <div class="text-[11px] text-slate-400">16 orders returned out of 40 delivered</div>
+                    <span class="text-xs font-bold text-rose-600 bg-rose-50 dark:bg-rose-950/40 px-2.5 py-1 rounded-full">
+                        {{ array_sum($trends['returns']) }} Total
+                    </span>
                 </div>
 
-                <!-- Reverse Shipping Cost -->
-                <div>
-                    <div class="text-xs text-slate-500 font-medium">Average Reverse Shipping Cost</div>
-                    <div class="flex items-baseline space-x-2 my-1">
-                        <span class="text-2xl font-black text-slate-900">₹ 158</span>
-                        <span class="text-xs font-bold text-rose-500">&blacktriangle; 9.72%</span>
+                <div class="pt-3">
+                    @php $maxRet = max(1, ...$trends['returns']); @endphp
+                    <div class="h-36 flex items-end gap-1.5 sm:gap-2">
+                        @foreach($trends['labels'] as $idx => $label)
+                            @php
+                                $val = $trends['returns'][$idx] ?? 0;
+                                $barH = round(($val / $maxRet) * 110);
+                            @endphp
+                            <div class="flex-1 flex flex-col items-center gap-1 group relative">
+                                <div class="absolute -top-7 bg-slate-900 text-white text-[9px] font-bold py-0.5 px-1.5 rounded opacity-0 group-hover:opacity-100 transition whitespace-nowrap pointer-events-none">
+                                    {{ $label }}: {{ $val }}
+                                </div>
+                                <div class="w-full bg-rose-500 rounded-t-sm" style="height: {{ max(4, $barH) }}px"></div>
+                                <span class="text-[8px] font-mono text-slate-400 truncate max-w-full">{{ $label }}</span>
+                            </div>
+                        @endforeach
                     </div>
-                    <div class="text-[11px] text-slate-400">For 16 customer returned orders</div>
+                </div>
+            </div>
+
+            <!-- Courier RTO Trends Chart -->
+            <div class="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-2xs space-y-3">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <div class="text-xs font-bold uppercase tracking-wider text-slate-400">Courier Non-Delivery</div>
+                        <h3 class="text-sm font-black text-slate-900 dark:text-white mt-0.5">Courier RTO Initiations (14 Days)</h3>
+                    </div>
+                    <span class="text-xs font-bold text-amber-600 bg-amber-50 dark:bg-amber-950/40 px-2.5 py-1 rounded-full">
+                        {{ array_sum($trends['rto']) }} Total
+                    </span>
                 </div>
 
-                <!-- Courier Return RTO Rate -->
-                <div>
-                    <div class="text-xs text-slate-500 font-medium">Courier Return (RTO) Rate</div>
-                    <div class="flex items-baseline space-x-2 my-1">
-                        <span class="text-2xl font-black text-slate-900">37.50%</span>
-                        <span class="text-xs font-bold text-emerald-600">&blacktriangledown; 8.65%</span>
-                    </div>
-                    <div class="text-[11px] text-slate-400">24 RTO orders out of 64 dispatched</div>
-                </div>
-
-                <!-- Dual Pricing - Customer Return Rate -->
-                <div>
-                    <div class="text-xs text-slate-500 font-medium">Dual Pricing - Customer Return Rate</div>
-                    <div class="flex items-center space-x-4 mt-2">
-                        <div>
-                            <div class="text-[10px] text-slate-400">Wrong/Defective Return Price</div>
-                            <div class="text-sm font-extrabold text-emerald-600">21.43%</div>
-                        </div>
-                        <div>
-                            <div class="text-[10px] text-slate-400">Meesho Price</div>
-                            <div class="text-sm font-extrabold text-rose-600">48.00%</div>
-                        </div>
+                <div class="pt-3">
+                    @php $maxRto = max(1, ...$trends['rto']); @endphp
+                    <div class="h-36 flex items-end gap-1.5 sm:gap-2">
+                        @foreach($trends['labels'] as $idx => $label)
+                            @php
+                                $val = $trends['rto'][$idx] ?? 0;
+                                $barH = round(($val / $maxRto) * 110);
+                            @endphp
+                            <div class="flex-1 flex flex-col items-center gap-1 group relative">
+                                <div class="absolute -top-7 bg-slate-900 text-white text-[9px] font-bold py-0.5 px-1.5 rounded opacity-0 group-hover:opacity-100 transition whitespace-nowrap pointer-events-none">
+                                    {{ $label }}: {{ $val }}
+                                </div>
+                                <div class="w-full bg-amber-500 rounded-t-sm" style="height: {{ max(4, $barH) }}px"></div>
+                                <span class="text-[8px] font-mono text-slate-400 truncate max-w-full">{{ $label }}</span>
+                            </div>
+                        @endforeach
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Product Performance Table (Screenshot 4 Bottom) -->
-        <div class="bg-white rounded-xl border border-slate-200/90 shadow-2xs overflow-hidden">
-            <div class="p-4 border-b border-slate-200 flex flex-wrap items-center justify-between gap-3 text-xs">
+        <!-- Product Performance Table -->
+        <div class="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xs overflow-hidden">
+            <div class="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
                 <div>
-                    <h3 class="text-sm font-bold text-slate-900">Product Performance</h3>
-                    <span class="text-[11px] text-slate-400">(01 Oct'26 - 28 Oct'26)</span>
-                </div>
-                <div class="flex items-center space-x-3">
-                    <select class="py-1 px-3 border border-slate-300 rounded text-xs text-slate-700">
-                        <option>Most Recent Order</option>
-                    </select>
+                    <h3 class="font-black text-sm text-slate-900 dark:text-white">Product-Wise Return Performance</h3>
+                    <p class="text-xs text-slate-400">Delivered orders, return rates, courier RTO percentage, and top reported return reasons.</p>
                 </div>
             </div>
 
             <div class="overflow-x-auto">
                 <table class="w-full text-left text-xs">
-                    <thead class="bg-slate-50 text-slate-500 uppercase font-semibold text-[10px] border-b border-slate-200">
+                    <thead class="bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800 font-bold uppercase text-slate-400 text-[10px]">
                         <tr>
-                            <th class="p-3">Product Details</th>
-                            <th class="p-3">Orders Delivered</th>
-                            <th class="p-3">Customer Return</th>
-                            <th class="p-3">Action</th>
-                            <th class="p-3">What Changed ⓘ</th>
+                            <th class="py-3 px-4">Product Details</th>
+                            <th class="py-3 px-4">Delivered</th>
+                            <th class="py-3 px-4">Customer Returns</th>
+                            <th class="py-3 px-4">Return Rate</th>
+                            <th class="py-3 px-4">Courier RTO</th>
+                            <th class="py-3 px-4">Top Return Reasons</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-slate-100">
-                        @php
-                            $items = [
-                                ['name' => 'Kids Remote Control Sports Car Toy with 27MHz RC Controller White', 'pid' => '1021922155', 'cat' => 'Automotive Accessories', 'del' => 1, 'ret' => '0.00%', 'changed' => '₹78.5 Saved on return fees compared to last month', 'positive' => true],
-                                ['name' => 'Mini RC Helicopter for Kids - Easy to Fly (BLUE)', 'pid' => '1047853505', 'cat' => 'Kids', 'del' => 5, 'ret' => '40.00% (2 Returns)', 'changed' => '40.00% Returns increased compared to last month', 'positive' => false],
-                                ['name' => 'OXMORA "RC Stunt Car with 360° Rotation & Off-Road Wheels', 'pid' => '1060950389', 'cat' => 'Kids', 'del' => 7, 'ret' => '42.86% (3 Returns)', 'changed' => '42.86% Returns increased compared to last month', 'positive' => false],
-                                ['name' => 'Dancing Cactus, Talking Cactus Toy, Repeats What You Say', 'pid' => '1068980142', 'cat' => 'Kids', 'del' => 14, 'ret' => '42.86% (6 Returns)', 'changed' => '42.86% Returns increased compared to last month', 'positive' => false],
-                            ];
-                        @endphp
-                        @foreach($items as $row)
-                            <tr class="hover:bg-slate-50 transition">
-                                <td class="p-3">
-                                    <div class="font-bold text-slate-900">{{ $row['name'] }}</div>
-                                    <div class="text-[10px] text-slate-500">Product ID: {{ $row['pid'] }} &bull; Category: {{ $row['cat'] }}</div>
-                                    <span class="inline-block mt-1 px-1.5 py-0.2 rounded bg-purple-50 text-[9px] font-bold text-purple-700 border border-purple-200">Dual Pricing Enabled</span>
+                    <tbody class="divide-y divide-slate-100 dark:divide-slate-800 text-slate-700 dark:text-slate-300">
+                        @forelse($productPerformance as $prod)
+                            <tr class="hover:bg-slate-50/70 dark:hover:bg-slate-800/50 transition">
+                                <td class="py-3.5 px-4">
+                                    <div class="flex items-center gap-3">
+                                        @if(!empty($prod['thumbnail']))
+                                            <div class="w-9 h-9 rounded-xl bg-slate-100 border border-slate-200 overflow-hidden shrink-0">
+                                                <img src="{{ \Illuminate\Support\Facades\Storage::url($prod['thumbnail']) }}" alt="{{ $prod['title'] }}" class="w-full h-full object-cover">
+                                            </div>
+                                        @else
+                                            <div class="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-xs shrink-0">
+                                                🛍️
+                                            </div>
+                                        @endif
+                                        <div>
+                                            <div class="font-bold text-slate-900 dark:text-white">{{ $prod['title'] }}</div>
+                                            <div class="text-[10px] text-slate-400 font-mono mt-0.5">SKU: {{ $prod['sku'] }}</div>
+                                        </div>
+                                    </div>
                                 </td>
-                                <td class="p-3 font-bold text-slate-800">{{ $row['del'] }}</td>
-                                <td class="p-3 font-bold {{ $row['positive'] ? 'text-slate-700' : 'text-rose-600' }}">{{ $row['ret'] }}</td>
-                                <td class="p-3">
-                                    <button type="button" class="px-3 py-1 border border-slate-300 rounded font-bold text-xs hover:bg-slate-50">View Details</button>
+                                <td class="py-3.5 px-4 font-bold text-slate-900 dark:text-white">
+                                    {{ number_format($prod['delivered_orders']) }}
                                 </td>
-                                <td class="p-3 font-medium {{ $row['positive'] ? 'text-emerald-700' : 'text-rose-600' }}">
-                                    {{ $row['changed'] }}
+                                <td class="py-3.5 px-4 font-bold text-rose-600 dark:text-rose-400">
+                                    {{ number_format($prod['customer_returns']) }}
+                                </td>
+                                <td class="py-3.5 px-4 whitespace-nowrap">
+                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold {{ $prod['customer_return_rate'] > 15 ? 'bg-rose-100 text-rose-800' : 'bg-emerald-100 text-emerald-800' }}">
+                                        {{ $prod['customer_return_rate'] }}%
+                                    </span>
+                                </td>
+                                <td class="py-3.5 px-4 whitespace-nowrap">
+                                    <span class="font-bold text-amber-600">{{ $prod['rto_count'] }}</span>
+                                    <span class="text-[10px] text-slate-400">({{ $prod['rto_rate'] }}%)</span>
+                                </td>
+                                <td class="py-3.5 px-4 text-slate-500 max-w-xs truncate">
+                                    {{ $prod['reasons'] }}
                                 </td>
                             </tr>
-                        @endforeach
+                        @empty
+                            <tr>
+                                <td colspan="6" class="py-10 text-center text-slate-400">
+                                    <div class="text-2xl mb-1">📦</div>
+                                    <div class="font-bold text-slate-700 dark:text-slate-300">No product return metrics available</div>
+                                    <div class="text-xs text-slate-400 mt-0.5">Performance metrics will compute dynamically once return requests occur.</div>
+                                </td>
+                            </tr>
+                        @endforelse
                     </tbody>
                 </table>
             </div>
         </div>
+
+    @elseif(in_array($tab, ['returns', 'tracking']))
+        <!-- RETURN TRACKING TAB -->
+        <div class="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xs overflow-hidden space-y-4">
+            <!-- Toolbar & Status Filters -->
+            <div class="p-4 border-b border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3">
+                <div class="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 text-xs font-bold">
+                    @php
+                        $subStatuses = [
+                            'all' => 'All Returns',
+                            'requested' => 'Pending Review',
+                            'approved' => 'Approved',
+                            'in_transit' => 'In Transit',
+                            'received' => 'Received at Hub',
+                            'qc_passed' => 'QC Passed',
+                            'refunded' => 'Refunded',
+                            'rejected' => 'Rejected',
+                        ];
+                    @endphp
+                    @foreach($subStatuses as $stVal => $stLabel)
+                        <a 
+                            href="{{ route('seller.returns.index', ['tab' => 'returns', 'status' => $stVal]) }}" 
+                            class="px-3 py-1.5 rounded-xl whitespace-nowrap transition {{ ($status ?? 'all') === $stVal ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-2xs' : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white' }}"
+                        >
+                            {{ $stLabel }}
+                        </a>
+                    @endforeach
+                </div>
+
+                <!-- Search Input -->
+                <form method="GET" action="{{ route('seller.returns.index') }}" class="relative w-full sm:w-64">
+                    <input type="hidden" name="tab" value="returns">
+                    <input type="hidden" name="status" value="{{ $status ?? 'all' }}">
+                    <input 
+                        type="text" 
+                        name="search" 
+                        value="{{ $search }}" 
+                        placeholder="Search Return #, Order #, SKU..." 
+                        class="w-full text-xs py-1.5 pl-8 pr-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                    >
+                    <svg class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                </form>
+            </div>
+
+            <!-- Table of Customer Return Records -->
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs">
+                    <thead class="bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800 font-bold uppercase text-slate-400 text-[10px]">
+                        <tr>
+                            <th class="py-3 px-4">Return ID / Order</th>
+                            <th class="py-3 px-4">Product Details</th>
+                            <th class="py-3 px-4">Return Reason</th>
+                            <th class="py-3 px-4">Tracking Waybill</th>
+                            <th class="py-3 px-4">Status &amp; QC</th>
+                            <th class="py-3 px-4">Refund Status</th>
+                            <th class="py-3 px-4 text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 dark:divide-slate-800 text-slate-700 dark:text-slate-300">
+                        @forelse($returns as $ret)
+                            @php
+                                $item = $ret->orderItem;
+                                $fo = $item?->fulfilmentOrder;
+                                $order = $fo?->order;
+                            @endphp
+                            <tr class="hover:bg-slate-50/70 dark:hover:bg-slate-800/50 transition">
+                                <!-- Return ID & Order -->
+                                <td class="py-3.5 px-4 whitespace-nowrap">
+                                    <div class="font-bold text-slate-900 dark:text-white">
+                                        <a href="{{ route('seller.returns.show', $ret) }}" class="hover:text-indigo-600 transition">
+                                            #{{ $ret->return_number }}
+                                        </a>
+                                    </div>
+                                    <div class="text-[10px] font-mono text-slate-400 mt-0.5">
+                                        Order: #{{ $order?->order_number ?? 'N/A' }}
+                                    </div>
+                                    @if($fo)
+                                        <div class="text-[10px] font-mono text-slate-500 mt-0.5">
+                                            Pkg: #{{ $fo->fulfilment_order_number }}
+                                        </div>
+                                    @endif
+                                    <div class="text-[10px] text-slate-400 mt-0.5">
+                                        {{ $ret->created_at->format('d M Y') }}
+                                    </div>
+                                </td>
+
+                                <!-- Product Details & SKU -->
+                                <td class="py-3.5 px-4 max-w-xs">
+                                    <div class="font-bold text-slate-900 dark:text-white truncate" title="{{ $item?->title }}">
+                                        {{ $item?->title ?? 'Marketplace Item' }}
+                                    </div>
+                                    <div class="text-[10px] text-slate-500 flex items-center gap-1 mt-0.5">
+                                        <span class="font-mono">SKU: {{ $item?->sku ?? $item?->variant?->sku ?? 'N/A' }}</span>
+                                        <span>&bull; Qty: <strong>{{ $item?->qty ?? 1 }}</strong></span>
+                                    </div>
+                                </td>
+
+                                <!-- Return Reason -->
+                                <td class="py-3.5 px-4 max-w-xs">
+                                    <div class="font-semibold text-slate-800 dark:text-slate-200">
+                                        {{ $ret->reason ?: 'Customer Return' }}
+                                    </div>
+                                    @if($ret->customer_notes)
+                                        <div class="text-[10px] text-slate-400 italic mt-0.5 truncate" title="{{ $ret->customer_notes }}">
+                                            "{{ $ret->customer_notes }}"
+                                        </div>
+                                    @endif
+                                    @if(!empty($ret->photos) && is_array($ret->photos))
+                                        <div class="text-[10px] text-indigo-600 dark:text-indigo-400 font-bold mt-0.5">
+                                            📷 {{ count($ret->photos) }} photo(s) attached
+                                        </div>
+                                    @endif
+                                </td>
+
+                                <!-- Tracking Waybill -->
+                                <td class="py-3.5 px-4 whitespace-nowrap">
+                                    @if($ret->pickup_waybill)
+                                        <div class="font-mono font-bold text-indigo-600 dark:text-indigo-400">
+                                            {{ $ret->pickup_waybill }}
+                                        </div>
+                                        <div class="text-[10px] text-slate-400 mt-0.5">
+                                            {{ $ret->pickupShipment?->courier ?? 'Shiprocket Return' }}
+                                        </div>
+                                    @else
+                                        <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400">
+                                            Pickup Pending
+                                        </span>
+                                    @endif
+                                </td>
+
+                                <!-- Status & QC -->
+                                <td class="py-3.5 px-4 whitespace-nowrap">
+                                    <div>
+                                        <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold border {{ $ret->status->badgeClass() }}">
+                                            {{ $ret->status->label() }}
+                                        </span>
+                                    </div>
+                                    <div class="text-[10px] text-slate-400 mt-1">
+                                        QC: <strong class="capitalize">{{ $ret->qc_status->label() }}</strong>
+                                    </div>
+                                </td>
+
+                                <!-- Refund Status -->
+                                <td class="py-3.5 px-4 whitespace-nowrap">
+                                    <div class="font-bold text-slate-900 dark:text-white">
+                                        {{ format_currency((float)($ret->refund_amount ?? $item?->total ?? 0)) }}
+                                    </div>
+                                    <div class="text-[10px] mt-0.5">
+                                        @if($ret->status === \App\Enums\ReturnStatus::REFUNDED)
+                                            <span class="font-bold text-emerald-600">Refund Issued ✓</span>
+                                        @elseif($ret->status === \App\Enums\ReturnStatus::REJECTED)
+                                            <span class="font-bold text-rose-600">Refund Denied</span>
+                                        @else
+                                            <span class="font-medium text-amber-600">Pending QC</span>
+                                        @endif
+                                    </div>
+                                </td>
+
+                                <!-- Actions -->
+                                <td class="py-3.5 px-4 whitespace-nowrap text-right">
+                                    <div class="flex items-center justify-end gap-1.5">
+                                        @if($ret->status === \App\Enums\ReturnStatus::REQUESTED)
+                                            <form method="POST" action="{{ route('seller.returns.approve', $ret) }}" class="inline">
+                                                @csrf
+                                                <button type="submit" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[11px] rounded-lg transition shadow-2xs">
+                                                    Approve
+                                                </button>
+                                            </form>
+                                        @endif
+
+                                        <a href="{{ route('seller.returns.show', $ret) }}" class="text-indigo-600 dark:text-indigo-400 font-bold text-[11px] hover:underline px-1">
+                                            Details &rarr;
+                                        </a>
+
+                                        <!-- Raise Claim link -->
+                                        <a href="{{ route('seller.claims.index', ['order_id' => $order?->id, 'return_id' => $ret->id]) }}" class="text-slate-400 hover:text-amber-600 text-[11px] font-semibold px-1" title="Raise a damage/discrepancy claim">
+                                            Claim
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="7" class="py-12 text-center text-slate-400">
+                                    <div class="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-2xl mx-auto mb-2">
+                                        📦
+                                    </div>
+                                    <h4 class="font-bold text-slate-800 dark:text-slate-200 text-sm">No Return Requests Found</h4>
+                                    <p class="text-xs text-slate-400 mt-0.5">Customer returns matching your filter will appear here.</p>
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+
+            @if($returns->hasPages())
+                <div class="p-4 border-t border-slate-200 dark:border-slate-800">
+                    {{ $returns->links() }}
+                </div>
+            @endif
+        </div>
+
+    @elseif($tab === 'rto')
+        <!-- RTO TRACKING TAB -->
+        <div class="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xs overflow-hidden space-y-4">
+            <!-- RTO Header Toolbar -->
+            <div class="p-4 border-b border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3">
+                <div>
+                    <h3 class="font-black text-sm text-slate-900 dark:text-white">Courier Return to Origin (RTO) Consignments</h3>
+                    <p class="text-xs text-slate-400">Parcels returning due to customer door-step rejection, uncontactable phone, or failed delivery attempts.</p>
+                </div>
+
+                <!-- Search form -->
+                <form method="GET" action="{{ route('seller.returns.index') }}" class="relative w-full sm:w-64">
+                    <input type="hidden" name="tab" value="rto">
+                    <input 
+                        type="text" 
+                        name="search" 
+                        value="{{ $search }}" 
+                        placeholder="Search AWB, Order #, Package #..." 
+                        class="w-full text-xs py-1.5 pl-8 pr-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                    >
+                    <svg class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                </form>
+            </div>
+
+            <!-- Table of RTO Consignments -->
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs">
+                    <thead class="bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800 font-bold uppercase text-slate-400 text-[10px]">
+                        <tr>
+                            <th class="py-3 px-4">Order / Package #</th>
+                            <th class="py-3 px-4">Product Details</th>
+                            <th class="py-3 px-4">Courier Partner &amp; AWB</th>
+                            <th class="py-3 px-4">RTO Reason</th>
+                            <th class="py-3 px-4">RTO Status</th>
+                            <th class="py-3 px-4">Restock Status</th>
+                            <th class="py-3 px-4 text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 dark:divide-slate-800 text-slate-700 dark:text-slate-300">
+                        @forelse($rtoShipments as $s)
+                            @php
+                                $fo = $s->fulfilmentOrder;
+                                $order = $fo?->order;
+                                $firstItem = $fo?->items?->first();
+                                $rtoCase = $s->rtoCases?->first();
+                                $isRestocked = $s->status === \App\Enums\ShipmentStatus::RTO_DELIVERED;
+                            @endphp
+                            <tr class="hover:bg-slate-50/70 dark:hover:bg-slate-800/50 transition">
+                                <!-- Order & Package -->
+                                <td class="py-3.5 px-4 whitespace-nowrap">
+                                    <div class="font-bold text-slate-900 dark:text-white">
+                                        #{{ $fo?->fulfilment_order_number ?? 'PKG-' . $s->id }}
+                                    </div>
+                                    <div class="text-[10px] font-mono text-slate-400 mt-0.5">
+                                        Parent: #{{ $order?->order_number ?? 'N/A' }}
+                                    </div>
+                                    <div class="text-[10px] text-slate-400 mt-0.5">
+                                        {{ $s->updated_at->format('d M Y, h:i A') }}
+                                    </div>
+                                </td>
+
+                                <!-- Product Details -->
+                                <td class="py-3.5 px-4 max-w-xs">
+                                    <div class="font-bold text-slate-900 dark:text-white truncate" title="{{ $firstItem?->title }}">
+                                        {{ $firstItem?->title ?? 'Consignment Items' }}
+                                    </div>
+                                    <div class="text-[10px] text-slate-500 font-mono mt-0.5">
+                                        SKU: {{ $firstItem?->sku ?? $firstItem?->variant?->sku ?? 'N/A' }}
+                                        &bull; Qty: {{ $firstItem?->qty ?? 1 }}
+                                    </div>
+                                </td>
+
+                                <!-- Courier Partner & AWB -->
+                                <td class="py-3.5 px-4 whitespace-nowrap">
+                                    <div class="font-bold text-slate-900 dark:text-white">
+                                        {{ $s->courier }}
+                                    </div>
+                                    <div class="text-[10px] font-mono text-indigo-600 dark:text-indigo-400 mt-0.5">
+                                        AWB: <strong>{{ $s->awb ?? 'Pending' }}</strong>
+                                    </div>
+                                    <div class="text-[10px] text-slate-400 mt-0.5">
+                                        Reverse Fee: {{ format_currency($s->charges) }}
+                                    </div>
+                                </td>
+
+                                <!-- RTO Reason -->
+                                <td class="py-3.5 px-4 max-w-xs">
+                                    <div class="font-semibold text-slate-800 dark:text-slate-200">
+                                        {{ $rtoCase?->reason ?? 'Maximum delivery attempts exhausted / Doorstep refusal' }}
+                                    </div>
+                                    <div class="text-[10px] text-slate-400 mt-0.5">
+                                        Carrier scan exception recorded
+                                    </div>
+                                </td>
+
+                                <!-- RTO Status -->
+                                <td class="py-3.5 px-4 whitespace-nowrap">
+                                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold border
+                                        {{ $s->status === \App\Enums\ShipmentStatus::RTO_DELIVERED ? 'bg-emerald-100 text-emerald-800 border-emerald-300' : 'bg-amber-100 text-amber-800 border-amber-300 animate-pulse' }}">
+                                        {{ $s->status->label() }}
+                                    </span>
+                                </td>
+
+                                <!-- Restock Status -->
+                                <td class="py-3.5 px-4 whitespace-nowrap">
+                                    @if($isRestocked)
+                                        <span class="text-emerald-600 font-bold flex items-center gap-1">
+                                            <span>✓</span> Restocked at Depot
+                                        </span>
+                                    @else
+                                        <span class="text-slate-400 text-[10px] italic">
+                                            Awaiting Arrival at Origin
+                                        </span>
+                                    @endif
+                                </td>
+
+                                <!-- Actions -->
+                                <td class="py-3.5 px-4 whitespace-nowrap text-right">
+                                    <div class="flex items-center justify-end gap-1.5">
+                                        <!-- Live Sync Tracking -->
+                                        <form method="POST" action="{{ route('seller.shipments.sync_tracking', $s) }}" class="inline">
+                                            @csrf
+                                            <button type="submit" title="Sync live tracking from Shiprocket" class="p-1 rounded-md text-slate-500 hover:text-indigo-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                                            </button>
+                                        </form>
+
+                                        <!-- Track Console Link -->
+                                        <a href="{{ route('seller.shipments.show', $s) }}" class="text-indigo-600 dark:text-indigo-400 font-bold text-[11px] hover:underline px-1">
+                                            Track &rarr;
+                                        </a>
+
+                                        <!-- Raise Claim link -->
+                                        <a href="{{ route('seller.claims.index', ['order_id' => $order?->id]) }}" class="text-slate-400 hover:text-amber-600 text-[11px] font-semibold px-1" title="Raise a damage/loss claim">
+                                            Claim
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="7" class="py-12 text-center text-slate-400">
+                                    <div class="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-2xl mx-auto mb-2">
+                                        🚚
+                                    </div>
+                                    <h4 class="font-bold text-slate-800 dark:text-slate-200 text-sm">No RTO consignments</h4>
+                                    <p class="text-xs text-slate-400 mt-0.5">Parcels returning from courier non-delivery will appear here.</p>
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+
+            @if($rtoShipments->hasPages())
+                <div class="p-4 border-t border-slate-200 dark:border-slate-800">
+                    {{ $rtoShipments->links() }}
+                </div>
+            @endif
+        </div>
     @endif
+
 </div>
 @endsection

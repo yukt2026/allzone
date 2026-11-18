@@ -33,6 +33,7 @@ Route::get('/quick/stores', [\App\Http\Controllers\Storefront\QuickCommerceContr
 // ALLZONE Cargo & Shiprocket Logistics Webhook Receivers
 Route::post('/cargo/webhook', [\App\Http\Controllers\Api\CargoWebhookController::class, 'handle'])->name('cargo.webhook');
 Route::post('/shiprocket/webhook', [\App\Http\Controllers\Api\ShiprocketWebhookController::class, 'handle'])->name('shiprocket.webhook');
+Route::post('/webhooks/shiprocket', [\App\Http\Controllers\Api\ShiprocketWebhookController::class, 'handle'])->name('shiprocket.webhooks');
 
 // Connect My Shop — Public Integration Endpoints & Webhooks
 Route::prefix('integrations')->middleware(['throttle:60,1'])->group(function () {

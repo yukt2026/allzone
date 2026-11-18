@@ -33,6 +33,21 @@ class SellerBankAccount extends Model
         ];
     }
 
+    public function getMaskedAccountNoAttribute(): string
+    {
+        $raw = (string) $this->account_no;
+        $len = strlen($raw);
+        if ($len <= 4) {
+            return '•••• ' . $raw;
+        }
+        return str_repeat('•', 8) . ' ' . substr($raw, -4);
+    }
+
+    public function getIsVerifiedAttribute(): bool
+    {
+        return $this->verified_at !== null;
+    }
+
     /**
      * Scope query to primary bank account.
      */

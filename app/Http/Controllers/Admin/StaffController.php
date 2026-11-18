@@ -23,9 +23,12 @@ class StaffController extends Controller
     protected array $adminRoles = [
         'super_admin',
         'admin',
+        'operations_admin',
         'support_admin',
+        'seller_support',
         'catalog_manager',
         'finance_admin',
+        'finance_manager',
         'support_staff',
     ];
 

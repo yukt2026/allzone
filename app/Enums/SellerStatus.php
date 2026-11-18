@@ -11,6 +11,7 @@ enum SellerStatus: string
     case APPROVED = 'approved';
     case REJECTED = 'rejected';
     case SUSPENDED = 'suspended';
+    case INACTIVE = 'inactive';
 
     public function label(): string
     {
@@ -20,6 +21,7 @@ enum SellerStatus: string
             self::APPROVED => 'Approved & Active',
             self::REJECTED => 'Rejected',
             self::SUSPENDED => 'Suspended',
+            self::INACTIVE => 'Inactive',
         };
     }
 
@@ -31,6 +33,7 @@ enum SellerStatus: string
             self::APPROVED => 'success',
             self::REJECTED => 'danger',
             self::SUSPENDED => 'danger',
+            self::INACTIVE => 'secondary',
         };
     }
 
@@ -42,6 +45,7 @@ enum SellerStatus: string
             self::APPROVED => 'bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800',
             self::REJECTED => 'bg-rose-100 text-rose-800 border-rose-300 dark:bg-rose-950/60 dark:text-rose-300 dark:border-rose-800',
             self::SUSPENDED => 'bg-red-100 text-red-800 border-red-300 dark:bg-red-950/60 dark:text-red-300 dark:border-red-800',
+            self::INACTIVE => 'bg-slate-100 text-slate-800 border-slate-300 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700',
         };
     }
 }

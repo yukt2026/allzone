@@ -17,6 +17,7 @@ use App\Models\OrderStatusHistory;
 use App\Models\RtoCase;
 use App\Models\Shipment;
 use App\Models\ShipmentTracking;
+use App\Models\ShipmentWebhookLog;
 use App\Services\Cargo\ShiprocketClient;
 use App\Services\Inventory\InventoryService;
 use App\Services\Order\OrderStateMachine;
@@ -40,9 +41,32 @@ class ShiprocketWebhookController extends Controller
     public function handle(Request $request): JsonResponse
     {
         $payload = $request->all();
-        $rawContent = $request->getContent();
+        $sourceIp = $request->ip();
 
-        Log::info('Shiprocket webhook received', ['payload' => $payload]);
+        // 1. Authenticity verification
+        $configuredToken = (string) (\App\Models\Setting::get('shiprocket_webhook_token') ?: \App\Models\Setting::get('shiprocket_api_key', ''));
+        $incomingToken = (string) ($request->header('x-api-key') ?? $request->header('X-Shiprocket-Token') ?? $request->input('webhook_token') ?? '');
+        $isVerified = true;
+
+        if (!empty($configuredToken) && !$this->shiprocketClient->isFakeMode()) {
+            if (!hash_equals($configuredToken, $incomingToken)) {
+                $isVerified = false;
+                ShipmentWebhookLog::create([
+                    'event' => 'unauthorized_attempt',
+                    'awb' => $request->input('awb') ?? $request->input('awb_code'),
+                    'order_id' => $request->input('order_id'),
+                    'source_ip' => $sourceIp,
+                    'is_verified' => false,
+                    'error' => 'Invalid webhook token / secret signature header.',
+                    'payload' => $payload,
+                ]);
+
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthorized: Invalid webhook secret token.',
+                ], 401);
+            }
+        }
 
         $awb = $request->input('awb') ?? $request->input('awb_code') ?? $request->input('data.awb');
         $orderNumber = $request->input('order_id') ?? $request->input('data.order_id');
@@ -50,6 +74,18 @@ class ShiprocketWebhookController extends Controller
         $statusCode = (int) ($request->input('current_status_id') ?? $request->input('status_id') ?? 0);
         $location = (string) ($request->input('current_city') ?? $request->input('location') ?? 'In Transit Hub');
         $timestamp = !empty($request->input('current_timestamp')) ? Carbon::parse($request->input('current_timestamp')) : now();
+
+        // Log the webhook payload securely
+        ShipmentWebhookLog::create([
+            'event' => strtolower(str_replace(' ', '_', $currentStatus ?: "status_{$statusCode}")),
+            'awb' => $awb,
+            'order_id' => $orderNumber,
+            'current_status' => $currentStatus,
+            'status_code' => $statusCode,
+            'source_ip' => $sourceIp,
+            'is_verified' => $isVerified,
+            'payload' => $payload,
+        ]);
 
         $shipment = Shipment::query()
             ->when($awb, fn($q) => $q->where('awb', $awb))

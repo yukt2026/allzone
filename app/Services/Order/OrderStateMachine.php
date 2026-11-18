@@ -49,8 +49,9 @@ class OrderStateMachine
      * @var array<string, array<string>>
      */
     protected const STANDARD_ALLOWED_TRANSITIONS = [
-        'placed' => ['confirmed', 'cancelled'],
-        'confirmed' => ['packed', 'cancelled'],
+        'placed' => ['confirmed', 'processing', 'cancelled'],
+        'confirmed' => ['processing', 'packed', 'cancelled'],
+        'processing' => ['packed', 'ready_to_ship', 'cancelled'],
         'packed' => ['ready_to_ship', 'cancelled'],
         'ready_to_ship' => ['picked_up', 'cancelled'],
         'picked_up' => ['in_transit'],
@@ -208,9 +209,12 @@ class OrderStateMachine
                 $this->rerouteService->attemptAutoReroute($fo, $note ?: 'Store rejected order');
             }
 
-            // 4. Commission ledger hook on delivery or refund
+            // 4. Commission ledger and permanent inventory deduction hook on delivery or refund
             if ($toStatus === 'delivered') {
                 $this->commissionService->recordForDeliveredFulfilmentOrder($fo);
+                if ($fo->order) {
+                    $this->inventoryService->commitForOrder($fo->order->order_number, $fo->order);
+                }
             } elseif ($toStatus === 'refunded') {
                 $this->commissionService->recordReversal($fo, (float) $fo->total_amount, $note ?: 'Package refunded');
             }

@@ -86,9 +86,16 @@ class CustomerOrderController extends Controller
         $customer = $user->customer;
 
         $order = Order::where('order_number', $orderNumber)
-            ->where('customer_id', $customer?->id ?? 0)
+            ->where(function ($q) use ($customer, $user) {
+                if ($customer) {
+                    $q->where('customer_id', $customer->id)->orWhere('user_id', $user->id);
+                } else {
+                    $q->where('user_id', $user->id);
+                }
+            })
             ->with([
                 'fulfilmentOrders.items.variant.product',
+                'fulfilmentOrders.items.returns',
                 'fulfilmentOrders.store',
                 'fulfilmentOrders.seller',
                 'fulfilmentOrders.shipment.tracking',
@@ -123,7 +130,13 @@ class CustomerOrderController extends Controller
         $customer = $user->customer;
 
         $order = Order::where('order_number', $orderNumber)
-            ->where('customer_id', $customer?->id ?? 0)
+            ->where(function ($q) use ($customer, $user) {
+                if ($customer) {
+                    $q->where('customer_id', $customer->id)->orWhere('user_id', $user->id);
+                } else {
+                    $q->where('user_id', $user->id);
+                }
+            })
             ->firstOrFail();
 
         return $this->pdfService->generateInvoicePdf($order);
@@ -142,7 +155,13 @@ class CustomerOrderController extends Controller
         $customer = $user->customer;
 
         $order = Order::where('order_number', $orderNumber)
-            ->where('customer_id', $customer?->id ?? 0)
+            ->where(function ($q) use ($customer, $user) {
+                if ($customer) {
+                    $q->where('customer_id', $customer->id)->orWhere('user_id', $user->id);
+                } else {
+                    $q->where('user_id', $user->id);
+                }
+            })
             ->firstOrFail();
 
         try {
@@ -207,7 +226,13 @@ class CustomerOrderController extends Controller
         $customer = $user->customer;
 
         $order = Order::where('order_number', $orderNumber)
-            ->where('customer_id', $customer?->id ?? 0)
+            ->where(function ($q) use ($customer, $user) {
+                if ($customer) {
+                    $q->where('customer_id', $customer->id)->orWhere('user_id', $user->id);
+                } else {
+                    $q->where('user_id', $user->id);
+                }
+            })
             ->firstOrFail();
 
         $fo = FulfilmentOrder::where('order_id', $order->id)
@@ -439,7 +464,13 @@ class CustomerOrderController extends Controller
         $customer = $user->customer;
 
         $order = Order::where('order_number', $orderNumber)
-            ->where('customer_id', $customer?->id ?? 0)
+            ->where(function ($q) use ($customer, $user) {
+                if ($customer) {
+                    $q->where('customer_id', $customer->id)->orWhere('user_id', $user->id);
+                } else {
+                    $q->where('user_id', $user->id);
+                }
+            })
             ->firstOrFail();
 
         $fo = FulfilmentOrder::where('order_id', $order->id)

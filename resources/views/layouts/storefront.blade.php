@@ -33,9 +33,18 @@
             csrfToken: @json(csrf_token())
         };
         window.apiUrl = function(endpoint) {
-            var base = (window.appConfig && window.appConfig.baseUrl) ? window.appConfig.baseUrl : '';
             if (endpoint.startsWith('http://') || endpoint.startsWith('https://')) return endpoint;
             if (!endpoint.startsWith('/')) endpoint = '/' + endpoint;
+            var base = '';
+            try {
+                var configBase = (window.appConfig && window.appConfig.baseUrl) ? window.appConfig.baseUrl : '';
+                if (configBase) {
+                    var u = new URL(configBase, window.location.href);
+                    base = u.pathname.replace(/\/+$/, '');
+                }
+            } catch (e) {
+                base = '';
+            }
             return base + endpoint;
         };
     </script>
@@ -450,7 +459,7 @@
 
                         <!-- Mega Menu Panel -->
                         @php
-                            $categoriesList = $categories ?? $navCategories ?? collect();
+                            $categoriesList = (isset($categories) && $categories instanceof \Illuminate\Support\Collection) ? $categories : ($navCategories ?? collect());
                         @endphp
                         <div x-show="megaMenuOpen"
                              x-transition

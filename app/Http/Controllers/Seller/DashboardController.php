@@ -64,13 +64,18 @@ class DashboardController extends Controller
         }
 
         $range = (string) $request->query('range', '30d');
-        $data = $this->dashboardService->getDashboardData($seller, $activeStore?->id, $range);
+        $startDate = $request->query('start_date');
+        $endDate = $request->query('end_date');
+
+        $data = $this->dashboardService->getDashboardData($seller, $activeStore?->id, $range, $startDate, $endDate);
 
         return view('seller.dashboard', array_merge($data, [
             'seller' => $seller,
             'stores' => $stores,
             'activeStore' => $activeStore,
             'range' => $range,
+            'startDate' => $startDate,
+            'endDate' => $endDate,
         ]));
     }
 
@@ -85,8 +90,10 @@ class DashboardController extends Controller
 
         $storeId = session('seller_active_store_id');
         $range = (string) $request->query('range', '30d');
+        $startDate = $request->query('start_date');
+        $endDate = $request->query('end_date');
 
-        $charts = $this->dashboardService->getChartsData($seller, $storeId ? (int) $storeId : null, $range);
+        $charts = $this->dashboardService->getChartsData($seller, $storeId ? (int) $storeId : null, $range, $startDate, $endDate);
 
         return response()->json($charts);
     }

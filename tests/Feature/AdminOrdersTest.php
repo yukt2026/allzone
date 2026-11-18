@@ -6,9 +6,16 @@ use App\Enums\FulfilmentType;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
+use App\Enums\ProductStatus;
+use App\Enums\ReturnStatus;
+use App\Models\Category;
 use App\Models\Customer;
 use App\Models\FulfilmentOrder;
 use App\Models\Order;
+use App\Models\OrderItem;
+use App\Models\OrderReturn;
+use App\Models\Product;
+use App\Models\ProductVariant;
 use App\Models\Seller;
 use App\Models\Store;
 use App\Models\User;
@@ -24,12 +31,15 @@ class AdminOrdersTest extends TestCase
     protected Customer $customer;
     protected Seller $seller;
     protected Store $store;
+    protected Product $product;
+    protected ProductVariant $variant;
 
     protected function setUp(): void
     {
         parent::setUp();
 
         \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'super_admin', 'guard_name' => 'web']);
+        \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'staff', 'guard_name' => 'web']);
 
         $this->admin = User::factory()->create([
             'email' => 'admin_orders_' . uniqid() . '@example.com',
@@ -68,6 +78,31 @@ class AdminOrdersTest extends TestCase
             'status' => 'active',
             'is_active' => true,
         ]);
+
+        $category = Category::create([
+            'name' => 'Groceries',
+            'slug' => 'groceries-' . uniqid(),
+            'commission_percent' => 5.0,
+            'is_active' => true,
+        ]);
+
+        $this->product = Product::create([
+            'seller_id' => $this->seller->id,
+            'category_id' => $category->id,
+            'title' => 'Organic Apples',
+            'slug' => 'organic-apples-' . uniqid(),
+            'status' => ProductStatus::ACTIVE,
+        ]);
+
+        $this->variant = ProductVariant::create([
+            'product_id' => $this->product->id,
+            'sku' => 'SKU-APPLES-001',
+            'name' => '1kg Pack',
+            'mrp' => 700.00,
+            'selling_price' => 600.00,
+            'is_default' => true,
+            'is_active' => true,
+        ]);
     }
 
     protected function createSampleOrder(array $attributes = [], array $foAttributes = []): Order
@@ -93,7 +128,7 @@ class AdminOrdersTest extends TestCase
             'status' => OrderStatus::PROCESSING,
         ], $attributes));
 
-        FulfilmentOrder::create(array_merge([
+        $fo = FulfilmentOrder::create(array_merge([
             'order_id' => $order->id,
             'seller_id' => $this->seller->id,
             'store_id' => $this->store->id,
@@ -106,6 +141,17 @@ class AdminOrdersTest extends TestCase
             'status' => 'processing',
         ], $foAttributes));
 
+        OrderItem::create([
+            'fulfilment_order_id' => $fo->id,
+            'product_id' => $this->product->id,
+            'variant_id' => $this->variant->id,
+            'title' => 'Sample Organic Apples',
+            'sku' => 'SKU-APPLES-001',
+            'qty' => 2,
+            'price' => 600.00,
+            'total' => 1200.00,
+        ]);
+
         return $order;
     }
 
@@ -117,10 +163,35 @@ class AdminOrdersTest extends TestCase
         $response = $this->actingAs($this->admin)->get(route('admin.orders.index'));
 
         $response->assertStatus(200);
-        $response->assertSee('Orders & Fulfilment Central');
+        $response->assertSee('Orders &amp; Fulfilment Central', false);
         $response->assertSee('Total Orders');
         $response->assertSee('Gross Merchandise Value');
         $response->assertSee('Quick Commerce');
+    }
+
+    public function test_admin_can_view_all_10_order_tabs_with_accurate_counts(): void
+    {
+        // Create orders across various statuses
+        $this->createSampleOrder(['status' => OrderStatus::PENDING]);
+        $this->createSampleOrder(['status' => OrderStatus::PROCESSING]);
+        $this->createSampleOrder(['status' => OrderStatus::READY_FOR_PICKUP]);
+        $this->createSampleOrder(['status' => OrderStatus::OUT_FOR_DELIVERY]);
+        $this->createSampleOrder(['status' => OrderStatus::DELIVERED]);
+        $this->createSampleOrder(['status' => OrderStatus::CANCELLED]);
+
+        $response = $this->actingAs($this->admin)->get(route('admin.orders.index'));
+
+        $response->assertStatus(200);
+        $response->assertSee('All Orders');
+        $response->assertSee('Pending');
+        $response->assertSee('Processing');
+        $response->assertSee('Ready to Ship');
+        $response->assertSee('Shipped');
+        $response->assertSee('Delivered');
+        $response->assertSee('Cancelled');
+        $response->assertSee('Return Requested');
+        $response->assertSee('Returned');
+        $response->assertSee('RTO');
     }
 
     public function test_admin_can_filter_orders_by_status_and_payment(): void
@@ -168,6 +239,66 @@ class AdminOrdersTest extends TestCase
         $response->assertDontSee('ORD-STD-99');
     }
 
+    public function test_admin_can_filter_by_seller_and_date_range(): void
+    {
+        $seller2User = User::factory()->create(['status' => 'active']);
+        $seller2 = Seller::create([
+            'user_id' => $seller2User->id,
+            'business_name' => 'Apex Electronics',
+            'legal_name' => 'Apex Electronics Pvt Ltd',
+            'slug' => 'apex-electronics-' . uniqid(),
+            'status' => 'approved',
+        ]);
+        $store2 = Store::create([
+            'seller_id' => $seller2->id,
+            'name' => 'Apex Store',
+            'slug' => 'apex-store-' . uniqid(),
+            'status' => 'active',
+            'is_active' => true,
+        ]);
+
+        $order1 = $this->createSampleOrder(['order_number' => 'ORD-SELLER-1']);
+
+        $order2 = Order::create([
+            'order_number' => 'ORD-SELLER-2',
+            'customer_id' => $this->customer->id,
+            'address_snapshot' => ['name' => 'Buyer', 'phone' => '1234567890'],
+            'subtotal' => 500,
+            'total' => 500,
+            'payment_method' => PaymentMethod::UPI,
+            'payment_status' => PaymentStatus::PAID,
+            'status' => OrderStatus::PROCESSING,
+        ]);
+        $fo2 = FulfilmentOrder::create([
+            'order_id' => $order2->id,
+            'seller_id' => $seller2->id,
+            'store_id' => $store2->id,
+            'fulfilment_order_number' => 'FO-APEX-01',
+            'fulfilment_type' => FulfilmentType::STANDARD,
+            'subtotal' => 500,
+            'status' => 'processing',
+        ]);
+        OrderItem::create([
+            'fulfilment_order_id' => $fo2->id,
+            'product_id' => $this->product->id,
+            'variant_id' => $this->variant->id,
+            'title' => 'Other Item',
+            'sku' => 'SKU-OTHER',
+            'qty' => 1,
+            'price' => 500,
+            'total' => 500,
+        ]);
+
+        $response = $this->actingAs($this->admin)->get(route('admin.orders.index', [
+            'seller_id' => $this->seller->id,
+            'date_range' => 'today',
+        ]));
+
+        $response->assertStatus(200);
+        $response->assertSee('ORD-SELLER-1');
+        $response->assertDontSee('ORD-SELLER-2');
+    }
+
     public function test_admin_can_search_orders_by_number_or_customer(): void
     {
         $order1 = $this->createSampleOrder(['order_number' => 'ORD-UNIQUE-SEARCH-999']);
@@ -206,10 +337,11 @@ class AdminOrdersTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertSee($order->order_number);
-        $response->assertSee('Customer & Shipping Profile');
-        $response->assertSee('Payment & Gateway Audit');
-        $response->assertSee('Split Fulfilment Packages');
+        $response->assertSee('Customer &amp; Shipping Profile', false);
+        $response->assertSee('Payment &amp; Gateway Audit', false);
+        $response->assertSee('Multi-Vendor Packages');
         $response->assertSee('Metro Superstore');
+        $response->assertSee('Sample Organic Apples');
     }
 
     public function test_admin_can_override_order_status_with_reason(): void
@@ -237,12 +369,96 @@ class AdminOrdersTest extends TestCase
 
         $response = $this->actingAs($this->admin)->post(route('admin.orders.override_status', $order), [
             'status' => 'delivered',
-            'reason' => '', // Empty reason should fail
+            'reason' => '',
         ]);
 
         $response->assertSessionHasErrors('reason');
         $order->refresh();
         $this->assertEquals(OrderStatus::PROCESSING, $order->status);
+    }
+
+    public function test_admin_can_cancel_order_with_mandatory_reason(): void
+    {
+        $order = $this->createSampleOrder(['status' => OrderStatus::PROCESSING]);
+
+        $response = $this->actingAs($this->admin)->post(route('admin.orders.cancel', $order), [
+            'reason' => 'Suspected fraudulent transaction identified during fraud audit review.',
+        ]);
+
+        $response->assertRedirect();
+        $order->refresh();
+        $this->assertEquals(OrderStatus::CANCELLED, $order->status);
+        $this->assertStringContainsString('Suspected fraudulent transaction', $order->notes);
+
+        // Sub-orders should be cancelled
+        foreach ($order->fulfilmentOrders as $fo) {
+            $this->assertEquals('cancelled', $fo->status);
+        }
+    }
+
+    public function test_admin_cannot_cancel_order_without_reason(): void
+    {
+        $order = $this->createSampleOrder(['status' => OrderStatus::PROCESSING]);
+
+        $response = $this->actingAs($this->admin)->post(route('admin.orders.cancel', $order), [
+            'reason' => '',
+        ]);
+
+        $response->assertSessionHasErrors('reason');
+        $order->refresh();
+        $this->assertEquals(OrderStatus::PROCESSING, $order->status);
+    }
+
+    public function test_admin_can_cancel_specific_sub_order_package(): void
+    {
+        $order = $this->createSampleOrder(['status' => OrderStatus::PROCESSING]);
+        $fo = $order->fulfilmentOrders()->first();
+
+        $response = $this->actingAs($this->admin)->post(route('admin.orders.cancel_sub_order', $fo), [
+            'reason' => 'Vendor inventory damaged in warehouse prior to dispatch.',
+        ]);
+
+        $response->assertRedirect();
+        $fo->refresh();
+        $this->assertEquals('cancelled', $fo->status);
+        $this->assertNotNull($fo->cancelled_at);
+    }
+
+    public function test_admin_can_resolve_order_dispute(): void
+    {
+        $order = $this->createSampleOrder();
+
+        $response = $this->actingAs($this->admin)->post(route('admin.orders.resolve_dispute', $order), [
+            'resolution' => 'Merchant and buyer agreed on partial goodwill voucher replacement.',
+        ]);
+
+        $response->assertRedirect();
+        $order->refresh();
+        $this->assertStringContainsString('DISPUTE RESOLVED', $order->notes);
+        $this->assertStringContainsString('partial goodwill voucher', $order->notes);
+    }
+
+    public function test_admin_can_approve_customer_return(): void
+    {
+        $order = $this->createSampleOrder();
+        $fo = $order->fulfilmentOrders()->first();
+        $item = $fo->items()->first();
+
+        $return = OrderReturn::create([
+            'return_number' => 'RMA-TEST-001',
+            'type' => 'return',
+            'order_item_id' => $item->id,
+            'reason' => 'Defective or expired item',
+            'status' => ReturnStatus::REQUESTED,
+            'refund_amount' => 600.00,
+        ]);
+
+        $response = $this->actingAs($this->admin)->post(route('admin.orders.approve_return', [$order, $return]));
+
+        $response->assertRedirect();
+        $return->refresh();
+        $this->assertEquals(ReturnStatus::APPROVED, $return->status);
+        $this->assertNotNull($return->approved_at);
     }
 
     public function test_admin_can_add_internal_note(): void

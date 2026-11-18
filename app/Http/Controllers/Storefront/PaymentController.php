@@ -8,6 +8,7 @@ use App\Enums\PaymentStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\Payment;
+use App\Models\PaymentWebhookLog;
 use App\Services\Payment\PaymentGatewayManager;
 use App\Services\Payment\PaymentService;
 use Illuminate\Http\JsonResponse;
@@ -143,6 +144,17 @@ class PaymentController extends Controller
                 'ip' => $request->ip(),
             ]);
 
+            PaymentWebhookLog::create([
+                'gateway' => $gateway,
+                'event' => 'unauthorized_signature',
+                'payload' => json_decode($rawBody, true) ?? ['raw' => substr($rawBody, 0, 500)],
+                'signature' => $signature,
+                'is_valid_signature' => false,
+                'status' => 'failed',
+                'error_message' => 'Invalid webhook signature.',
+                'ip_address' => $request->ip(),
+            ]);
+
             return response()->json(['status' => 'error', 'message' => 'Invalid webhook signature.'], 400);
         }
 
@@ -153,6 +165,18 @@ class PaymentController extends Controller
             $processed = $gatewayDriver->processWebhook($payload, $rawBody);
         } catch (\Throwable $e) {
             Log::error("Webhook payload parsing error [{$gateway}]", ['error' => $e->getMessage()]);
+
+            PaymentWebhookLog::create([
+                'gateway' => $gateway,
+                'event' => 'malformed_payload',
+                'payload' => $payload,
+                'signature' => $signature,
+                'is_valid_signature' => true,
+                'status' => 'failed',
+                'error_message' => $e->getMessage(),
+                'ip_address' => $request->ip(),
+            ]);
+
             return response()->json(['status' => 'error', 'message' => 'Malformed webhook payload.'], 400);
         }
 
@@ -165,11 +189,31 @@ class PaymentController extends Controller
             if ($payment) {
                 if ($processed['status'] === 'paid' && $gatewayPaymentId) {
                     $this->paymentService->handlePaymentSuccess($payment, $gatewayPaymentId, $payload);
+                    $payment->update([
+                        'gateway_signature' => $signature,
+                        'reconciliation_status' => \App\Enums\ReconciliationStatus::RECONCILED,
+                        'reconciled_at' => now(),
+                    ]);
                 } elseif ($processed['status'] === 'failed') {
                     $this->paymentService->handlePaymentFailure($payment, $processed['message'], $payload);
+                    $payment->update([
+                        'reconciliation_status' => \App\Enums\ReconciliationStatus::UNRECONCILED,
+                    ]);
                 }
             }
         }
+
+        PaymentWebhookLog::create([
+            'gateway' => $gateway,
+            'event' => $processed['event'] ?? ($payload['event'] ?? 'unknown'),
+            'gateway_order_id' => $gatewayOrderId,
+            'gateway_payment_id' => $gatewayPaymentId,
+            'payload' => $payload,
+            'signature' => $signature,
+            'is_valid_signature' => true,
+            'status' => 'processed',
+            'ip_address' => $request->ip(),
+        ]);
 
         return response()->json([
             'status' => 'success',

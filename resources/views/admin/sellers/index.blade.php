@@ -27,9 +27,37 @@
         </x-slot>
     </x-page-header>
 
+    <!-- Seller Tabs Bar (All, Pending Approval, Active, Rejected, Suspended, Inactive) -->
+    <div class="border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-2xl p-1.5 shadow-2xs">
+        <nav class="flex flex-wrap gap-1 sm:gap-1.5" aria-label="Seller tabs">
+            @php
+                $tabs = [
+                    'all' => ['label' => 'All Sellers', 'count' => $tabCounts['all'] ?? 0],
+                    'pending' => ['label' => 'Pending Approval', 'count' => $tabCounts['pending'] ?? 0, 'alert' => ($tabCounts['pending'] ?? 0) > 0],
+                    'active' => ['label' => 'Active', 'count' => $tabCounts['active'] ?? 0],
+                    'rejected' => ['label' => 'Rejected', 'count' => $tabCounts['rejected'] ?? 0],
+                    'suspended' => ['label' => 'Suspended', 'count' => $tabCounts['suspended'] ?? 0],
+                    'inactive' => ['label' => 'Inactive', 'count' => $tabCounts['inactive'] ?? 0],
+                ];
+            @endphp
+            @foreach($tabs as $tabKey => $tab)
+                <a 
+                    href="{{ route('admin.sellers.index', array_merge(request()->query(), ['tab' => $tabKey, 'page' => 1])) }}"
+                    class="px-3.5 py-2 text-xs font-bold rounded-xl transition-all duration-150 flex items-center space-x-2 {{ ($activeTab === $tabKey || ($tabKey === 'all' && empty($activeTab))) ? 'bg-emerald-600 text-white shadow-2xs' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800' }}"
+                >
+                    <span>{{ $tab['label'] }}</span>
+                    <span class="px-1.5 py-0.5 text-[10px] font-extrabold rounded-full {{ ($activeTab === $tabKey || ($tabKey === 'all' && empty($activeTab))) ? 'bg-white/20 text-white' : (isset($tab['alert']) && $tab['alert'] ? 'bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400') }}">
+                        {{ $tab['count'] }}
+                    </span>
+                </a>
+            @endforeach
+        </nav>
+    </div>
+
     <!-- Filters Bar Card -->
     <x-card padding="p-5">
         <form method="GET" action="{{ route('admin.sellers.index') }}" class="space-y-4">
+            <input type="hidden" name="tab" value="{{ $activeTab }}">
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3">
                 <!-- Search input -->
                 <div class="lg:col-span-2">
@@ -45,7 +73,7 @@
                             name="search" 
                             value="{{ $filters['search'] ?? '' }}" 
                             placeholder="Business name, legal, email, PAN, GSTIN..." 
-                            class="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                            class="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
                         />
                     </div>
                 </div>
@@ -53,11 +81,11 @@
                 <!-- Status Filter -->
                 <div>
                     <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
-                        KYC Status
+                        Status Override
                     </label>
                     <select 
                         name="status" 
-                        class="w-full py-2 px-3 text-xs rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                        class="w-full py-2 px-3 text-xs rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
                     >
                         <option value="">All Statuses</option>
                         @foreach($statuses as $status)
@@ -75,7 +103,7 @@
                     </label>
                     <select 
                         name="type" 
-                        class="w-full py-2 px-3 text-xs rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                        class="w-full py-2 px-3 text-xs rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
                     >
                         <option value="">All Store Models</option>
                         @foreach($types as $type)
@@ -96,7 +124,7 @@
                         name="city" 
                         value="{{ $filters['city'] ?? '' }}" 
                         placeholder="e.g. Bengaluru, Mumbai" 
-                        class="w-full py-2 px-3 text-xs rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                        class="w-full py-2 px-3 text-xs rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
                     />
                 </div>
 
@@ -104,13 +132,13 @@
                 <div class="flex items-end space-x-2">
                     <button 
                         type="submit" 
-                        class="flex-1 py-2 px-3 text-xs font-bold rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs transition-all"
+                        class="flex-1 py-2 px-3 text-xs font-bold rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs transition-all"
                     >
                         Filter
                     </button>
                     @if(array_filter($filters))
                         <a 
-                            href="{{ route('admin.sellers.index') }}" 
+                            href="{{ route('admin.sellers.index', ['tab' => $activeTab]) }}" 
                             class="py-2 px-3 text-xs font-semibold rounded-xl bg-slate-200 dark:bg-slate-750 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition-all"
                             title="Reset all filters"
                         >
@@ -129,10 +157,10 @@
         x-transition:enter-start="opacity-0 -translate-y-2"
         x-transition:enter-end="opacity-100 translate-y-0"
         x-cloak
-        class="p-4 rounded-2xl bg-indigo-50 dark:bg-indigo-950/70 border border-indigo-200 dark:border-indigo-800 shadow-lg flex flex-col sm:flex-row items-center justify-between gap-4"
+        class="p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/70 border border-emerald-200 dark:border-emerald-800 shadow-lg flex flex-col sm:flex-row items-center justify-between gap-4"
     >
-        <div class="flex items-center space-x-3 text-xs font-semibold text-indigo-900 dark:text-indigo-200">
-            <span class="w-6 h-6 rounded-full bg-indigo-600 text-white flex items-center justify-center text-[11px] font-bold" x-text="selectedIds.length"></span>
+        <div class="flex items-center space-x-3 text-xs font-semibold text-emerald-900 dark:text-emerald-200">
+            <span class="w-6 h-6 rounded-full bg-emerald-600 text-white flex items-center justify-center text-[11px] font-bold" x-text="selectedIds.length"></span>
             <span>merchant(s) selected for bulk operation</span>
         </div>
 
@@ -146,7 +174,7 @@
                 name="action" 
                 x-model="bulkActionType"
                 required
-                class="py-1.5 px-3 text-xs rounded-xl bg-white dark:bg-slate-900 border border-indigo-200 dark:border-indigo-800 text-slate-800 dark:text-slate-200 font-medium"
+                class="py-1.5 px-3 text-xs rounded-xl bg-white dark:bg-slate-900 border border-emerald-200 dark:border-emerald-800 text-slate-800 dark:text-slate-200 font-medium"
             >
                 <option value="">Select Bulk Action</option>
                 <option value="approve">Bulk Approve KYC & Initialize Stores</option>
@@ -160,13 +188,13 @@
                 type="text" 
                 name="reason" 
                 placeholder="Mandatory reason for bulk action..." 
-                class="py-1.5 px-3 text-xs rounded-xl bg-white dark:bg-slate-900 border border-indigo-200 dark:border-indigo-800 text-slate-800 dark:text-slate-200"
+                class="py-1.5 px-3 text-xs rounded-xl bg-white dark:bg-slate-900 border border-emerald-200 dark:border-emerald-800 text-slate-800 dark:text-slate-200"
             />
 
             <button 
                 type="submit" 
-                onclick="return confirm('Are you sure you want to execute this bulk action on selected merchants?')"
-                class="px-3.5 py-1.5 text-xs font-bold rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs transition"
+                data-confirm="Are you sure you want to execute this bulk action on selected merchants?"
+                class="px-3.5 py-1.5 text-xs font-bold rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs transition"
             >
                 Execute Action
             </button>
@@ -187,55 +215,64 @@
             <table class="w-full text-left text-xs border-collapse">
                 <thead>
                     <tr class="border-b border-slate-200/80 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/40 text-slate-400 dark:text-slate-500 font-semibold uppercase tracking-wider">
-                        <th class="py-3 px-4 w-10 text-center">
+                        <th class="py-3 px-3 w-8 text-center">
                             <input 
                                 type="checkbox" 
                                 @change="toggleAll($event)"
-                                class="rounded-sm border-slate-300 dark:border-slate-700 text-indigo-600 focus:ring-indigo-500"
+                                class="rounded-sm border-slate-300 dark:border-slate-700 text-emerald-600 focus:ring-emerald-500"
                             />
                         </th>
-                        <th class="py-3 px-4">Merchant Business</th>
-                        <th class="py-3 px-4">Owner & Contact</th>
-                        <th class="py-3 px-4">Store Model</th>
-                        <th class="py-3 px-4 text-center">KYC Status</th>
-                        <th class="py-3 px-4 text-center">Commercials</th>
-                        <th class="py-3 px-4 text-center">Commission</th>
-                        <th class="py-3 px-4">Primary City</th>
-                        <th class="py-3 px-4 text-right">Registered</th>
-                        <th class="py-3 px-4 text-center">Action</th>
+                        <th class="py-3 px-3">ID & Business</th>
+                        <th class="py-3 px-3">Owner & Contact</th>
+                        <th class="py-3 px-3">Store Model</th>
+                        <th class="py-3 px-3">GST Details</th>
+                        <th class="py-3 px-3 text-center">Verification</th>
+                        <th class="py-3 px-3 text-center">Items / Orders</th>
+                        <th class="py-3 px-3 text-right">Sales (GMV)</th>
+                        <th class="py-3 px-3 text-center">Commission Plan</th>
+                        <th class="py-3 px-3 text-center">Account Status</th>
+                        <th class="py-3 px-3 text-right">Registered</th>
+                        <th class="py-3 px-3 text-center">Action</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100 dark:divide-slate-800/80">
                     @forelse($sellers as $seller)
+                        @php
+                            $isKycVerified = $seller->status === \App\Enums\SellerStatus::APPROVED;
+                            $isBankVerified = $seller->bankAccounts->whereNotNull('verified_at')->count() > 0;
+                            $isPickupVerified = $seller->pickupLocations->where('verification_status', 'verified')->count() > 0;
+                        @endphp
                         <tr class="hover:bg-slate-50/70 dark:hover:bg-slate-850/50 transition-colors">
-                            <td class="py-3.5 px-4 text-center">
+                            <td class="py-3.5 px-3 text-center">
                                 <input 
                                     type="checkbox" 
                                     value="{{ $seller->id }}" 
                                     x-model="selectedIds"
-                                    class="rounded-sm border-slate-300 dark:border-slate-700 text-indigo-600 focus:ring-indigo-500"
+                                    class="rounded-sm border-slate-300 dark:border-slate-700 text-emerald-600 focus:ring-emerald-500"
                                 />
                             </td>
-                            <td class="py-3.5 px-4">
-                                <div class="flex items-center space-x-3">
-                                    <div class="w-8 h-8 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-100 dark:border-indigo-800/40 flex items-center justify-center font-bold text-xs text-indigo-600 dark:text-indigo-400 shrink-0">
+                            <!-- Seller ID & Business Name -->
+                            <td class="py-3.5 px-3">
+                                <div class="flex items-center space-x-2.5">
+                                    <div class="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-100 dark:border-emerald-800/40 flex items-center justify-center font-bold text-xs text-emerald-600 dark:text-emerald-400 shrink-0">
                                         {{ substr($seller->business_name, 0, 2) }}
                                     </div>
-                                    <div>
-                                        <a href="{{ route('admin.sellers.show', $seller) }}" class="font-bold text-slate-900 dark:text-white hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+                                    <div class="min-w-0">
+                                        <a href="{{ route('admin.sellers.show', $seller) }}" class="font-bold text-slate-900 dark:text-white hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors truncate block max-w-[160px]">
                                             {{ $seller->business_name }}
                                         </a>
-                                        <div class="text-[11px] text-slate-400 dark:text-slate-500">
-                                            {{ $seller->legal_name }} &bull; <span class="font-mono">#{{ $seller->id }}</span>
+                                        <div class="text-[10px] text-slate-400 dark:text-slate-500 truncate max-w-[160px]">
+                                            {{ $seller->legal_name }} &bull; <span class="font-mono font-bold text-slate-600 dark:text-slate-300">#{{ $seller->id }}</span>
                                         </div>
                                     </div>
                                 </div>
                             </td>
-                            <td class="py-3.5 px-4">
-                                <div class="font-medium text-slate-800 dark:text-slate-200">
+                            <!-- Owner & Contact -->
+                            <td class="py-3.5 px-3">
+                                <div class="font-medium text-slate-800 dark:text-slate-200 truncate max-w-[140px]">
                                     {{ $seller->user?->name ?? 'N/A' }}
                                 </div>
-                                <div class="text-[11px] text-slate-400">
+                                <div class="text-[11px] text-slate-400 truncate max-w-[140px]">
                                     {{ $seller->user?->email ?? 'No email' }}
                                 </div>
                                 @if($seller->user?->phone)
@@ -244,46 +281,68 @@
                                     </div>
                                 @endif
                             </td>
-                            <td class="py-3.5 px-4">
+                            <!-- Store Model -->
+                            <td class="py-3.5 px-3 whitespace-nowrap">
                                 <span class="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
                                     {{ $seller->seller_type->label() }}
                                 </span>
                             </td>
-                            <td class="py-3.5 px-4 text-center">
-                                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold border {{ $seller->status->badgeClass() }}">
-                                    {{ $seller->status->label() }}
-                                </span>
+                            <!-- GST Details -->
+                            <td class="py-3.5 px-3 font-mono text-[11px] text-slate-600 dark:text-slate-300 whitespace-nowrap">
+                                @if($seller->gstin)
+                                    <span class="font-semibold text-slate-800 dark:text-slate-200">{{ $seller->gstin }}</span>
+                                @else
+                                    <span class="text-slate-400 italic">Exempt / Unregistered</span>
+                                @endif
                             </td>
-                            <td class="py-3.5 px-4 text-center">
-                                <div class="inline-flex items-center space-x-1.5 text-[11px]">
-                                    <span title="Stores" class="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-mono">
-                                        {{ $seller->stores_count }} stores
+                            <!-- Verification Status Badges -->
+                            <td class="py-3.5 px-3 text-center whitespace-nowrap">
+                                <div class="flex flex-col gap-1 items-center">
+                                    <span class="px-1.5 py-0.5 text-[9px] font-bold rounded-sm border {{ $isKycVerified ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300' : 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/60 dark:text-amber-300' }}">
+                                        KYC: {{ $isKycVerified ? 'Verified' : 'Pending' }}
                                     </span>
-                                    <span title="Products" class="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-mono">
-                                        {{ $seller->products_count }} items
+                                    <span class="px-1.5 py-0.5 text-[9px] font-bold rounded-sm border {{ $isBankVerified ? 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/60 dark:text-blue-300' : 'bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-400' }}">
+                                        Bank: {{ $isBankVerified ? 'Verified' : 'Pending' }}
                                     </span>
                                 </div>
                             </td>
-                            <td class="py-3.5 px-4 text-center font-mono text-xs">
+                            <!-- Product Count & Order Count -->
+                            <td class="py-3.5 px-3 text-center whitespace-nowrap font-mono text-[11px]">
+                                <span class="font-semibold text-slate-800 dark:text-slate-200">{{ $seller->products_count }}</span>
+                                <span class="text-slate-400">/</span>
+                                <span class="font-semibold text-slate-800 dark:text-slate-200">{{ $seller->fulfilment_orders_count }}</span>
+                                <div class="text-[9px] text-slate-400 font-sans">items / orders</div>
+                            </td>
+                            <!-- Total Sales (GMV) -->
+                            <td class="py-3.5 px-3 text-right font-mono font-bold text-slate-900 dark:text-white whitespace-nowrap">
+                                ₹{{ number_format((float) ($seller->total_sales ?? 0), 2) }}
+                            </td>
+                            <!-- Commission Plan -->
+                            <td class="py-3.5 px-3 text-center font-mono text-xs whitespace-nowrap">
                                 @if($seller->commission_override !== null)
                                     <span class="font-bold text-amber-600 dark:text-amber-400">
                                         {{ $seller->commission_override }}%
                                     </span>
-                                    <div class="text-[9px] text-amber-500 font-sans">Custom</div>
+                                    <div class="text-[9px] text-amber-500 font-sans">Custom Override</div>
                                 @else
-                                    <span class="text-slate-400">Default ({{ setting('default_commission_pct', 10) }}%)</span>
+                                    <span class="text-slate-500 dark:text-slate-400">Default ({{ setting('default_commission_pct', 10) }}%)</span>
                                 @endif
                             </td>
-                            <td class="py-3.5 px-4 text-slate-600 dark:text-slate-400">
-                                {{ $seller->stores->first()?->locations->first()?->city ?? 'N/A' }}
+                            <!-- Account Status -->
+                            <td class="py-3.5 px-3 text-center whitespace-nowrap">
+                                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold border {{ $seller->status->badgeClass() }}">
+                                    {{ $seller->status->label() }}
+                                </span>
                             </td>
-                            <td class="py-3.5 px-4 text-right text-slate-400 text-[11px]">
+                            <!-- Registration Date -->
+                            <td class="py-3.5 px-3 text-right text-slate-400 text-[11px] whitespace-nowrap">
                                 {{ $seller->created_at->format('M d, Y') }}
                             </td>
-                            <td class="py-3.5 px-4 text-center">
+                            <!-- Action Link -->
+                            <td class="py-3.5 px-3 text-center whitespace-nowrap">
                                 <a 
                                     href="{{ route('admin.sellers.show', $seller) }}" 
-                                    class="inline-flex items-center px-2.5 py-1 text-xs font-bold rounded-lg bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 border border-indigo-200 dark:border-indigo-800/60 transition"
+                                    class="inline-flex items-center px-2.5 py-1 text-xs font-bold rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 border border-emerald-200 dark:border-emerald-800/60 transition"
                                 >
                                     Manage &rarr;
                                 </a>
@@ -291,7 +350,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="10" class="py-12 text-center">
+                            <td colspan="12" class="py-12 text-center">
                                 <x-empty-state 
                                     title="No merchants match criteria" 
                                     description="Try clearing search filters or adjust keywords to discover merchant accounts."

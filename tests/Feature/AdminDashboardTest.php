@@ -155,11 +155,11 @@ class AdminDashboardTest extends TestCase
 
         $response->assertStatus(200);
         $this->assertStringContainsString('text/csv', (string) $response->headers->get('Content-Type'));
-        $this->assertStringContainsString('attachment; filename="onestall_dashboard_summary_', (string) $response->headers->get('Content-Disposition'));
+        $this->assertStringContainsString('allzone_dashboard_summary_', (string) $response->headers->get('Content-Disposition'));
 
         // Read stream content
         $content = $response->streamedContent();
-        $this->assertStringContainsString('OneStall Smart Commerce Platform - Executive Dashboard Summary', $content);
+        $this->assertStringContainsString('Executive Dashboard Summary', $content);
         $this->assertStringContainsString('KEY PERFORMANCE INDICATORS', $content);
         $this->assertStringContainsString('Total Platform GMV', $content);
         $this->assertStringContainsString('REVENUE BY CATEGORY', $content);

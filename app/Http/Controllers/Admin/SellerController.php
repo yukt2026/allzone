@@ -36,6 +36,7 @@ class SellerController extends Controller
         $this->authorize('viewAny', Seller::class);
 
         $filters = [
+            'tab' => $request->query('tab', 'all'),
             'search' => $request->query('search'),
             'status' => $request->query('status'),
             'type' => $request->query('type'),
@@ -45,12 +46,15 @@ class SellerController extends Controller
         ];
 
         $sellers = $this->sellerService->getFilteredSellers($filters, 15);
+        $tabCounts = $this->sellerService->getSellerTabCounts();
 
         return view('admin.sellers.index', [
             'sellers' => $sellers,
             'filters' => $filters,
             'statuses' => SellerStatus::cases(),
             'types' => SellerType::cases(),
+            'tabCounts' => $tabCounts,
+            'activeTab' => $filters['tab'],
         ]);
     }
 
@@ -79,6 +83,8 @@ class SellerController extends Controller
             'documents',
             'bankAccounts',
             'brands',
+            'pickupLocations',
+            'primaryBankAccount',
         ]);
 
         $products = $seller->products()
@@ -93,15 +99,31 @@ class SellerController extends Controller
             ->paginate(10, ['*'], 'orders_page')
             ->appends(array_merge($request->query(), ['tab' => 'orders']));
 
-        $activityLogs = $this->sellerService->getSellerActivityLogs($seller);
+        $settlements = $seller->settlements()
+            ->latest('id')
+            ->paginate(10, ['*'], 'settlements_page')
+            ->appends(array_merge($request->query(), ['tab' => 'payments']));
 
-        $stats = [
-            'total_gmv' => (float) $seller->fulfilmentOrders()->sum('subtotal'),
-            'total_orders' => $seller->fulfilmentOrders()->count(),
-            'stores_count' => $seller->stores()->count(),
-            'products_count' => $seller->products()->count(),
-            'pending_payout' => (float) $seller->settlements()->where('status', SettlementStatus::PENDING)->sum('net'),
-        ];
+        $commissionEntries = $seller->commissionEntries()
+            ->select('commission_entries.*')
+            ->with('order')
+            ->latest('commission_entries.id')
+            ->paginate(10, ['*'], 'commission_page')
+            ->appends(array_merge($request->query(), ['tab' => 'commission']));
+
+        $tickets = \App\Models\SupportTicket::where(function ($q) use ($seller) {
+                $q->where('seller_id', $seller->id)
+                  ->orWhere('user_id', $seller->user_id);
+            })
+            ->with(['categoryRelation', 'assignedAgent'])
+            ->latest('id')
+            ->paginate(10, ['*'], 'tickets_page')
+            ->appends(array_merge($request->query(), ['tab' => 'tickets']));
+
+        $pickupLocations = $seller->pickupLocations()->latest('id')->get();
+        $bankAccounts = $seller->bankAccounts()->latest('id')->get();
+        $activityLogs = $this->sellerService->getSellerActivityLogs($seller);
+        $stats = $this->sellerService->getSellerPerformanceMetrics($seller);
 
         $activeTab = (string) $request->query('tab', '');
         if (empty($activeTab)) {
@@ -109,6 +131,12 @@ class SellerController extends Controller
                 $activeTab = 'products';
             } elseif ($request->has('orders_page')) {
                 $activeTab = 'orders';
+            } elseif ($request->has('settlements_page')) {
+                $activeTab = 'payments';
+            } elseif ($request->has('commission_page')) {
+                $activeTab = 'commission';
+            } elseif ($request->has('tickets_page')) {
+                $activeTab = 'tickets';
             } else {
                 $activeTab = 'overview';
             }
@@ -118,6 +146,11 @@ class SellerController extends Controller
             'seller' => $seller,
             'products' => $products,
             'orders' => $orders,
+            'settlements' => $settlements,
+            'commissionEntries' => $commissionEntries,
+            'tickets' => $tickets,
+            'pickupLocations' => $pickupLocations,
+            'bankAccounts' => $bankAccounts,
             'activityLogs' => $activityLogs,
             'stats' => $stats,
             'activeTab' => $activeTab,
@@ -269,5 +302,52 @@ class SellerController extends Controller
         return redirect()
             ->route('admin.sellers.index')
             ->with('success', "Bulk {$action} action applied to {$processed} merchant(s).");
+    }
+
+    /**
+     * Request additional verification documents from seller.
+     */
+    public function requestDocuments(Request $request, Seller $seller): RedirectResponse
+    {
+        $this->authorize('requestDocuments', $seller);
+
+        $validated = $request->validate([
+            'document_type' => ['required', 'string'],
+            'instructions' => ['required', 'string', 'min:3', 'max:1000'],
+        ]);
+
+        $this->sellerService->requestAdditionalDocuments(
+            $seller,
+            (string) $validated['document_type'],
+            (string) $validated['instructions'],
+            $request->user()
+        );
+
+        return redirect()
+            ->route('admin.sellers.show', ['seller' => $seller, 'tab' => 'documents'])
+            ->with('success', "Requested additional document '{$validated['document_type']}' from merchant.");
+    }
+
+    /**
+     * Update permitted seller operational settings.
+     */
+    public function updateSettings(Request $request, Seller $seller): RedirectResponse
+    {
+        $this->authorize('update', $seller);
+
+        $validated = $request->validate([
+            'seller_type' => ['nullable', 'string'],
+            'category_focus' => ['nullable', 'string', 'max:255'],
+            'status' => ['nullable', 'string'],
+            'commission_override' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'accepts_quick_commerce' => ['nullable'],
+            'accepts_pickup' => ['nullable'],
+        ]);
+
+        $this->sellerService->updateSellerSettings($seller, $validated, $request->user());
+
+        return redirect()
+            ->route('admin.sellers.show', ['seller' => $seller, 'tab' => 'overview'])
+            ->with('success', 'Merchant settings updated successfully.');
     }
 }

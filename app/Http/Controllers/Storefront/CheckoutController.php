@@ -42,7 +42,13 @@ class CheckoutController extends Controller
         $sessionId = $request->session()->getId();
         $cart = $this->cartService->getActiveCart($user, $sessionId);
 
-        // Ensure cart has active items
+        // Ensure cart has active items; if empty, attempt fallback merge before redirecting
+        if ($cart->activeItems->isEmpty()) {
+            $this->cartService->mergeSessionCart($sessionId, $user);
+            $cart = $this->cartService->getActiveCart($user, $sessionId);
+            $cart->load('items.variant.product');
+        }
+
         if ($cart->activeItems->isEmpty()) {
             return redirect()->route('cart.index')->with('notice', 'Your cart is empty. Add items before checking out.');
         }
@@ -230,7 +236,12 @@ class CheckoutController extends Controller
     public function success(Request $request, string $orderNumber): View
     {
         $order = Order::where('order_number', $orderNumber)
-            ->with(['fulfilmentOrders.items.variant.product', 'fulfilmentOrders.seller', 'customer.user'])
+            ->with([
+                'fulfilmentOrders.items.variant.product.media',
+                'fulfilmentOrders.seller',
+                'fulfilmentOrders.shipment.tracking',
+                'customer.user',
+            ])
             ->firstOrFail();
 
         return view('storefront.order-success', [

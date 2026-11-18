@@ -559,8 +559,8 @@
             </div>
         </x-card>
 
-        <!-- 6. Tax, Logistics & Omnichannel Flags -->
-        <x-card title="6. Tax, Return Policy & Omnichannel Flags" subtitle="Mandatory GST tax codes, return windows, COD eligibility, and 10-30m instant dispatch capability">
+        <!-- 6. Tax, Return Policy & Logistics Flags -->
+        <x-card title="6. Tax, Return Policy & Payment Flags" subtitle="Mandatory GST tax codes, customer return windows, and Cash on Delivery eligibility">
             <div class="space-y-4">
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div>
@@ -611,15 +611,7 @@
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4 border-t border-slate-100 dark:border-slate-800">
-                    <label class="p-3.5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/40 flex items-start space-x-3 cursor-pointer hover:bg-slate-100/60 transition">
-                        <input type="checkbox" name="is_quick_capable" value="1" {{ old('is_quick_capable', $product->is_quick_capable) ? 'checked' : '' }} @change="markDirty()" class="mt-0.5 rounded text-amber-500 focus:ring-amber-500" />
-                        <div>
-                            <span class="text-xs font-bold text-slate-900 dark:text-white block">⚡ 10-30m Quick Delivery Candidate</span>
-                            <span class="text-[11px] text-slate-500">Eligible for instant hyper-local dark store rider dispatch.</span>
-                        </div>
-                    </label>
-
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-slate-100 dark:border-slate-800">
                     <label class="p-3.5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/40 flex items-start space-x-3 cursor-pointer hover:bg-slate-100/60 transition">
                         <input type="checkbox" name="is_returnable" value="1" {{ old('is_returnable', $product->is_returnable) ? 'checked' : '' }} @change="markDirty()" class="mt-0.5 rounded text-indigo-600 focus:ring-indigo-500" />
                         <div>

@@ -13,11 +13,14 @@ use App\Models\ProductAttributeValue;
 use App\Models\User;
 use App\Notifications\ProductApprovedNotification;
 use App\Notifications\ProductRejectedNotification;
+use App\Notifications\ProductBlockedNotification;
+use App\Notifications\ProductCorrectionsRequestedNotification;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class AdminCatalogueService
 {
@@ -310,19 +313,25 @@ class AdminCatalogueService
     // =========================================================================
 
     /**
-     * Get paginated moderation queue products.
+     * Build filtered moderation queue query.
      *
      * @param array<string, mixed> $filters
      */
-    public function getModerationQueue(array $filters = [], int $perPage = 15): LengthAwarePaginator
+    public function buildModerationQuery(array $filters = []): Builder
     {
         $query = Product::query()
             ->with(['seller.user', 'category', 'brand', 'variants', 'media']);
 
-        // Default status is pending_review if not specified
+        // Status filter: support tabs 'all', 'pending_review', 'approved'/'active', 'rejected', 'blocked', 'inactive'
         $status = $filters['status'] ?? 'pending_review';
-        if ($status !== 'all') {
-            $query->where('status', $status);
+        if ($status !== 'all' && $status !== '') {
+            if ($status === 'approved' || $status === 'active') {
+                $query->where('status', ProductStatus::ACTIVE);
+            } elseif ($status === 'inactive') {
+                $query->whereIn('status', [ProductStatus::INACTIVE, ProductStatus::DRAFT]);
+            } else {
+                $query->where('status', $status);
+            }
         }
 
         if (!empty($filters['search'])) {
@@ -331,8 +340,10 @@ class AdminCatalogueService
                 $sub->where('title', 'like', "%{$term}%")
                     ->orWhere('slug', 'like', "%{$term}%")
                     ->orWhere('hsn_code', 'like', "%{$term}%")
+                    ->orWhere('id', $term)
                     ->orWhereHas('seller', function (Builder $sSub) use ($term) {
-                        $sSub->where('business_name', 'like', "%{$term}%");
+                        $sSub->where('business_name', 'like', "%{$term}%")
+                             ->orWhere('legal_name', 'like', "%{$term}%");
                     })
                     ->orWhereHas('variants', function (Builder $vSub) use ($term) {
                         $vSub->where('sku', 'like', "%{$term}%")
@@ -342,29 +353,78 @@ class AdminCatalogueService
         }
 
         if (!empty($filters['category_id'])) {
-            $query->where('category_id', $filters['category_id']);
+            $catId = (int) $filters['category_id'];
+            // Include subcategory IDs under this category
+            $childCatIds = Category::where('parent_id', $catId)->pluck('id')->all();
+            $allCatIds = array_merge([$catId], $childCatIds);
+            $query->whereIn('category_id', $allCatIds);
+        }
+
+        if (!empty($filters['brand_id'])) {
+            $query->where('brand_id', (int) $filters['brand_id']);
         }
 
         if (!empty($filters['seller_id'])) {
-            $query->where('seller_id', $filters['seller_id']);
+            $query->where('seller_id', (int) $filters['seller_id']);
         }
 
-        return $query->latest('id')->paginate($perPage)->withQueryString();
+        if (isset($filters['is_quick_capable']) && $filters['is_quick_capable'] !== '') {
+            $query->where('is_quick_capable', (bool) $filters['is_quick_capable']);
+        }
+
+        if (!empty($filters['min_price'])) {
+            $minPrice = (float) $filters['min_price'];
+            $query->whereHas('variants', function (Builder $v) use ($minPrice) {
+                $v->where('selling_price', '>=', $minPrice);
+            });
+        }
+
+        if (!empty($filters['max_price'])) {
+            $maxPrice = (float) $filters['max_price'];
+            $query->whereHas('variants', function (Builder $v) use ($maxPrice) {
+                $v->where('selling_price', '<=', $maxPrice);
+            });
+        }
+
+        // Sorting
+        $sort = $filters['sort'] ?? 'latest';
+        match ($sort) {
+            'oldest' => $query->oldest('id'),
+            'title_asc' => $query->orderBy('title', 'asc'),
+            'title_desc' => $query->orderBy('title', 'desc'),
+            default => $query->latest('id'),
+        };
+
+        return $query;
     }
 
     /**
-     * Get moderation queue counters.
+     * Get paginated moderation queue products.
+     *
+     * @param array<string, mixed> $filters
+     */
+    public function getModerationQueue(array $filters = [], int $perPage = 15): LengthAwarePaginator
+    {
+        return $this->buildModerationQuery($filters)->paginate($perPage)->withQueryString();
+    }
+
+    /**
+     * Get moderation queue counters across all required status tabs.
      *
      * @return array<string, int>
      */
     public function getModerationStats(): array
     {
         return [
+            'all_count' => Product::count(),
             'pending_count' => Product::where('status', ProductStatus::PENDING_REVIEW)->count(),
+            'approved_count' => Product::where('status', ProductStatus::ACTIVE)->count(),
+            'rejected_count' => Product::where('status', ProductStatus::REJECTED)->count(),
+            'blocked_count' => Product::where('status', ProductStatus::BLOCKED)->count(),
+            'inactive_count' => Product::whereIn('status', [ProductStatus::INACTIVE, ProductStatus::DRAFT])->count(),
             'approved_today' => Product::where('status', ProductStatus::ACTIVE)
                 ->whereDate('updated_at', today())
                 ->count(),
-            'rejected_count' => Product::where('status', ProductStatus::REJECTED)->count(),
             'total_active' => Product::where('status', ProductStatus::ACTIVE)->count(),
         ];
     }
@@ -430,6 +490,212 @@ class AdminCatalogueService
                 $product->seller->user->notify(new ProductRejectedNotification($product, $reason));
             }
         });
+    }
+
+    /**
+     * Block product listing according to platform compliance policy.
+     */
+    public function blockProduct(Product $product, string $policyReason, User $admin): void
+    {
+        $product->loadMissing('seller.user');
+        DB::transaction(function () use ($product, $policyReason, $admin) {
+            $oldStatus = $product->status->value;
+
+            $product->update([
+                'status' => ProductStatus::BLOCKED,
+                'rejection_reason' => "Policy Violation: {$policyReason}",
+            ]);
+
+            activity()
+                ->performedOn($product)
+                ->causedBy($admin)
+                ->withProperties([
+                    'action' => 'block_product',
+                    'reason' => $policyReason,
+                    'old' => ['status' => $oldStatus],
+                    'new' => ['status' => ProductStatus::BLOCKED->value, 'rejection_reason' => "Policy Violation: {$policyReason}"],
+                ])
+                ->log("Blocked product #{$product->id} ('{$product->title}') due to policy violation: {$policyReason}");
+
+            // Notify seller
+            if ($product->seller?->user) {
+                $product->seller->user->notify(new ProductBlockedNotification($product, $policyReason));
+            }
+        });
+    }
+
+    /**
+     * Request specific corrections from seller for product listing.
+     */
+    public function requestCorrections(Product $product, string $notes, User $admin): void
+    {
+        $product->loadMissing('seller.user');
+        DB::transaction(function () use ($product, $notes, $admin) {
+            $product->update([
+                'status' => ProductStatus::PENDING_REVIEW,
+                'rejection_reason' => "Corrections Requested: {$notes}",
+            ]);
+
+            activity()
+                ->performedOn($product)
+                ->causedBy($admin)
+                ->withProperties([
+                    'action' => 'request_corrections',
+                    'notes' => $notes,
+                    'status' => ProductStatus::PENDING_REVIEW->value,
+                ])
+                ->log("Requested corrections on product #{$product->id} ('{$product->title}'): {$notes}");
+
+            // Notify seller
+            if ($product->seller?->user) {
+                $product->seller->user->notify(new ProductCorrectionsRequestedNotification($product, $notes));
+            }
+        });
+    }
+
+    /**
+     * Bulk update status for multiple products.
+     *
+     * @param array<int> $productIds
+     */
+    public function bulkUpdateStatus(array $productIds, ProductStatus $newStatus, ?string $reason, User $admin): int
+    {
+        $products = Product::whereIn('id', $productIds)->with('seller.user')->get();
+        $count = 0;
+
+        foreach ($products as $product) {
+            if ($newStatus === ProductStatus::ACTIVE) {
+                $this->approveProduct($product, $admin);
+            } elseif ($newStatus === ProductStatus::REJECTED) {
+                $this->rejectProduct($product, $reason ?: 'Rejected in bulk administrative review.', $admin);
+            } elseif ($newStatus === ProductStatus::BLOCKED) {
+                $this->blockProduct($product, $reason ?: 'Blocked in bulk compliance action.', $admin);
+            } else {
+                $oldStatus = $product->status->value;
+                $product->update([
+                    'status' => $newStatus,
+                    'rejection_reason' => $reason,
+                ]);
+
+                activity()
+                    ->performedOn($product)
+                    ->causedBy($admin)
+                    ->withProperties([
+                        'action' => 'bulk_status_update',
+                        'old' => ['status' => $oldStatus],
+                        'new' => ['status' => $newStatus->value],
+                    ])
+                    ->log("Updated product #{$product->id} status to {$newStatus->value} in bulk operation.");
+            }
+            $count++;
+        }
+
+        return $count;
+    }
+
+    /**
+     * Bulk reassign category for multiple products.
+     *
+     * @param array<int> $productIds
+     */
+    public function bulkAssignCategory(array $productIds, int $categoryId, User $admin): int
+    {
+        $category = Category::findOrFail($categoryId);
+        $products = Product::whereIn('id', $productIds)->get();
+        $count = 0;
+
+        foreach ($products as $product) {
+            $oldCatId = $product->category_id;
+            $product->update(['category_id' => $categoryId]);
+
+            activity()
+                ->performedOn($product)
+                ->causedBy($admin)
+                ->withProperties([
+                    'action' => 'bulk_category_assign',
+                    'old' => ['category_id' => $oldCatId],
+                    'new' => ['category_id' => $categoryId, 'category_name' => $category->name],
+                ])
+                ->log("Reassigned product #{$product->id} to category '{$category->name}' in bulk operation.");
+
+            $count++;
+        }
+
+        return $count;
+    }
+
+    /**
+     * Stream filtered products as an authorized CSV report.
+     *
+     * @param array<string, mixed> $filters
+     */
+    public function exportProductsCsv(array $filters = []): StreamedResponse
+    {
+        $query = $this->buildModerationQuery($filters);
+
+        $headers = [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="allzone_products_' . now()->format('Ymd_His') . '.csv"',
+            'Pragma' => 'no-cache',
+            'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
+            'Expires' => '0',
+        ];
+
+        return response()->stream(function () use ($query) {
+            $handle = fopen('php://output', 'w');
+            if ($handle === false) {
+                return;
+            }
+
+            fputcsv($handle, [
+                'Product ID',
+                'Title',
+                'SKU (Default)',
+                'Seller Store',
+                'Owner Name',
+                'Category',
+                'Brand',
+                'Status',
+                'Selling Price (INR)',
+                'MRP (INR)',
+                'Cost Price (INR)',
+                'HSN Code',
+                'GST Tax %',
+                'Is Returnable',
+                'Return Days',
+                'Quick Commerce',
+                'Rejection/Block Reason',
+                'Created At',
+            ]);
+
+            $query->chunk(200, function ($products) use ($handle) {
+                foreach ($products as $product) {
+                    $defaultVar = $product->variants->first();
+                    fputcsv($handle, [
+                        $product->id,
+                        $product->title,
+                        $defaultVar?->sku ?? 'N/A',
+                        $product->seller?->business_name ?? 'N/A',
+                        $product->seller?->user?->name ?? 'N/A',
+                        $product->category?->name ?? 'Uncategorized',
+                        $product->brand?->name ?? 'No Brand',
+                        $product->status->value,
+                        number_format((float) ($defaultVar?->selling_price ?? 0), 2, '.', ''),
+                        number_format((float) ($defaultVar?->mrp ?? 0), 2, '.', ''),
+                        number_format((float) ($defaultVar?->cost_price ?? 0), 2, '.', ''),
+                        $product->hsn_code ?? '',
+                        number_format((float) $product->tax_percent, 2, '.', ''),
+                        $product->is_returnable ? 'YES' : 'NO',
+                        $product->return_window_days,
+                        $product->is_quick_capable ? 'YES' : 'NO',
+                        $product->rejection_reason ?? '',
+                        $product->created_at?->format('Y-m-d H:i:s') ?? '',
+                    ]);
+                }
+            });
+
+            fclose($handle);
+        }, 200, $headers);
     }
 
     /**

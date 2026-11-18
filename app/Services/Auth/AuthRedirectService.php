@@ -18,10 +18,11 @@ class AuthRedirectService
     public function handleLoginSuccess(User $user, Request $request, string $authGuard = 'web'): string
     {
         $oldSessionId = $request->session()->getId();
+        $guestCartId = $request->session()->get('guest_cart_id') ?? $request->cookie('allzone_cart_id');
 
         // 1. Merge guest session cart into user's account cart
         try {
-            app(\App\Services\Storefront\CartService::class)->mergeSessionCart($oldSessionId, $user);
+            app(\App\Services\Storefront\CartService::class)->mergeSessionCart($oldSessionId, $user, $guestCartId ? (int) $guestCartId : null);
         } catch (\Throwable $e) {
             report($e);
         }
@@ -67,7 +68,7 @@ class AuthRedirectService
      */
     public function getRedirectPath(User $user): string
     {
-        if ($user->hasAnyRole(['super_admin', 'admin', 'support_admin'])) {
+        if ($user->hasAnyRole(['super_admin', 'admin', 'operations_admin', 'support_admin', 'seller_support', 'catalog_manager', 'finance_admin', 'finance_manager', 'support_staff'])) {
             return route('admin.dashboard');
         }
 

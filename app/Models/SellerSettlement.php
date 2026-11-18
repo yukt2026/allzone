@@ -31,6 +31,9 @@ class SellerSettlement extends Model
         'notes',
         'paid_at',
         'reference',
+        'approved_by',
+        'approved_at',
+        'failed_reason',
     ];
 
     protected $casts = [
@@ -44,6 +47,7 @@ class SellerSettlement extends Model
         'net' => 'decimal:2',
         'status' => SettlementStatus::class,
         'paid_at' => 'datetime',
+        'approved_at' => 'datetime',
     ];
 
     public function seller(): BelongsTo
@@ -56,13 +60,33 @@ class SellerSettlement extends Model
         return $this->hasMany(SettlementItem::class);
     }
 
+    public function approver(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'approved_by');
+    }
+
     public function scopePending(Builder $query): Builder
     {
         return $query->where('status', SettlementStatus::PENDING);
     }
 
+    public function scopeApproved(Builder $query): Builder
+    {
+        return $query->where('status', SettlementStatus::APPROVED);
+    }
+
+    public function scopeProcessing(Builder $query): Builder
+    {
+        return $query->where('status', SettlementStatus::PROCESSING);
+    }
+
     public function scopePaid(Builder $query): Builder
     {
         return $query->whereIn('status', [SettlementStatus::PAID, SettlementStatus::SETTLED]);
+    }
+
+    public function scopeFailed(Builder $query): Builder
+    {
+        return $query->where('status', SettlementStatus::FAILED);
     }
 }

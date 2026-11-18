@@ -73,6 +73,10 @@
                         Issue Refund ({{ format_currency($return->refund_amount ?? $return->orderItem?->total ?? 0) }})
                     </x-button>
                 @endif
+
+                <a href="{{ route('seller.claims.index', ['order_id' => $return->orderItem?->fulfilmentOrder?->order_id, 'return_id' => $return->id]) }}" class="px-3 py-1.5 rounded-xl border border-amber-300 text-amber-700 hover:bg-amber-50 dark:border-amber-800 dark:text-amber-400 text-xs font-bold transition flex items-center gap-1">
+                    <span>Raise Claim</span>
+                </a>
             </div>
         </x-slot>
     </x-page-header>

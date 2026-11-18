@@ -10,6 +10,7 @@ enum ProductStatus: string
     case PENDING_REVIEW = 'pending_review';
     case ACTIVE = 'active';
     case REJECTED = 'rejected';
+    case BLOCKED = 'blocked';
     case INACTIVE = 'inactive';
 
     public function label(): string
@@ -17,8 +18,9 @@ enum ProductStatus: string
         return match ($this) {
             self::DRAFT => 'Draft',
             self::PENDING_REVIEW => 'Pending QC Review',
-            self::ACTIVE => 'Live in Catalog',
+            self::ACTIVE => 'Approved / Active',
             self::REJECTED => 'Rejected by Admin',
+            self::BLOCKED => 'Blocked (Policy Violation)',
             self::INACTIVE => 'Inactive / Archived',
         };
     }
@@ -30,6 +32,7 @@ enum ProductStatus: string
             self::PENDING_REVIEW => 'warning',
             self::ACTIVE => 'success',
             self::REJECTED => 'danger',
+            self::BLOCKED => 'danger',
             self::INACTIVE => 'secondary',
         };
     }
@@ -41,6 +44,7 @@ enum ProductStatus: string
             self::PENDING_REVIEW => 'bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800',
             self::ACTIVE => 'bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800',
             self::REJECTED => 'bg-rose-100 text-rose-800 border-rose-300 dark:bg-rose-950/60 dark:text-rose-300 dark:border-rose-800',
+            self::BLOCKED => 'bg-red-100 text-red-800 border-red-300 dark:bg-red-950/60 dark:text-red-300 dark:border-red-800',
             self::INACTIVE => 'bg-slate-200 text-slate-700 border-slate-300 dark:bg-slate-900/80 dark:text-slate-400 dark:border-slate-800',
         };
     }

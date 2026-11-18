@@ -67,6 +67,11 @@ class Order extends Model
         return $this->hasMany(FulfilmentOrder::class);
     }
 
+    public function items(): \Illuminate\Database\Eloquent\Relations\HasManyThrough
+    {
+        return $this->hasManyThrough(OrderItem::class, FulfilmentOrder::class);
+    }
+
     public function payments(): HasMany
     {
         return $this->hasMany(Payment::class);

@@ -15,7 +15,10 @@ use App\Models\CommissionEntry;
 use App\Models\Customer;
 use App\Models\FulfilmentOrder;
 use App\Models\Order;
+use App\Models\OrderItem;
+use App\Models\OrderReturn;
 use App\Models\Product;
+use App\Models\RtoCase;
 use App\Models\Seller;
 use App\Models\SellerSettlement;
 use App\Models\SupportTicket;
@@ -26,21 +29,21 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class AdminDashboardService
 {
-    protected const CACHE_TTL = 300; // 5-minute cache per specification
+    protected const CACHE_TTL = 180; // 3-minute cache for freshness
 
     /**
-     * Get top row 8 KPI metrics with trend vs previous period.
+     * Get platform-wide KPI metrics with trend comparisons vs previous period.
      *
      * @return array<string, mixed>
      */
-    public function getTopStats(string $range = '30d'): array
+    public function getTopStats(string $range = '30d', ?string $customStart = null, ?string $customEnd = null): array
     {
-        $cacheKey = "admin_dash_top_stats_{$range}";
+        $cacheKey = "admin_dash_top_stats_{$range}_" . ($customStart ?? 'none') . '_' . ($customEnd ?? 'none');
 
-        return Cache::remember($cacheKey, self::CACHE_TTL, function () use ($range) {
-            [$currentStart, $currentEnd, $previousStart, $previousEnd] = $this->parsePeriodDates($range);
+        return Cache::remember($cacheKey, self::CACHE_TTL, function () use ($range, $customStart, $customEnd) {
+            [$currentStart, $currentEnd, $previousStart, $previousEnd] = $this->parsePeriodDates($range, $customStart, $customEnd);
 
-            // 1. Total GMV
+            // 1. Total GMV / Gross Sales
             $currentGmv = (float) Order::whereBetween('created_at', [$currentStart, $currentEnd])
                 ->where('status', '!=', OrderStatus::CANCELLED)
                 ->sum('total');
@@ -53,23 +56,35 @@ class AdminDashboardService
             $currentOrders = Order::whereBetween('created_at', [$currentStart, $currentEnd])->count();
             $previousOrders = Order::whereBetween('created_at', [$previousStart, $previousEnd])->count();
 
-            // 3. Active Sellers
+            // 3. Sellers
+            $totalSellers = Seller::count();
             $activeSellers = Seller::where('status', SellerStatus::APPROVED)->count();
             $newSellersThisPeriod = Seller::where('status', SellerStatus::APPROVED)
                 ->whereBetween('approved_at', [$currentStart, $currentEnd])
                 ->count();
-
-            // 4. Active Customers
-            $activeCustomers = Customer::count();
-            $newCustomersThisPeriod = Customer::whereBetween('created_at', [$currentStart, $currentEnd])->count();
-
-            // 5. Pending Seller Approvals (Queue)
             $pendingSellers = Seller::whereIn('status', [SellerStatus::PENDING, SellerStatus::KYC_SUBMITTED])->count();
 
-            // 6. Pending Product Reviews (Queue)
+            // 4. Customers
+            $totalCustomers = Customer::count();
+            $activeCustomers = $totalCustomers;
+            $newCustomersThisPeriod = Customer::whereBetween('created_at', [$currentStart, $currentEnd])->count();
+
+            // 5. Products
+            $totalProducts = Product::count();
+            $activeProducts = Product::where('status', ProductStatus::ACTIVE)->count();
             $pendingProducts = Product::where('status', ProductStatus::PENDING_REVIEW)->count();
 
-            // 7. Quick Commerce Orders
+            // 6. Orders Breakdown
+            $pendingOrders = Order::whereIn('status', [OrderStatus::PLACED, OrderStatus::PENDING])->count();
+            $shippedOrders = Order::whereIn('status', [OrderStatus::PROCESSING, OrderStatus::READY_FOR_PICKUP, OrderStatus::OUT_FOR_DELIVERY])->count();
+            $deliveredOrders = Order::where('status', OrderStatus::DELIVERED)->count();
+            $cancelledOrders = Order::where('status', OrderStatus::CANCELLED)->count();
+
+            // 7. Returns and RTOs
+            $returnsCount = OrderReturn::count();
+            $rtoCount = RtoCase::count();
+
+            // 8. Quick Commerce Orders
             $currentQuickOrders = FulfilmentOrder::where('fulfilment_type', FulfilmentType::QUICK)
                 ->whereBetween('created_at', [$currentStart, $currentEnd])
                 ->count();
@@ -78,12 +93,23 @@ class AdminDashboardService
                 ->whereBetween('created_at', [$previousStart, $previousEnd])
                 ->count();
 
-            // 8. Platform Commission Earned
+            // 9. Financial Precision & Commissions
             $currentCommission = (float) CommissionEntry::whereBetween('created_at', [$currentStart, $currentEnd])
                 ->sum('commission');
 
             $previousCommission = (float) CommissionEntry::whereBetween('created_at', [$previousStart, $previousEnd])
                 ->sum('commission');
+
+            $sellerPayable = (float) CommissionEntry::whereBetween('created_at', [$currentStart, $currentEnd])
+                ->sum('net_payable');
+
+            $pendingSettlements = (float) SellerSettlement::whereIn('status', [
+                \App\Enums\SettlementStatus::PENDING,
+                \App\Enums\SettlementStatus::PROCESSING,
+            ])->sum('net');
+
+            // 10. Open Support Tickets
+            $openTickets = SupportTicket::whereIn('status', [TicketStatus::OPEN, TicketStatus::IN_PROGRESS])->count();
 
             return [
                 'total_gmv' => [
@@ -126,6 +152,22 @@ class AdminDashboardService
                     'formatted' => '₹' . number_format($currentCommission, 2),
                     'trend' => $this->calculatePercentageTrend($currentCommission, $previousCommission),
                 ],
+                // Platform Overview Specifics
+                'total_customers' => $totalCustomers,
+                'total_sellers' => $totalSellers,
+                'total_products' => $totalProducts,
+                'active_products' => $activeProducts,
+                'total_orders_count' => $currentOrders,
+                'pending_orders' => $pendingOrders,
+                'shipped_orders' => $shippedOrders,
+                'delivered_orders' => $deliveredOrders,
+                'cancelled_orders' => $cancelledOrders,
+                'returns_count' => $returnsCount,
+                'rto_count' => $rtoCount,
+                'gross_sales' => $currentGmv,
+                'seller_payable' => $sellerPayable,
+                'pending_settlements' => $pendingSettlements,
+                'open_tickets' => $openTickets,
             ];
         });
     }
@@ -133,12 +175,12 @@ class AdminDashboardService
     /**
      * Chart 1: Sales & Orders trend (Dual Axis).
      */
-    public function getSalesAndOrdersTrend(string $range = '30d'): array
+    public function getSalesAndOrdersTrend(string $range = '30d', ?string $customStart = null, ?string $customEnd = null): array
     {
-        $cacheKey = "admin_chart_sales_trend_{$range}";
+        $cacheKey = "admin_chart_sales_trend_{$range}_" . ($customStart ?? 'none') . '_' . ($customEnd ?? 'none');
 
-        return Cache::remember($cacheKey, self::CACHE_TTL, function () use ($range) {
-            [$start, $end] = $this->parsePeriodDates($range);
+        return Cache::remember($cacheKey, self::CACHE_TTL, function () use ($range, $customStart, $customEnd) {
+            [$start, $end] = $this->parsePeriodDates($range, $customStart, $customEnd);
 
             $days = $start->diffInDays($end) + 1;
             $format = $days <= 2 ? 'H:00' : 'M d';
@@ -149,7 +191,6 @@ class AdminDashboardService
                 ? "strftime('{$sqlGroup}', created_at)"
                 : "DATE_FORMAT(created_at, '{$sqlGroup}')";
 
-            // Aggregate orders by interval
             $records = Order::selectRaw("
                 {$dateExpr} as period,
                 COALESCE(SUM(total), 0) as gmv,
@@ -167,7 +208,6 @@ class AdminDashboardService
             $orderData = [];
 
             if ($days <= 2) {
-                // Hourly progression
                 $current = $start->copy()->startOfHour();
                 while ($current <= $end) {
                     $key = $current->format('Y-m-d H:00:00');
@@ -177,7 +217,6 @@ class AdminDashboardService
                     $current->addHour();
                 }
             } else {
-                // Daily progression
                 $current = $start->copy()->startOfDay();
                 while ($current <= $end) {
                     $key = $current->format('Y-m-d');
@@ -194,8 +233,8 @@ class AdminDashboardService
                     [
                         'label' => 'Gross Merchandise Value (₹)',
                         'data' => $gmvData,
-                        'borderColor' => '#4f46e5',
-                        'backgroundColor' => 'rgba(79, 70, 229, 0.08)',
+                        'borderColor' => '#059669', // Emerald branding
+                        'backgroundColor' => 'rgba(5, 150, 105, 0.08)',
                         'fill' => true,
                         'tension' => 0.35,
                         'yAxisID' => 'y',
@@ -203,7 +242,7 @@ class AdminDashboardService
                     [
                         'label' => 'Order Volume',
                         'data' => $orderData,
-                        'borderColor' => '#f59e0b',
+                        'borderColor' => '#0f172a', // Slate 900
                         'backgroundColor' => 'transparent',
                         'borderDash' => [4, 4],
                         'tension' => 0.35,
@@ -217,12 +256,12 @@ class AdminDashboardService
     /**
      * Chart 2: Orders by Fulfilment Type (Donut).
      */
-    public function getOrdersByType(string $range = '30d'): array
+    public function getOrdersByType(string $range = '30d', ?string $customStart = null, ?string $customEnd = null): array
     {
-        $cacheKey = "admin_chart_order_types_{$range}";
+        $cacheKey = "admin_chart_order_types_{$range}_" . ($customStart ?? 'none') . '_' . ($customEnd ?? 'none');
 
-        return Cache::remember($cacheKey, self::CACHE_TTL, function () use ($range) {
-            [$start, $end] = $this->parsePeriodDates($range);
+        return Cache::remember($cacheKey, self::CACHE_TTL, function () use ($range, $customStart, $customEnd) {
+            [$start, $end] = $this->parsePeriodDates($range, $customStart, $customEnd);
 
             $counts = FulfilmentOrder::selectRaw("fulfilment_type, COUNT(id) as count")
                 ->whereBetween('created_at', [$start, $end])
@@ -239,7 +278,7 @@ class AdminDashboardService
                 'datasets' => [
                     [
                         'data' => [$standard, $quick, $pickup],
-                        'backgroundColor' => ['#4f46e5', '#f59e0b', '#10b981'],
+                        'backgroundColor' => ['#059669', '#0284c7', '#0f172a'],
                         'borderWidth' => 0,
                     ],
                 ],
@@ -250,14 +289,13 @@ class AdminDashboardService
     /**
      * Chart 3: Revenue by Category (Horizontal Bar).
      */
-    public function getRevenueByCategory(string $range = '30d'): array
+    public function getRevenueByCategory(string $range = '30d', ?string $customStart = null, ?string $customEnd = null): array
     {
-        $cacheKey = "admin_chart_category_revenue_{$range}";
+        $cacheKey = "admin_chart_category_revenue_{$range}_" . ($customStart ?? 'none') . '_' . ($customEnd ?? 'none');
 
-        return Cache::remember($cacheKey, self::CACHE_TTL, function () use ($range) {
-            [$start, $end] = $this->parsePeriodDates($range);
+        return Cache::remember($cacheKey, self::CACHE_TTL, function () use ($range, $customStart, $customEnd) {
+            [$start, $end] = $this->parsePeriodDates($range, $customStart, $customEnd);
 
-            // Join order_items -> products -> categories to get category revenue
             $records = DB::table('order_items')
                 ->join('products', 'order_items.product_id', '=', 'products.id')
                 ->join('categories', 'products.category_id', '=', 'categories.id')
@@ -282,7 +320,7 @@ class AdminDashboardService
                     [
                         'label' => 'Category Revenue (₹)',
                         'data' => $data,
-                        'backgroundColor' => '#6366f1',
+                        'backgroundColor' => '#059669',
                         'borderRadius' => 6,
                     ],
                 ],
@@ -291,14 +329,14 @@ class AdminDashboardService
     }
 
     /**
-     * Chart 4: Top 10 Sellers (Table with Sparklines).
+     * Chart 4: Top 10 Sellers (Strictly Real Data, Zero Simulated Sparklines).
      */
-    public function getTopSellers(string $range = '30d'): array
+    public function getTopSellers(string $range = '30d', ?string $customStart = null, ?string $customEnd = null): array
     {
-        $cacheKey = "admin_chart_top_sellers_{$range}";
+        $cacheKey = "admin_chart_top_sellers_{$range}_" . ($customStart ?? 'none') . '_' . ($customEnd ?? 'none');
 
-        return Cache::remember($cacheKey, self::CACHE_TTL, function () use ($range) {
-            [$start, $end] = $this->parsePeriodDates($range);
+        return Cache::remember($cacheKey, self::CACHE_TTL, function () use ($range, $customStart, $customEnd) {
+            [$start, $end] = $this->parsePeriodDates($range, $customStart, $customEnd);
 
             $salesSubquery = DB::table('fulfilment_orders')
                 ->selectRaw('seller_id, COALESCE(SUM(subtotal), 0) as total_sales, COUNT(id) as order_count')
@@ -316,12 +354,15 @@ class AdminDashboardService
                 ->get();
 
             return $sellers->map(function ($s) {
-                // Generate 7-day sparkline points
-                $sparkline = [
-                    rand(10, 50), rand(20, 70), rand(30, 90),
-                    rand(40, 110), rand(50, 130), rand(60, 150),
-                    (int) ($s->order_count > 0 ? $s->order_count : rand(20, 80))
-                ];
+                // Real 7-day order points from actual fulfilment_orders records
+                $sparkline = [];
+                for ($i = 6; $i >= 0; $i--) {
+                    $dStart = Carbon::now()->subDays($i)->startOfDay();
+                    $dEnd = Carbon::now()->subDays($i)->endOfDay();
+                    $sparkline[] = FulfilmentOrder::where('seller_id', $s->id)
+                        ->whereBetween('created_at', [$dStart, $dEnd])
+                        ->count();
+                }
 
                 return [
                     'id' => $s->id,
@@ -340,12 +381,12 @@ class AdminDashboardService
     /**
      * Chart 5: Order Status Funnel.
      */
-    public function getOrderStatusFunnel(string $range = '30d'): array
+    public function getOrderStatusFunnel(string $range = '30d', ?string $customStart = null, ?string $customEnd = null): array
     {
-        $cacheKey = "admin_chart_order_funnel_{$range}";
+        $cacheKey = "admin_chart_order_funnel_{$range}_" . ($customStart ?? 'none') . '_' . ($customEnd ?? 'none');
 
-        return Cache::remember($cacheKey, self::CACHE_TTL, function () use ($range) {
-            [$start, $end] = $this->parsePeriodDates($range);
+        return Cache::remember($cacheKey, self::CACHE_TTL, function () use ($range, $customStart, $customEnd) {
+            [$start, $end] = $this->parsePeriodDates($range, $customStart, $customEnd);
 
             $placed = Order::whereBetween('created_at', [$start, $end])->count();
             $confirmed = Order::whereBetween('created_at', [$start, $end])
@@ -367,11 +408,42 @@ class AdminDashboardService
                     [
                         'label' => 'Orders in Funnel',
                         'data' => [$placed, $confirmed, $processing, $dispatched, $delivered],
-                        'backgroundColor' => ['#a5b4fc', '#818cf8', '#6366f1', '#f59e0b', '#10b981'],
+                        'backgroundColor' => ['#94a3b8', '#64748b', '#0284c7', '#d97706', '#059669'],
                         'borderRadius' => 6,
                     ],
                 ],
             ];
+        });
+    }
+
+    /**
+     * Top-Selling Products across Platform in Period.
+     */
+    public function getTopSellingProducts(string $range = '30d', ?string $customStart = null, ?string $customEnd = null, int $limit = 10): array
+    {
+        $cacheKey = "admin_top_selling_products_{$range}_" . ($customStart ?? 'none') . '_' . ($customEnd ?? 'none') . "_{$limit}";
+
+        return Cache::remember($cacheKey, self::CACHE_TTL, function () use ($range, $customStart, $customEnd, $limit) {
+            [$start, $end] = $this->parsePeriodDates($range, $customStart, $customEnd);
+
+            return OrderItem::query()
+                ->whereBetween('created_at', [$start, $end])
+                ->select('product_id', DB::raw('SUM(qty) as units_sold'), DB::raw('SUM(total) as revenue'), DB::raw('COUNT(id) as orders_count'))
+                ->groupBy('product_id')
+                ->orderByDesc('revenue')
+                ->with(['product.category', 'product.seller'])
+                ->limit($limit)
+                ->get()
+                ->map(fn ($item) => [
+                    'product_id' => $item->product_id,
+                    'title' => $item->product?->title ?? 'Product #' . $item->product_id,
+                    'category' => $item->product?->category?->name ?? 'General',
+                    'seller_name' => $item->product?->seller?->business_name ?? 'Merchant',
+                    'units_sold' => (int) $item->units_sold,
+                    'revenue' => (float) $item->revenue,
+                    'orders_count' => (int) $item->orders_count,
+                ])
+                ->toArray();
         });
     }
 
@@ -437,19 +509,20 @@ class AdminDashboardService
     /**
      * Export dashboard summary as CSV.
      */
-    public function exportSummaryCsv(string $range = '30d'): StreamedResponse
+    public function exportSummaryCsv(string $range = '30d', ?string $customStart = null, ?string $customEnd = null): StreamedResponse
     {
-        $stats = $this->getTopStats($range);
-        $topSellers = $this->getTopSellers($range);
-        $categoryRevenue = $this->getRevenueByCategory($range);
+        $stats = $this->getTopStats($range, $customStart, $customEnd);
+        $topSellers = $this->getTopSellers($range, $customStart, $customEnd);
+        $categoryRevenue = $this->getRevenueByCategory($range, $customStart, $customEnd);
+        $topProducts = $this->getTopSellingProducts($range, $customStart, $customEnd);
 
         $filename = "allzone_dashboard_summary_" . date('Y_m_d_His') . ".csv";
 
-        return new StreamedResponse(function () use ($stats, $topSellers, $categoryRevenue, $range) {
+        return new StreamedResponse(function () use ($stats, $topSellers, $categoryRevenue, $topProducts, $range) {
             $handle = fopen('php://output', 'w');
 
             // Header info
-            fputcsv($handle, [setting('name', 'ALLZONE') . ' Marketplace (SK Refrigeration) - Executive Dashboard Summary']);
+            fputcsv($handle, [setting('name', 'ALLZONE') . ' Marketplace - Executive Dashboard Summary']);
             fputcsv($handle, ['Generated At', date('Y-m-d H:i:s'), 'Period Range', strtoupper($range)]);
             fputcsv($handle, []);
 
@@ -462,8 +535,13 @@ class AdminDashboardService
             fputcsv($handle, ['Total Customer Base', $stats['active_customers']['formatted'], $stats['active_customers']['trend']['text']]);
             fputcsv($handle, ['Pending KYC Approvals', $stats['pending_seller_approvals']['formatted'], $stats['pending_seller_approvals']['trend']['text']]);
             fputcsv($handle, ['Pending Product Reviews', $stats['pending_product_reviews']['formatted'], $stats['pending_product_reviews']['trend']['text']]);
-            fputcsv($handle, ['Quick Commerce Orders (10-30m)', $stats['quick_orders']['formatted'], $stats['quick_orders']['trend']['text']]);
             fputcsv($handle, ['Platform Commission Earned', $stats['platform_commission']['formatted'], $stats['platform_commission']['trend']['text']]);
+            fputcsv($handle, ['Gross Sales (INR)', number_format($stats['gross_sales'], 2), '']);
+            fputcsv($handle, ['Seller Payable (INR)', number_format($stats['seller_payable'], 2), '']);
+            fputcsv($handle, ['Pending Settlements (INR)', number_format($stats['pending_settlements'], 2), '']);
+            fputcsv($handle, ['Customer Returns Count', $stats['returns_count'], '']);
+            fputcsv($handle, ['Courier RTO Count', $stats['rto_count'], '']);
+            fputcsv($handle, ['Open Support Tickets', $stats['open_tickets'], '']);
             fputcsv($handle, []);
 
             // Category Breakdown
@@ -484,6 +562,20 @@ class AdminDashboardService
                     $seller['seller_type'],
                     $seller['order_count'],
                     number_format($seller['total_sales'], 2),
+                ]);
+            }
+            fputcsv($handle, []);
+
+            // Top Products
+            fputcsv($handle, ['--- TOP-SELLING PRODUCTS ---']);
+            fputcsv($handle, ['Product Name', 'Category', 'Seller', 'Units Sold', 'Total Revenue (INR)']);
+            foreach ($topProducts as $p) {
+                fputcsv($handle, [
+                    $p['title'],
+                    $p['category'],
+                    $p['seller_name'],
+                    $p['units_sold'],
+                    number_format($p['revenue'], 2),
                 ]);
             }
 
@@ -518,11 +610,18 @@ class AdminDashboardService
     /**
      * Parse date range string into [start, end, prevStart, prevEnd].
      */
-    protected function parsePeriodDates(string $range): array
+    public function parsePeriodDates(string $range, ?string $customStart = null, ?string $customEnd = null): array
     {
         $end = Carbon::now();
 
         switch ($range) {
+            case 'yesterday':
+                $start = Carbon::yesterday()->startOfDay();
+                $end = Carbon::yesterday()->endOfDay();
+                $prevEnd = $start->copy()->subSecond();
+                $prevStart = $prevEnd->copy()->startOfDay();
+                break;
+
             case 'today':
                 $start = Carbon::today();
                 $prevEnd = $start->copy()->subSecond();
@@ -530,9 +629,24 @@ class AdminDashboardService
                 break;
 
             case '7d':
+            case 'last_7':
+            case 'last_7_days':
                 $start = Carbon::now()->subDays(7);
                 $prevEnd = $start->copy()->subSecond();
                 $prevStart = $prevEnd->copy()->subDays(7);
+                break;
+
+            case 'custom':
+                $start = $customStart ? Carbon::parse($customStart)->startOfDay() : Carbon::now()->subDays(7)->startOfDay();
+                $end = $customEnd ? Carbon::parse($customEnd)->endOfDay() : Carbon::now()->endOfDay();
+                if ($start->gt($end)) {
+                    $temp = $start;
+                    $start = $end->copy()->startOfDay();
+                    $end = $temp->copy()->endOfDay();
+                }
+                $days = $start->diffInDays($end) ?: 1;
+                $prevEnd = $start->copy()->subSecond();
+                $prevStart = $prevEnd->copy()->subDays($days);
                 break;
 
             case '90d':
@@ -542,6 +656,8 @@ class AdminDashboardService
                 break;
 
             case '30d':
+            case 'last_30':
+            case 'last_30_days':
             default:
                 $start = Carbon::now()->subDays(30);
                 $prevEnd = $start->copy()->subSecond();

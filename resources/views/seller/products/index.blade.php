@@ -5,7 +5,7 @@
     <!-- Header -->
     <x-page-header 
         title="Products Catalogue" 
-        subtitle="Manage your inventory catalog, variant pricing, quick-commerce capabilities, and moderation approvals."
+        subtitle="Manage your marketplace catalog, variant pricing, stock availability, and catalog approval status."
         :breadcrumbs="['Seller Studio' => route('seller.dashboard'), 'Products' => '#']"
     >
         <x-slot name="actions">
@@ -70,7 +70,7 @@
 
     <!-- Filters Bar -->
     <x-card>
-        <form method="GET" action="{{ route('seller.products.index') }}" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-6 gap-3">
+        <form method="GET" action="{{ route('seller.products.index') }}" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3">
             @if(request('status'))
                 <input type="hidden" name="status" value="{{ request('status') }}">
             @endif
@@ -110,27 +110,18 @@
                 </select>
             </div>
 
-            <!-- Stock Filter -->
-            <div>
+            <!-- Stock Filter & Submit -->
+            <div class="flex items-center space-x-2">
                 <select name="stock" class="w-full text-xs rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-700 p-2.5 text-slate-900 dark:text-white">
                     <option value="all">All Stock Levels</option>
                     <option value="in_stock" {{ request('stock') === 'in_stock' ? 'selected' : '' }}>In Stock</option>
                     <option value="low_stock" {{ request('stock') === 'low_stock' ? 'selected' : '' }}>Low Stock Warning</option>
                     <option value="out_of_stock" {{ request('stock') === 'out_of_stock' ? 'selected' : '' }}>Out of Stock</option>
                 </select>
-            </div>
-
-            <!-- Quick Capable & Filter Submit -->
-            <div class="flex items-center space-x-2">
-                <select name="quick_capable" class="w-full text-xs rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-700 p-2.5 text-slate-900 dark:text-white">
-                    <option value="">Delivery: All</option>
-                    <option value="1" {{ request('quick_capable') === '1' ? 'selected' : '' }}>⚡ Quick 10-30m Only</option>
-                    <option value="0" {{ request('quick_capable') === '0' ? 'selected' : '' }}>Standard Cargo Only</option>
-                </select>
-                <button type="submit" class="p-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white shrink-0">
+                <button type="submit" class="p-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white shrink-0" title="Apply Filters">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                 </button>
-                @if(request()->anyFilled(['search', 'category_id', 'brand_id', 'stock', 'quick_capable', 'status']))
+                @if(request()->anyFilled(['search', 'category_id', 'brand_id', 'stock', 'status']))
                     <a href="{{ route('seller.products.index') }}" class="p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 shrink-0" title="Clear Filters">
                         &times;
                     </a>
@@ -231,11 +222,7 @@
                                                 <span class="px-1.5 py-0.5 rounded uppercase font-bold {{ $product->product_type->value === 'variable' ? 'bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400' }}">
                                                     {{ $product->product_type->value }}
                                                 </span>
-                                                @if($product->is_quick_capable)
-                                                    <span class="px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-950/80 text-amber-700 dark:text-amber-300 font-bold">
-                                                        ⚡ Quick
-                                                    </span>
-                                                @endif
+
                                             </div>
                                         </div>
                                     </div>

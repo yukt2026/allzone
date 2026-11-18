@@ -1,252 +1,360 @@
-@extends('layouts.dashboard', ['portal' => 'seller', 'title' => 'Orders - Meesho Supplier Hub'])
+@extends('layouts.dashboard', ['portal' => 'seller', 'title' => 'Orders Management - ALLZONE Supplier Hub'])
 
 @section('content')
-<div class="space-y-5 max-w-7xl mx-auto pb-12" x-data="{
-    currentTab: '{{ request('status', 'all') }}',
-    filterModal: false
-}">
-    <!-- Page Header & Action Bar (Screenshot 2) -->
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <h1 class="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
-            Orders
-        </h1>
+<div class="space-y-5 max-w-7xl mx-auto pb-16">
+    <!-- Page Header & Actions -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <h1 class="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
+                <svg class="w-6 h-6 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
+                <span>Orders Management</span>
+            </h1>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                Manage order processing, packing slips, Shiprocket courier dispatch, and customer fulfilment.
+            </p>
+        </div>
 
-        <div class="flex items-center space-x-2">
-            <a href="https://youtube.com" target="_blank" class="px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition flex items-center space-x-1.5">
-                <span class="text-rose-600">▶</span>
-                <span>Learn how to process your orders?</span>
+        <div class="flex items-center gap-2.5">
+            <!-- Export Button -->
+            <a href="{{ route('seller.orders.index', array_merge(request()->all(), ['export' => 'csv'])) }}"
+               class="px-3.5 py-1.5 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold border border-slate-200 dark:border-slate-700 transition flex items-center gap-1.5 shadow-2xs">
+                <svg class="w-4 h-4 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                <span>Export CSV</span>
             </a>
-
-            <div class="relative" x-data="{ exportOpen: false }">
-                <button 
-                    @click="exportOpen = !exportOpen"
-                    type="button" 
-                    class="px-3.5 py-1.5 rounded-lg bg-[#3e2e84] hover:bg-[#32236e] text-white text-xs font-bold transition flex items-center space-x-1.5 shadow-xs"
-                >
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-                    <span>Download Orders Data</span>
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-                </button>
-                <div 
-                    x-show="exportOpen" 
-                    @click.away="exportOpen = false" 
-                    x-cloak 
-                    class="absolute right-0 mt-1 w-44 bg-white rounded-lg shadow-xl border border-slate-200 py-1 z-20 text-xs"
-                >
-                    <a href="{{ route('seller.orders.index', ['export' => 'csv']) }}" class="block px-3 py-2 text-slate-700 hover:bg-slate-50 font-medium">Export CSV</a>
-                    <a href="{{ route('seller.orders.index', ['export' => 'excel']) }}" class="block px-3 py-2 text-slate-700 hover:bg-slate-50 font-medium">Export Excel</a>
-                </div>
-            </div>
         </div>
     </div>
 
-    <!-- Pay Later Promotional Banner (Screenshot 2 Top) -->
-    <div class="p-4 rounded-xl bg-gradient-to-r from-purple-50 via-white to-pink-50 border border-purple-200 flex flex-col md:flex-row md:items-center md:justify-between gap-3 text-xs">
-        <div class="flex items-center space-x-3">
-            <div class="w-10 h-10 rounded-lg bg-[#53389e] flex items-center justify-center text-white font-extrabold text-lg shrink-0">
-                ₹
+    <!-- Dispatch & SLA Health Notice Banner -->
+    <div class="p-3.5 sm:p-4 rounded-2xl bg-indigo-50/50 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-800/60 flex flex-col md:flex-row md:items-center md:justify-between gap-3 text-xs shadow-2xs">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-indigo-100 dark:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 flex items-center justify-center font-bold text-lg shrink-0">
+                ⚡
             </div>
             <div>
-                <div class="flex items-center space-x-2">
-                    <span class="font-extrabold text-[#ff3f8b]">meesho</span>
-                    <span class="font-bold text-slate-900">pay later <span class="text-[10px] text-slate-400 font-normal">lite</span></span>
-                    <span class="px-1.5 py-0.2 bg-purple-100 text-[#53389e] rounded text-[9px] font-bold">2,00,000+ sellers enabled</span>
-                </div>
-                <div class="font-bold text-slate-800 text-sm">Sell more today by letting customers pay later</div>
-                <div class="flex items-center space-x-4 text-slate-500 text-[11px] mt-0.5">
-                    <span class="flex items-center space-x-1 text-emerald-600"><span>✔</span> <span>You get full payouts on time</span></span>
-                    <span class="flex items-center space-x-1 text-emerald-600"><span>✔</span> <span>Customers buy more with Pay Later Lite</span></span>
+                <div class="font-bold text-slate-900 dark:text-white">Next-Day Dispatch Standard Active</div>
+                <div class="text-slate-500 dark:text-slate-400 text-[11px] mt-0.5">
+                    Process and mark orders <strong>Ready to Ship</strong> within 24 hours of placement to maintain optimal seller score and courier allocation priority.
                 </div>
             </div>
         </div>
-        <div class="flex items-center space-x-2 shrink-0">
-            <a href="#" class="text-xs text-indigo-600 font-bold hover:underline">Know more</a>
-            <button type="button" class="px-4 py-1.5 rounded-lg border border-[#53389e] text-[#53389e] hover:bg-purple-50 font-bold text-xs transition">
-                Enable now
-            </button>
+        <div class="flex items-center gap-2 shrink-0">
+            <a href="{{ route('seller.orders.dispatch_performance') }}" class="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs transition shadow-2xs">
+                Dispatch SLA Performance &rarr;
+            </a>
         </div>
     </div>
 
-    <!-- Packaging Policy Notice (Screenshot 2) -->
-    <div class="p-3.5 rounded-xl bg-white border border-slate-200/90 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs shadow-2xs">
-        <div class="flex items-center space-x-3">
-            <span class="text-xl">📦</span>
-            <span class="text-slate-700">
-                As per Meesho packaging policy, all sellers must use <strong>Transparent Barcoded Packaging</strong> for their products on the platform.
-            </span>
-        </div>
-        <div class="flex items-center space-x-2 shrink-0">
-            <button type="button" class="px-3 py-1.5 rounded-lg border border-slate-300 text-slate-700 font-bold hover:bg-slate-50 transition">
-                Buy Barcoded Packets
-            </button>
-            <button type="button" class="px-3 py-1.5 rounded-lg border border-slate-300 text-slate-700 font-bold hover:bg-slate-50 transition">
-                Scan Barcoded Packets
-            </button>
-        </div>
-    </div>
+    <!-- Orders Main Container -->
+    <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-800 shadow-2xs overflow-hidden space-y-0">
+        <!-- 9 Status Navigation Tabs -->
+        @php
+            $tabs = [
+                'all' => ['label' => 'All Orders', 'count' => $counts['all'] ?? 0],
+                'pending' => ['label' => 'New / Pending', 'count' => $counts['pending'] ?? 0],
+                'on_hold' => ['label' => 'On Hold', 'count' => $counts['on_hold'] ?? 0],
+                'processing' => ['label' => 'Processing', 'count' => $counts['processing'] ?? 0],
+                'ready_to_ship' => ['label' => 'Ready to Ship', 'count' => $counts['ready_to_ship'] ?? 0],
+                'shipped' => ['label' => 'Shipped', 'count' => $counts['shipped'] ?? 0],
+                'delivered' => ['label' => 'Delivered', 'count' => $counts['delivered'] ?? 0],
+                'cancelled' => ['label' => 'Cancelled', 'count' => $counts['cancelled'] ?? 0],
+                'returned' => ['label' => 'Returned', 'count' => $counts['returned'] ?? 0],
+            ];
+            $currentStatus = $tab ?? 'all';
+        @endphp
 
-    <!-- Dispatch Health Visibility Card (Screenshot 2) -->
-    <div class="p-3.5 rounded-xl bg-white border border-slate-200/90 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs shadow-2xs">
-        <div class="flex items-center space-x-3">
-            <div class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
-                🎯
-            </div>
-            <div>
-                <div class="font-bold text-slate-900">Get better visibility into your dispatch health</div>
-                <div class="text-slate-500 text-[11px]">Track dispatch health, catalog status and key order performance insights in one place.</div>
-            </div>
-        </div>
-        <a href="{{ route('seller.orders.dispatch_performance') }}" class="px-4 py-1.5 rounded-lg bg-[#3e2e84] hover:bg-[#32236e] text-white font-bold text-xs transition shrink-0 text-center">
-            Check Dispatch health
-        </a>
-    </div>
-
-    <!-- Order Navigation Status Tabs (Screenshot 2) -->
-    <div class="bg-white rounded-xl border border-slate-200/90 shadow-2xs overflow-hidden">
-        <div class="flex items-center space-x-1 border-b border-slate-200 px-4 pt-2 overflow-x-auto text-xs font-bold scrollbar-none">
-            @php
-                $tabList = [
-                    'on_hold' => ['label' => 'On Hold', 'count' => 0],
-                    'pending' => ['label' => 'Pending', 'count' => $counts['action_needed'] ?? 0],
-                    'ready' => ['label' => 'Ready to Ship', 'count' => 1],
-                    'shipped' => ['label' => 'Shipped', 'count' => null],
-                    'cancelled' => ['label' => 'Cancelled', 'count' => null],
-                    'rating' => ['label' => 'Delivery Partner Rating', 'count' => null, 'badge' => 'New'],
-                ];
-                $activeTabKey = request('status', 'pending');
-            @endphp
-
-            @foreach($tabList as $key => $tabItem)
-                <a 
-                    href="{{ route('seller.orders.index', ['status' => $key]) }}"
-                    class="py-3 px-4 border-b-2 transition whitespace-nowrap flex items-center space-x-1.5 {{ $activeTabKey === $key ? 'border-[#53389e] text-[#53389e] font-black' : 'border-transparent text-slate-500 hover:text-slate-800' }}"
-                >
+        <div class="flex items-center border-b border-slate-200 dark:border-slate-800 px-4 pt-2 overflow-x-auto text-xs font-bold scrollbar-none gap-1">
+            @foreach($tabs as $key => $tabItem)
+                <a href="{{ route('seller.orders.index', array_merge(request()->except('status', 'page'), ['status' => $key])) }}"
+                   class="py-3 px-3.5 border-b-2 transition whitespace-nowrap flex items-center gap-1.5 {{ $currentStatus === $key ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400 font-extrabold' : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200' }}">
                     <span>{{ $tabItem['label'] }}</span>
-                    @if(isset($tabItem['count']))
-                        <span>({{ $tabItem['count'] }})</span>
-                    @endif
-                    @if(!empty($tabItem['badge']))
-                        <span class="ml-1 px-1.5 py-0.2 rounded text-[9px] font-black uppercase bg-[#d63384] text-white">NEW</span>
-                    @endif
+                    <span class="px-1.5 py-0.2 rounded-full text-[10px] {{ $currentStatus === $key ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400' }}">
+                        {{ $tabItem['count'] }}
+                    </span>
                 </a>
             @endforeach
         </div>
 
-        <!-- Filter Sub-bar (Screenshot 2) -->
-        <div class="p-3.5 bg-slate-50/50 border-b border-slate-200 flex flex-wrap items-center justify-between gap-3 text-xs">
-            <div class="flex flex-wrap items-center gap-2">
-                <span class="text-slate-500 font-semibold text-[11px]">Filter by:</span>
-
-                <!-- SLA Status Dropdown -->
-                <select class="py-1.5 px-3 bg-white border border-slate-300 rounded-lg text-xs text-slate-700 font-medium focus:outline-none focus:border-indigo-500">
-                    <option value="">SLA Status</option>
-                    <option value="breached">Breached</option>
-                    <option value="critical">Breaching Soon (<2h)</option>
-                    <option value="on_track">On Track</option>
-                </select>
-
-                <!-- Dispatch Date Dropdown -->
-                <select class="py-1.5 px-3 bg-white border border-slate-300 rounded-lg text-xs text-slate-700 font-medium focus:outline-none focus:border-indigo-500">
-                    <option value="">Dispatch Date</option>
-                    <option value="today">Today</option>
-                    <option value="tomorrow">Tomorrow</option>
-                    <option value="overdue">Overdue</option>
-                </select>
-
-                <!-- Order Date Dropdown -->
-                <select class="py-1.5 px-3 bg-white border border-slate-300 rounded-lg text-xs text-slate-700 font-medium focus:outline-none focus:border-indigo-500">
-                    <option value="">Order Date</option>
-                    <option value="today">Today</option>
-                    <option value="last_7_days">Last 7 Days</option>
-                    <option value="last_30_days">Last 30 Days</option>
-                </select>
-            </div>
-
-            <div class="flex items-center space-x-2">
-                <div class="relative">
-                    <input 
-                        type="text" 
-                        name="sku_search" 
-                        placeholder="SKU ID / Suborder ID" 
-                        class="py-1.5 pl-3 pr-8 bg-white border border-slate-300 rounded-lg text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-indigo-500 w-48"
-                    />
-                    <svg class="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-                </div>
-            </div>
-        </div>
-
-        <!-- Orders Content / Table or Empty State (Matching Screenshot 2) -->
-        <div class="p-8">
-            @if(count($orders) > 0)
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left text-xs">
-                        <thead class="bg-slate-50 text-slate-500 uppercase font-semibold text-[10px] border-b border-slate-200">
-                            <tr>
-                                <th class="p-3">Order Details</th>
-                                <th class="p-3">Suborder ID</th>
-                                <th class="p-3">Items &amp; SKU</th>
-                                <th class="p-3">Customer Details</th>
-                                <th class="p-3">Amount</th>
-                                <th class="p-3">Status / SLA</th>
-                                <th class="p-3 text-right">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-slate-100">
-                            @foreach($orders as $fo)
-                                <tr class="hover:bg-slate-50/80 transition">
-                                    <td class="p-3 font-semibold text-slate-900">
-                                        #{{ $fo->fulfilment_order_number }}
-                                        <div class="text-[10px] text-slate-400 font-normal">{{ $fo->created_at->format('d M, h:i A') }}</div>
-                                    </td>
-                                    <td class="p-3 font-mono text-[11px] text-slate-600">
-                                        {{ $fo->id + 350000000000 }}
-                                    </td>
-                                    <td class="p-3">
-                                        @foreach($fo->items as $item)
-                                            <div class="flex items-center space-x-2">
-                                                <span class="font-medium text-slate-800">{{ $item->variant?->title ?: 'Product' }}</span>
-                                                <span class="text-[10px] font-mono text-slate-400">({{ $item->variant?->sku ?? 'SKU-N/A' }})</span>
-                                                <span class="text-[10px] font-bold text-slate-600">x{{ $item->quantity }}</span>
-                                            </div>
-                                        @endforeach
-                                    </td>
-                                    <td class="p-3 text-slate-600">
-                                        {{ $fo->order?->customer?->user?->name ?? 'Meesho Customer' }}
-                                    </td>
-                                    <td class="p-3 font-bold text-slate-900">
-                                        ₹{{ number_format((float)$fo->total_amount, 2) }}
-                                    </td>
-                                    <td class="p-3">
-                                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
-                                            {{ ucwords(str_replace('_', ' ', $fo->status)) }}
-                                        </span>
-                                    </td>
-                                    <td class="p-3 text-right">
-                                        <a href="{{ route('seller.orders.show', $fo) }}" class="px-3 py-1 bg-[#3e2e84] text-white rounded font-bold text-xs hover:bg-[#32236e] transition">
-                                            View Details
-                                        </a>
-                                    </td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-            @else
-                <!-- Exact Empty State Box from Screenshot 2 -->
-                <div class="py-12 flex flex-col items-center justify-center text-center">
-                    <div class="w-24 h-24 mb-4 text-slate-300">
-                        <svg class="w-full h-full" viewBox="0 0 80 80" fill="none" stroke="currentColor">
-                            <rect x="15" y="25" width="50" height="40" rx="3" stroke-width="2.5" fill="#f8fafc"/>
-                            <path d="M15 35h50" stroke-width="2"/>
-                            <rect x="33" y="18" width="14" height="22" rx="2" fill="#64748b"/>
-                            <path d="M22 48h12m-12 8h8" stroke-width="2" stroke-linecap="round"/>
-                        </svg>
-                    </div>
-                    <h3 class="text-base font-bold text-slate-800">No orders yet</h3>
-                    <p class="text-xs text-slate-400 mt-1">But keep checking this section from time to time.</p>
-                </div>
+        <!-- Filter & Search Sub-Bar -->
+        <form action="{{ route('seller.orders.index') }}" method="GET" class="p-3.5 bg-slate-50/60 dark:bg-slate-950/60 border-b border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3 text-xs">
+            @if($tab !== 'all')
+                <input type="hidden" name="status" value="{{ $tab }}">
             @endif
+            @if(!empty($channel) && $channel !== 'all')
+                <input type="hidden" name="channel" value="{{ $channel }}">
+            @endif
+
+            <div class="flex flex-wrap items-center gap-2.5">
+                <span class="text-slate-400 font-semibold text-[11px]">Filters:</span>
+
+                <!-- Payment Method Filter -->
+                <select name="payment_method" onchange="this.form.submit()" class="py-1.5 px-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-700 dark:text-slate-200 font-medium focus:outline-hidden focus:border-emerald-500">
+                    <option value="all" {{ ($paymentMethod ?? 'all') === 'all' ? 'selected' : '' }}>All Payment Types</option>
+                    <option value="prepaid" {{ ($paymentMethod ?? '') === 'prepaid' ? 'selected' : '' }}>Prepaid (Razorpay)</option>
+                    <option value="cod" {{ ($paymentMethod ?? '') === 'cod' ? 'selected' : '' }}>Cash on Delivery (COD)</option>
+                </select>
+
+                <!-- Payment Status Filter -->
+                <select name="payment_status" onchange="this.form.submit()" class="py-1.5 px-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-700 dark:text-slate-200 font-medium focus:outline-hidden focus:border-emerald-500">
+                    <option value="all" {{ ($paymentStatus ?? 'all') === 'all' ? 'selected' : '' }}>All Payment Statuses</option>
+                    <option value="paid" {{ ($paymentStatus ?? '') === 'paid' ? 'selected' : '' }}>Paid</option>
+                    <option value="pending" {{ ($paymentStatus ?? '') === 'pending' ? 'selected' : '' }}>Pending</option>
+                </select>
+
+                <!-- Date Range Filter -->
+                <select name="date_range" onchange="this.form.submit()" class="py-1.5 px-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-700 dark:text-slate-200 font-medium focus:outline-hidden focus:border-emerald-500">
+                    <option value="all" {{ ($dateFilter ?? 'all') === 'all' ? 'selected' : '' }}>All Dates</option>
+                    <option value="today" {{ ($dateFilter ?? '') === 'today' ? 'selected' : '' }}>Placed Today</option>
+                    <option value="yesterday" {{ ($dateFilter ?? '') === 'yesterday' ? 'selected' : '' }}>Placed Yesterday</option>
+                    <option value="7d" {{ ($dateFilter ?? '') === '7d' ? 'selected' : '' }}>Last 7 Days</option>
+                    <option value="30d" {{ ($dateFilter ?? '') === '30d' ? 'selected' : '' }}>Last 30 Days</option>
+                </select>
+
+                <!-- Multi-Store Outlet Selector (if applicable) -->
+                @if(count($stores) > 1)
+                    <select name="store_id" onchange="this.form.submit()" class="py-1.5 px-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-700 dark:text-slate-200 font-medium focus:outline-hidden focus:border-emerald-500">
+                        <option value="">All Store Locations</option>
+                        @foreach($stores as $st)
+                            <option value="{{ $st->id }}" {{ ($storeId == $st->id) ? 'selected' : '' }}>{{ $st->name }}</option>
+                        @endforeach
+                    </select>
+                @endif
+            </div>
+
+            <!-- Search input -->
+            <div class="flex items-center gap-2">
+                <div class="relative w-64">
+                    <input type="text"
+                           name="search"
+                           value="{{ $search }}"
+                           placeholder="Search Order #, SKU, Item..."
+                           class="w-full py-1.5 pl-8 pr-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-hidden focus:border-emerald-500">
+                    <svg class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                </div>
+                @if($search || $paymentMethod || $paymentStatus || $dateFilter !== 'all' || $storeId)
+                    <a href="{{ route('seller.orders.index', ['status' => $tab]) }}" class="px-2 py-1 text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white">
+                        Clear
+                    </a>
+                @endif
+            </div>
+        </form>
+
+        <!-- Orders Table -->
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+                <thead class="bg-slate-50/80 dark:bg-slate-950/60 text-slate-500 dark:text-slate-400 font-bold text-[10px] uppercase border-b border-slate-200 dark:border-slate-800 tracking-wider">
+                    <tr>
+                        <th class="py-3.5 px-4 font-bold">Order &amp; Sub-Order</th>
+                        <th class="py-3.5 px-4 font-bold">Product Items &amp; SKU</th>
+                        <th class="py-3.5 px-4 font-bold">Customer Destination</th>
+                        <th class="py-3.5 px-4 font-bold">Amount &amp; Payment</th>
+                        <th class="py-3.5 px-4 font-bold">Status &amp; Dispatch SLA</th>
+                        <th class="py-3.5 px-4 font-bold text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 dark:divide-slate-800 text-slate-700 dark:text-slate-300">
+                    @forelse($orders as $fo)
+                        @php
+                            $order = $fo->order;
+                            $addr = is_array($order?->address_snapshot) ? $order->address_snapshot : [];
+                            $customerPhone = $addr['phone'] ?? $order?->customer?->user?->phone;
+                            $maskedPhone = $customerPhone ? (substr($customerPhone, 0, 3) . '***' . substr($customerPhone, -3)) : 'N/A';
+                            $isCod = $order?->payment_method === \App\Enums\PaymentMethod::COD;
+                            $isPaid = $order?->payment_status === \App\Enums\PaymentStatus::PAID;
+                            $firstItem = $fo->items->first();
+                            $expectedDispatch = $fo->created_at->addHours(24);
+                            $isBreached = $expectedDispatch->isPast() && in_array($fo->status, ['placed', 'store_accepted', 'packing', 'processing']);
+                        @endphp
+                        <tr class="hover:bg-slate-50/70 dark:hover:bg-slate-800/50 transition">
+                            <!-- 1. Order & Sub-Order IDs -->
+                            <td class="py-3.5 px-4 whitespace-nowrap">
+                                <div class="font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                                    <a href="{{ route('seller.orders.show', $fo) }}" class="hover:text-emerald-600 dark:hover:text-emerald-400 transition">
+                                        #{{ $fo->fulfilment_order_number }}
+                                    </a>
+                                </div>
+                                @if($order)
+                                    <div class="text-[10px] font-mono text-slate-500 dark:text-slate-400 mt-0.5">
+                                        Parent: #{{ $order->order_number }}
+                                    </div>
+                                @endif
+                                <div class="text-[10px] text-slate-400 mt-0.5">
+                                    {{ $fo->created_at->format('d M Y, h:i A') }}
+                                </div>
+                                <div class="mt-1">
+                                    <span class="px-1.5 py-0.2 rounded text-[9px] font-bold uppercase
+                                        {{ $fo->fulfilment_type === \App\Enums\FulfilmentType::QUICK ? 'bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300' }}">
+                                        {{ $fo->fulfilment_type->label() }}
+                                    </span>
+                                </div>
+                            </td>
+
+                            <!-- 2. Products & SKU Details -->
+                            <td class="py-3.5 px-4 max-w-xs">
+                                <div class="space-y-1.5">
+                                    @foreach($fo->items->take(2) as $item)
+                                        <div class="flex items-center gap-2">
+                                            @if($item->variant?->product?->thumbnail)
+                                                <div class="w-8 h-8 rounded-md bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 overflow-hidden shrink-0">
+                                                    <img src="{{ \Illuminate\Support\Facades\Storage::url($item->variant->product->thumbnail) }}" alt="{{ $item->title }}" class="w-full h-full object-cover">
+                                                </div>
+                                            @else
+                                                <div class="w-8 h-8 rounded-md bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-[10px] font-bold text-slate-400 shrink-0">
+                                                    📦
+                                                </div>
+                                            @endif
+                                            <div class="truncate">
+                                                <div class="font-bold text-slate-900 dark:text-white truncate" title="{{ $item->title }}">{{ $item->title }}</div>
+                                                <div class="text-[10px] text-slate-500 dark:text-slate-400 flex items-center gap-1">
+                                                    <span class="font-mono">SKU: {{ $item->sku }}</span>
+                                                    @if($item->variant_name)
+                                                        <span>&bull; {{ $item->variant_name }}</span>
+                                                    @endif
+                                                    <span class="font-bold text-slate-700 dark:text-slate-300">x{{ $item->qty }}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                    @if($fo->items->count() > 2)
+                                        <div class="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
+                                            +{{ $fo->items->count() - 2 }} more items
+                                        </div>
+                                    @endif
+                                </div>
+                            </td>
+
+                            <!-- 3. Customer Destination & Privacy Masking -->
+                            <td class="py-3.5 px-4 whitespace-nowrap">
+                                <div class="font-bold text-slate-900 dark:text-white">
+                                    {{ $addr['name'] ?? ($order?->customer?->user?->name ?? 'Verified Customer') }}
+                                </div>
+                                <div class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                                    {{ $addr['city'] ?? 'Bengaluru' }}, {{ $addr['state'] ?? 'Karnataka' }}
+                                    @if(!empty($addr['pincode']))
+                                        <span class="font-mono text-slate-400">({{ $addr['pincode'] }})</span>
+                                    @endif
+                                </div>
+                                <div class="text-[10px] text-slate-400 font-mono mt-0.5">
+                                    Contact: {{ $maskedPhone }}
+                                </div>
+                            </td>
+
+                            <!-- 4. Financials & Payment Method -->
+                            <td class="py-3.5 px-4 whitespace-nowrap">
+                                <div class="font-extrabold text-slate-900 dark:text-white text-xs">
+                                    ₹{{ number_format((float)$fo->total_amount, 2) }}
+                                </div>
+                                <div class="flex items-center gap-1 mt-1">
+                                    @if($isCod)
+                                        <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
+                                            COD
+                                        </span>
+                                    @else
+                                        <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                                            Prepaid (Razorpay)
+                                        </span>
+                                    @endif
+
+                                    @if($isPaid)
+                                        <span class="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">Paid ✓</span>
+                                    @else
+                                        <span class="text-[10px] font-semibold text-amber-600 dark:text-amber-400">Pending</span>
+                                    @endif
+                                </div>
+                            </td>
+
+                            <!-- 5. Status & Expected Dispatch SLA -->
+                            <td class="py-3.5 px-4 whitespace-nowrap">
+                                <div>
+                                    <span class="px-2.5 py-0.5 rounded text-[10px] font-bold border {{ $fo->statusBadgeClass() }}">
+                                        {{ $fo->statusLabel() }}
+                                    </span>
+                                </div>
+
+                                <div class="text-[10px] text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-1">
+                                    <span>Dispatch SLA:</span>
+                                    @if($isBreached)
+                                        <span class="font-bold text-rose-600 dark:text-rose-400">SLA Overdue!</span>
+                                    @else
+                                        <span class="font-semibold text-slate-700 dark:text-slate-300">{{ $expectedDispatch->format('d M, h:i A') }}</span>
+                                    @endif
+                                </div>
+
+                                @if($fo->shipment?->awb)
+                                    <div class="text-[10px] font-mono text-emerald-600 dark:text-emerald-400 mt-0.5">
+                                        AWB: {{ $fo->shipment->awb }}
+                                    </div>
+                                @endif
+                            </td>
+
+                            <!-- 6. Available Actions -->
+                            <td class="py-3.5 px-4 whitespace-nowrap text-right">
+                                <div class="flex items-center justify-end gap-1.5" x-data="{ docMenu: false }">
+                                    <!-- Context-sensitive processing actions -->
+                                    @if($fo->status === 'placed')
+                                        <form method="POST" action="{{ route('seller.orders.accept', $fo) }}">
+                                            @csrf
+                                            <button type="submit" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[11px] rounded-lg transition shadow-2xs">
+                                                Accept Order
+                                            </button>
+                                        </form>
+                                    @elseif(in_array($fo->status, ['store_accepted', 'packing', 'processing']))
+                                        <form method="POST" action="{{ route('seller.orders.ready_to_ship', $fo) }}">
+                                            @csrf
+                                            <button type="submit" class="px-2.5 py-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-[11px] rounded-lg transition shadow-2xs">
+                                                Ready to Ship
+                                            </button>
+                                        </form>
+                                    @endif
+
+                                    <!-- Documents dropdown -->
+                                    <div class="relative">
+                                        <button type="button" @click="docMenu = !docMenu" class="px-2 py-1 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold text-[11px] rounded-lg border border-slate-200 dark:border-slate-700 transition flex items-center gap-1">
+                                            <span>Docs</span>
+                                            <svg class="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                                        </button>
+                                        <div x-show="docMenu" @click.outside="docMenu = false" style="display: none;" class="absolute right-0 mt-1 w-36 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg py-1 z-30 text-[11px]">
+                                            <a href="{{ route('seller.orders.packing_slip', $fo) }}" target="_blank" class="block px-3 py-1.5 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/80 font-medium">Packing Slip</a>
+                                            <a href="{{ route('seller.orders.invoice', $fo) }}" target="_blank" class="block px-3 py-1.5 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/80 font-medium">Tax Invoice</a>
+                                            <a href="{{ route('seller.orders.shipping_label', $fo) }}" target="_blank" class="block px-3 py-1.5 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/80 font-medium">Shipping Label</a>
+                                        </div>
+                                    </div>
+
+                                    <!-- Detail Link -->
+                                    <a href="{{ route('seller.orders.show', $fo) }}" class="px-2.5 py-1 text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 font-bold text-[11px] hover:underline">
+                                        Details &rarr;
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="6" class="py-12 px-4">
+                                @php
+                                    $emptyDesc = ($tab !== 'all') ? "There are currently no orders under '" . ($tabs[$tab]['label'] ?? ucfirst($tab)) . "'." : 'No customer orders have been received yet. As soon as orders are placed on ALLZONE, they will appear here.';
+                                @endphp
+                                <x-empty-state 
+                                    icon="truck"
+                                    title="No Orders in this Status"
+                                    :description="$emptyDesc"
+                                >
+                                    @if($search || $tab !== 'all' || $paymentMethod || $paymentStatus)
+                                        <a href="{{ route('seller.orders.index') }}" class="inline-flex items-center px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-bold transition">
+                                            Reset Filters
+                                        </a>
+                                    @endif
+                                </x-empty-state>
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
         </div>
+
+        @if($orders->hasPages())
+            <div class="p-4 border-t border-slate-200 dark:border-slate-800">
+                {{ $orders->links() }}
+            </div>
+        @endif
     </div>
 </div>
 @endsection

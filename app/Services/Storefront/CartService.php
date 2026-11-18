@@ -8,7 +8,9 @@ use App\Models\Cart;
 use App\Models\CartItem;
 use App\Models\Coupon;
 use App\Models\Inventory;
+use App\Models\Product;
 use App\Models\ProductVariant;
+use App\Models\SellerCampaignProduct;
 use App\Models\User;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -50,16 +52,42 @@ class CartService
             return $cart;
         }
 
-        $cart = Cart::where('is_active', true)
-            ->where('session_id', $sessionId)
-            ->latest('id')
-            ->first();
+        $cart = null;
+
+        // Check if guest cart ID was stored in session or cookie
+        $sessionCartId = (request() && request()->hasSession()) ? request()->session()->get('guest_cart_id') : null;
+        $cookieCartId = request() ? request()->cookie('allzone_cart_id') : null;
+        $guestCartId = $sessionCartId ?? $cookieCartId;
+        if ($guestCartId) {
+            $cart = Cart::where('id', (int) $guestCartId)
+                ->where('is_active', true)
+                ->whereNull('user_id')
+                ->first();
+        }
+
+        if (!$cart) {
+            $cart = Cart::where('is_active', true)
+                ->where('session_id', $sessionId)
+                ->whereNull('user_id')
+                ->latest('id')
+                ->first();
+        }
 
         if (!$cart) {
             $cart = Cart::create([
                 'session_id' => $sessionId,
                 'is_active' => true,
             ]);
+        } elseif ($cart->session_id !== $sessionId) {
+            $cart->session_id = $sessionId;
+            $cart->saveQuietly();
+        }
+
+        if (request()?->hasSession()) {
+            request()->session()->put('guest_cart_id', $cart->id);
+        }
+        if (function_exists('cookie')) {
+            \Illuminate\Support\Facades\Cookie::queue('allzone_cart_id', (string) $cart->id, 60 * 24 * 30);
         }
 
         return $cart;
@@ -170,19 +198,55 @@ class CartService
     /**
      * Merge guest session cart into user's account cart upon login.
      */
-    public function mergeSessionCart(string $sessionId, User $user): void
+    public function mergeSessionCart(string $sessionId, User $user, ?int $explicitCartId = null): void
     {
-        $guestCart = Cart::where('session_id', $sessionId)
-            ->whereNull('user_id')
-            ->where('is_active', true)
-            ->with('items')
-            ->first();
+        $guestCart = null;
+
+        // 1. First, check if explicit cart ID or session / cookie cart ID is available
+        $sessionCartId = (request() && request()->hasSession()) ? request()->session()->get('guest_cart_id') : null;
+        $cookieCartId = request() ? request()->cookie('allzone_cart_id') : null;
+        $cartId = $explicitCartId ?: ($sessionCartId ?: $cookieCartId);
+
+        if ($cartId) {
+            $guestCart = Cart::where('id', (int) $cartId)
+                ->whereNull('user_id')
+                ->where('is_active', true)
+                ->with('items')
+                ->first();
+        }
+
+        // 2. Second, check by session ID
+        if (!$guestCart && !empty($sessionId)) {
+            $guestCart = Cart::where('session_id', $sessionId)
+                ->whereNull('user_id')
+                ->where('is_active', true)
+                ->with('items')
+                ->first();
+        }
+
+        // 3. Third fallback: check for any active unassigned guest cart with items created recently
+        if (!$guestCart) {
+            $guestCart = Cart::whereNull('user_id')
+                ->where('is_active', true)
+                ->whereHas('items')
+                ->where('created_at', '>=', now()->subHours(4))
+                ->latest('id')
+                ->first();
+        }
 
         if (!$guestCart || $guestCart->items->isEmpty()) {
             return;
         }
 
         $userCart = $this->getActiveCart($user, $sessionId);
+
+        if ($guestCart->id === $userCart->id) {
+            $userCart->user_id = $user->id;
+            $userCart->customer_id = $user->customer?->id ?: \App\Models\Customer::firstOrCreate(['user_id' => $user->id])->id;
+            $userCart->is_active = true;
+            $userCart->save();
+            return;
+        }
 
         DB::transaction(function () use ($guestCart, $userCart) {
             foreach ($guestCart->items as $item) {
@@ -211,6 +275,13 @@ class CartService
             $guestCart->is_active = false;
             $guestCart->save();
         });
+
+        if (request()?->hasSession()) {
+            request()->session()->forget('guest_cart_id');
+        }
+        if (function_exists('cookie')) {
+            \Illuminate\Support\Facades\Cookie::queue(\Illuminate\Support\Facades\Cookie::forget('allzone_cart_id'));
+        }
     }
 
     /**
@@ -458,7 +529,8 @@ class CartService
             $product = $variant?->product;
             $seller = $product?->seller;
 
-            $currentPrice = (float) ($variant?->selling_price ?? $item->price_snapshot ?? 0);
+            $basePrice = (float) ($variant?->selling_price ?? $item->price_snapshot ?? 0);
+            $currentPrice = $this->resolvePromotionalPrice($product, $basePrice);
             $snapshotPrice = (float) ($item->price_snapshot ?? $currentPrice);
             $mrp = (float) ($variant?->mrp ?? $currentPrice);
 
@@ -700,5 +772,51 @@ class CartService
         }
 
         return "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' width='100' height='100'><rect width='100' height='100' rx='12' fill='%23f1f5f9'/><text x='50' y='55' font-family='sans-serif' font-size='10' font-weight='800' fill='%232563eb' text-anchor='middle'>ALLZONE</text></svg>";
+    }
+
+    /**
+     * Alias for getSummary for cart summaries.
+     */
+    public function getCartSummary(Cart $cart, ?User $user = null): array
+    {
+        return $this->getSummary($cart, $user);
+    }
+
+    /**
+     * Resolve promotional campaign price for a product if actively enrolled in a live campaign.
+     * Prevents expired or unapproved promotions from applying.
+     */
+    public function resolvePromotionalPrice(?Product $product, float $fallbackPrice): float
+    {
+        if (!$product) {
+            return $fallbackPrice;
+        }
+
+        $now = now();
+        $campaignProduct = SellerCampaignProduct::query()
+            ->where('product_id', $product->id)
+            ->where('seller_id', $product->seller_id)
+            ->where('status', 'enrolled')
+            ->whereHas('campaign', function ($cq) use ($now) {
+                $cq->where('is_active', true)
+                   ->whereNotIn('status', ['draft', 'paused', 'ended'])
+                   ->where(function ($sq) use ($now) {
+                       $sq->whereNull('starts_at')->orWhere('starts_at', '<=', $now);
+                   })
+                   ->where(function ($eq) use ($now) {
+                       $eq->whereNull('ends_at')->orWhere('ends_at', '>=', $now);
+                   });
+            })
+            ->whereHas('campaign.participations', function ($pq) use ($product) {
+                $pq->where('seller_id', $product->seller_id)
+                   ->whereIn('status', ['enrolled', 'approved']);
+            })
+            ->first();
+
+        if ($campaignProduct && (float) $campaignProduct->campaign_price > 0 && (float) $campaignProduct->campaign_price < $fallbackPrice) {
+            return (float) $campaignProduct->campaign_price;
+        }
+
+        return $fallbackPrice;
     }
 }

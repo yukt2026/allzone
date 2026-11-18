@@ -65,6 +65,11 @@ class ProductVariant extends Model
         return $this->hasMany(OrderItem::class, 'variant_id');
     }
 
+    public function priceHistories(): HasMany
+    {
+        return $this->hasMany(ProductPriceHistory::class, 'product_variant_id');
+    }
+
     public function locations(): BelongsToMany
     {
         return $this->belongsToMany(InventoryLocation::class, 'inventory', 'variant_id', 'location_id')

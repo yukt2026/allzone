@@ -186,4 +186,19 @@ class Product extends Model
     {
         return $query->where('is_quick_capable', true);
     }
+
+    public function campaignProducts(): HasMany
+    {
+        return $this->hasMany(SellerCampaignProduct::class);
+    }
+
+    public function adCampaignProducts(): HasMany
+    {
+        return $this->hasMany(SellerAdCampaignProduct::class);
+    }
+
+    public function influencerCollaborations(): HasMany
+    {
+        return $this->hasMany(InfluencerCollaboration::class);
+    }
 }

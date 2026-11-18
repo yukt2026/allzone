@@ -54,4 +54,9 @@ class CommissionEntry extends Model
     {
         return $this->hasOne(SettlementItem::class);
     }
+
+    public function scopeForSeller($query, int $sellerId)
+    {
+        return $query->whereHas('fulfilmentOrder', fn ($q) => $q->where('seller_id', $sellerId));
+    }
 }

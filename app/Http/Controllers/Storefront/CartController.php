@@ -24,8 +24,16 @@ class CartController extends Controller
     public function index(Request $request): View
     {
         $sessionId = $request->session()->getId();
-        $cart = $this->cartService->getActiveCart($request->user(), $sessionId);
-        $summary = $this->cartService->getSummary($cart, $request->user());
+        $user = $request->user();
+        $cart = $this->cartService->getActiveCart($user, $sessionId);
+
+        if ($user && $cart->activeItems->isEmpty()) {
+            $this->cartService->mergeSessionCart($sessionId, $user);
+            $cart = $this->cartService->getActiveCart($user, $sessionId);
+            $cart->load('items.variant.product');
+        }
+
+        $summary = $this->cartService->getSummary($cart, $user);
 
         return view('storefront.cart', [
             'cart' => $cart,
@@ -39,11 +47,18 @@ class CartController extends Controller
     public function summary(Request $request): JsonResponse
     {
         $sessionId = $request->session()->getId();
-        $cart = $this->cartService->getActiveCart($request->user(), $sessionId);
+        $user = $request->user();
+        $cart = $this->cartService->getActiveCart($user, $sessionId);
+
+        if ($user && $cart->activeItems->isEmpty()) {
+            $this->cartService->mergeSessionCart($sessionId, $user);
+            $cart = $this->cartService->getActiveCart($user, $sessionId);
+            $cart->load('items.variant.product');
+        }
 
         return response()->json([
             'status' => 'success',
-            'cart' => $this->cartService->getSummary($cart, $request->user()),
+            'cart' => $this->cartService->getSummary($cart, $user),
         ]);
     }
 
@@ -77,6 +92,12 @@ class CartController extends Controller
         $sessionId = $request->session()->getId();
         $cart = $this->cartService->getActiveCart($request->user(), $sessionId);
         $this->cartService->addItem($cart, (int) $variantId, (int) ($validated['quantity'] ?? 1));
+
+        if (!$request->user()) {
+            $request->session()->put('guest_cart_id', $cart->id);
+            $request->session()->save();
+            \Illuminate\Support\Facades\Cookie::queue('allzone_cart_id', (string) $cart->id, 60 * 24 * 30);
+        }
 
         if ($request->wantsJson()) {
             return response()->json([

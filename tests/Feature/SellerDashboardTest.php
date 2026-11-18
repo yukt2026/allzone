@@ -163,13 +163,13 @@ class SellerDashboardTest extends TestCase
         $response->assertStatus(200);
 
         // Header & Core title
-        $response->assertSee('Merchant Operations Hub');
+        $response->assertSee('Supplier Panel');
 
         // All 8 KPI Card Labels
         $response->assertSee("Today's Sales");
         $response->assertSee('Total Orders');
-        $response->assertSee('Quick Orders');
-        $response->assertSee('Online Orders');
+        $response->assertSee('Ready to Dispatch');
+        $response->assertSee('In Transit');
         $response->assertSee('Pending Orders');
         $response->assertSee('Delivered Orders');
         $response->assertSee('Returns');
@@ -344,5 +344,68 @@ class SellerDashboardTest extends TestCase
             'added_quantity' => 20,
         ]);
         $inventoryResp->assertStatus(403);
+    }
+
+    public function test_dashboard_supports_date_filters_and_renders_todo_and_dispatch_metrics(): void
+    {
+        // 1. Test Yesterday filter
+        $responseYesterday = $this->actingAs($this->sellerUser)
+            ->get(route('seller.dashboard', ['range' => 'yesterday']));
+        $responseYesterday->assertOk()
+            ->assertSee('Filter By Date:')
+            ->assertSee('Yesterday');
+
+        // 2. Test 7-Day filter
+        $response7d = $this->actingAs($this->sellerUser)
+            ->get(route('seller.dashboard', ['range' => '7d']));
+        $response7d->assertOk()
+            ->assertSee('Last 7 Days');
+
+        // 3. Test Custom Date filter
+        $responseCustom = $this->actingAs($this->sellerUser)
+            ->get(route('seller.dashboard', [
+                'range' => 'custom',
+                'start_date' => now()->subDays(10)->format('Y-m-d'),
+                'end_date' => now()->format('Y-m-d'),
+            ]));
+        $responseCustom->assertOk()
+            ->assertSee('Custom Date');
+
+        // 4. Verify To-Do List and Dispatch Performance sections
+        $response7d->assertSee('Action Required / Seller To-Do List')
+            ->assertSee('Ready to Process')
+            ->assertSee('Labels Pending')
+            ->assertSee('Out of Stock')
+            ->assertSee('Low Stock')
+            ->assertSee('Catalog Approvals')
+            ->assertSee('Open Tickets')
+            ->assertSee('Dispatch Performance &amp; Logistics SLA', false)
+            ->assertSee('Awaiting Processing')
+            ->assertSee('Awaiting Shipment')
+            ->assertSee('In Transit')
+            ->assertSee('Delayed Shipments')
+            ->assertSee('Delivered Orders')
+            ->assertSee('Business Insights &amp; Performance', false)
+            ->assertSee('Net Seller Revenue')
+            ->assertSee('Quick Module Shortcuts');
+    }
+
+    public function test_dashboard_renders_clean_empty_states_for_new_seller(): void
+    {
+        $newUser = User::factory()->create();
+        $newUser->assignRole('seller_owner');
+        $newSeller = Seller::factory()->create([
+            'user_id' => $newUser->id,
+            'business_name' => 'Brand New Electronics Store',
+            'status' => SellerStatus::APPROVED,
+            'onboarding_step' => 7,
+        ]);
+
+        $response = $this->actingAs($newUser)->get(route('seller.dashboard'));
+        $response->assertOk()
+            ->assertSee('Welcome back, Brand New Electronics Store')
+            ->assertSee('Order queue is all clear!')
+            ->assertSee('Inventory levels are healthy!')
+            ->assertSee('No customer reviews received yet.');
     }
 }

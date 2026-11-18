@@ -60,7 +60,8 @@ class WalletController extends Controller
             ->where('seller_id', $seller->id)
             ->withCount('items')
             ->latest('id')
-            ->paginate(15);
+            ->paginate(15)
+            ->withQueryString();
 
         $primaryBank = $seller->primaryBankAccount ?: $seller->bankAccounts()->first();
 

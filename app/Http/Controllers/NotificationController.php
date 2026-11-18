@@ -14,6 +14,21 @@ use Illuminate\View\View;
 class NotificationController extends Controller
 {
     /**
+     * Categories supported for Seller and general user preferences.
+     */
+    protected array $sellerCategories = [
+        'orders' => 'Orders & Fulfilment',
+        'shipments' => 'Shipments & Tracking',
+        'returns_claims' => 'Returns & Disputes',
+        'catalogue' => 'Catalog Moderation',
+        'inventory' => 'Inventory & Low Stock',
+        'settlements' => 'Disbursements & Payouts',
+        'support' => 'Support Desk',
+        'announcements' => 'Platform Notices',
+        'promotions' => 'Campaigns & Deals',
+    ];
+
+    /**
      * Display in-app notifications and preferences portal.
      */
     public function index(Request $request): View
@@ -21,14 +36,44 @@ class NotificationController extends Controller
         $user = Auth::user();
         abort_if(!$user, 401);
 
-        $notifications = $user->notifications()->paginate(15);
+        $filter = $request->input('filter', 'all');
+        $category = $request->input('category');
+        $search = $request->input('search');
+
+        $query = $user->notifications();
+
+        if ($filter === 'unread') {
+            $query->whereNull('read_at');
+        } elseif ($filter === 'read') {
+            $query->whereNotNull('read_at');
+        }
+
+        if (!empty($category)) {
+            $query->where(function ($q) use ($category) {
+                $q->where('data->category', $category)
+                  ->orWhere('data->event_key', 'like', "%{$category}%");
+            });
+        }
+
+        if (!empty($search)) {
+            $query->where(function ($q) use ($search) {
+                $q->where('data->title', 'like', "%{$search}%")
+                  ->orWhere('data->message', 'like', "%{$search}%");
+            });
+        }
+
+        $notifications = $query->latest()->paginate(15)->withQueryString();
+
+        $totalCount = $user->notifications()->count();
         $unreadCount = $user->unreadNotifications()->count();
+        $readCount = max(0, $totalCount - $unreadCount);
+        $todayCount = $user->notifications()->whereDate('created_at', today())->count();
 
         // Load or initialize user preferences across categories
-        $categories = ['orders', 'account', 'security', 'promotions'];
+        $activeCategories = $this->sellerCategories;
         $preferences = [];
 
-        foreach ($categories as $cat) {
+        foreach (array_keys($activeCategories) as $cat) {
             $preferences[$cat] = UserNotificationPreference::firstOrCreate(
                 ['user_id' => $user->id, 'category' => $cat],
                 [
@@ -45,9 +90,34 @@ class NotificationController extends Controller
         return view('notifications.index', [
             'user' => $user,
             'notifications' => $notifications,
+            'totalCount' => $totalCount,
             'unreadCount' => $unreadCount,
+            'readCount' => $readCount,
+            'todayCount' => $todayCount,
+            'currentFilter' => $filter,
+            'currentCategory' => $category,
+            'search' => $search,
+            'eventCategories' => $activeCategories,
+            'categories' => $activeCategories,
             'preferences' => $preferences,
         ]);
+    }
+
+    /**
+     * Mark notification as read and redirect directly to its target action URL.
+     */
+    public function goToUrl(Request $request, string $id): RedirectResponse
+    {
+        $user = Auth::user();
+        abort_if(!$user, 401);
+
+        $notification = $user->notifications()->where('id', $id)->firstOrFail();
+        $notification->markAsRead();
+
+        $fallbackRoute = request()->is('seller*') ? route('seller.notifications.index') : route('notifications.index');
+        $actionUrl = $notification->data['action_url'] ?? $fallbackRoute;
+
+        return redirect()->to($actionUrl);
     }
 
     /**
@@ -61,9 +131,7 @@ class NotificationController extends Controller
         $data = $request->input('preferences', []);
         $promotionalConsent = $request->boolean('promotional_consent');
 
-        $categories = ['orders', 'account', 'security', 'promotions'];
-
-        foreach ($categories as $cat) {
+        foreach (array_keys($this->sellerCategories) as $cat) {
             $catData = $data[$cat] ?? [];
 
             $isPromo = ($cat === 'promotions');

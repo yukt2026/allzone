@@ -36,11 +36,29 @@ class AdminSellerService
     public function getFilteredSellers(array $filters = [], int $perPage = 15): LengthAwarePaginator
     {
         return $this->buildFilteredQuery($filters)
-            ->with(['user', 'stores.locations', 'documents'])
+            ->with(['user', 'stores.locations', 'documents', 'bankAccounts', 'pickupLocations'])
             ->withCount(['stores', 'products', 'fulfilmentOrders'])
+            ->withSum(['fulfilmentOrders as total_sales' => fn($q) => $q->where('status', '!=', \App\Enums\OrderStatus::CANCELLED)], 'subtotal')
             ->latest('id')
             ->paginate($perPage)
             ->withQueryString();
+    }
+
+    /**
+     * Get counts for seller filter tabs.
+     *
+     * @return array<string, int>
+     */
+    public function getSellerTabCounts(): array
+    {
+        return [
+            'all' => Seller::count(),
+            'pending' => Seller::whereIn('status', [SellerStatus::PENDING, SellerStatus::KYC_SUBMITTED])->count(),
+            'active' => Seller::where('status', SellerStatus::APPROVED)->count(),
+            'rejected' => Seller::where('status', SellerStatus::REJECTED)->count(),
+            'suspended' => Seller::where('status', SellerStatus::SUSPENDED)->count(),
+            'inactive' => Seller::where('status', SellerStatus::INACTIVE)->count(),
+        ];
     }
 
     /**
@@ -140,9 +158,18 @@ class AdminSellerService
             });
         }
 
-        // 2. Status Filter
+        // 2. Tab Filter (all, pending, active, rejected, suspended, inactive) & Status Filter
         if (!empty($filters['status'])) {
             $query->where('status', $filters['status']);
+        } elseif (!empty($filters['tab']) && $filters['tab'] !== 'all') {
+            match ($filters['tab']) {
+                'pending' => $query->whereIn('status', [SellerStatus::PENDING, SellerStatus::KYC_SUBMITTED]),
+                'active' => $query->where('status', SellerStatus::APPROVED),
+                'rejected' => $query->where('status', SellerStatus::REJECTED),
+                'suspended' => $query->where('status', SellerStatus::SUSPENDED),
+                'inactive' => $query->where('status', SellerStatus::INACTIVE),
+                default => null,
+            };
         }
 
         // 3. Seller Type Filter
@@ -504,5 +531,133 @@ class AdminSellerService
             ->latest('id')
             ->limit(50)
             ->get();
+    }
+
+    /**
+     * Compute comprehensive seller operational and performance metrics.
+     *
+     * @return array<string, mixed>
+     */
+    public function getSellerPerformanceMetrics(Seller $seller): array
+    {
+        $totalOrders = $seller->fulfilmentOrders()->count();
+        $deliveredOrders = $seller->fulfilmentOrders()->where('status', \App\Enums\OrderStatus::DELIVERED)->count();
+        $cancelledOrders = $seller->fulfilmentOrders()->where('status', \App\Enums\OrderStatus::CANCELLED)->count();
+        $totalGmv = (float) $seller->fulfilmentOrders()->where('status', '!=', \App\Enums\OrderStatus::CANCELLED)->sum('subtotal');
+
+        $returnsCount = DB::table('fulfilment_orders')
+            ->join('order_items', 'fulfilment_orders.id', '=', 'order_items.fulfilment_order_id')
+            ->join('returns', 'order_items.id', '=', 'returns.order_item_id')
+            ->where('fulfilment_orders.seller_id', $seller->id)
+            ->count();
+
+        $avgRating = (float) ($seller->stores()->avg('rating_avg') ?: 5.00);
+
+        return [
+            'total_gmv' => $totalGmv,
+            'total_orders' => $totalOrders,
+            'delivered_orders' => $deliveredOrders,
+            'cancelled_orders' => $cancelledOrders,
+            'fulfilment_rate' => $totalOrders > 0 ? round(($deliveredOrders / $totalOrders) * 100, 1) : 100.0,
+            'return_rate' => $totalOrders > 0 ? round(($returnsCount / $totalOrders) * 100, 1) : 0.0,
+            'returns_count' => $returnsCount,
+            'avg_rating' => $avgRating,
+            'stores_count' => $seller->stores()->count(),
+            'products_count' => $seller->products()->count(),
+            'active_products_count' => $seller->products()->where('status', ProductStatus::ACTIVE)->count(),
+            'pending_payout' => (float) $seller->settlements()->where('status', \App\Enums\SettlementStatus::PENDING)->sum('net'),
+        ];
+    }
+
+    /**
+     * Request additional or replacement verification documents from seller.
+     */
+    public function requestAdditionalDocuments(Seller $seller, string $documentType, string $instructions, User $admin): void
+    {
+        DB::transaction(function () use ($seller, $documentType, $instructions, $admin) {
+            $docType = \App\Enums\SellerDocumentType::tryFrom($documentType) ?? \App\Enums\SellerDocumentType::OTHER;
+
+            $existingDoc = $seller->documents()->where('type', $docType)->first();
+            if ($existingDoc) {
+                $existingDoc->update([
+                    'status' => SellerDocumentStatus::REJECTED,
+                    'remarks' => "Additional / Replacement Document Required: {$instructions}",
+                ]);
+            } else {
+                $seller->documents()->create([
+                    'type' => $docType,
+                    'file_path' => 'pending_submission',
+                    'status' => SellerDocumentStatus::PENDING,
+                    'remarks' => "Requested by Administration: {$instructions}",
+                ]);
+            }
+
+            activity()
+                ->performedOn($seller)
+                ->causedBy($admin)
+                ->withProperties([
+                    'action' => 'request_additional_documents',
+                    'document_type' => $docType->label(),
+                    'instructions' => $instructions,
+                ])
+                ->log("Requested additional document '{$docType->label()}' for seller #{$seller->id} ({$seller->business_name}). Note: {$instructions}");
+        });
+    }
+
+    /**
+     * Update permitted seller settings (store model, quick commerce, pickup, category focus, status).
+     *
+     * @param array<string, mixed> $data
+     */
+    public function updateSellerSettings(Seller $seller, array $data, User $admin): void
+    {
+        DB::transaction(function () use ($seller, $data, $admin) {
+            $old = [
+                'seller_type' => $seller->seller_type->value,
+                'category_focus' => $seller->category_focus,
+                'commission_override' => $seller->commission_override,
+                'status' => $seller->status->value,
+            ];
+
+            $update = [];
+            if (isset($data['seller_type'])) {
+                $update['seller_type'] = SellerType::from($data['seller_type']);
+            }
+            if (array_key_exists('category_focus', $data)) {
+                $update['category_focus'] = $data['category_focus'];
+            }
+            if (array_key_exists('commission_override', $data)) {
+                $update['commission_override'] = $data['commission_override'] !== null && $data['commission_override'] !== ''
+                    ? (float) $data['commission_override']
+                    : null;
+            }
+            if (isset($data['status'])) {
+                $update['status'] = SellerStatus::from($data['status']);
+            }
+
+            $seller->update($update);
+
+            // Update store quick commerce / pickup settings if provided
+            if (isset($data['accepts_quick_commerce']) || isset($data['accepts_pickup'])) {
+                $storeUpdates = [];
+                if (isset($data['accepts_quick_commerce'])) {
+                    $storeUpdates['accepts_quick_commerce'] = (bool) $data['accepts_quick_commerce'];
+                }
+                if (isset($data['accepts_pickup'])) {
+                    $storeUpdates['accepts_pickup'] = (bool) $data['accepts_pickup'];
+                }
+                $seller->stores()->update($storeUpdates);
+            }
+
+            activity()
+                ->performedOn($seller)
+                ->causedBy($admin)
+                ->withProperties([
+                    'action' => 'update_seller_settings',
+                    'old' => $old,
+                    'new' => $update,
+                ])
+                ->log("Updated settings for seller #{$seller->id} ({$seller->business_name})");
+        });
     }
 }

@@ -221,4 +221,59 @@ class Seller extends Model
     {
         return $this->hasMany(CodRemittance::class);
     }
+
+    public function claims(): HasMany
+    {
+        return $this->hasMany(SellerClaim::class);
+    }
+
+    public function pickupLocations(): HasMany
+    {
+        return $this->hasMany(SellerPickupLocation::class);
+    }
+
+    public function defaultPickupLocation(): HasOne
+    {
+        return $this->hasOne(SellerPickupLocation::class)->where('is_default', true);
+    }
+
+    public function campaignParticipations(): HasMany
+    {
+        return $this->hasMany(SellerCampaignParticipation::class);
+    }
+
+    public function campaignProducts(): HasMany
+    {
+        return $this->hasMany(SellerCampaignProduct::class);
+    }
+
+    public function adCampaigns(): HasMany
+    {
+        return $this->hasMany(SellerAdCampaign::class);
+    }
+
+    public function influencerCollaborations(): HasMany
+    {
+        return $this->hasMany(InfluencerCollaboration::class);
+    }
+
+    public function financeApplications(): HasMany
+    {
+        return $this->hasMany(SellerFinanceApplication::class);
+    }
+
+    public function financeTransactions(): HasMany
+    {
+        return $this->hasMany(SellerFinanceTransaction::class);
+    }
+
+    public function commissionEntries(): \Illuminate\Database\Eloquent\Relations\HasManyThrough
+    {
+        return $this->hasManyThrough(CommissionEntry::class, FulfilmentOrder::class);
+    }
+
+    public function supportTickets(): HasMany
+    {
+        return $this->hasMany(SupportTicket::class);
+    }
 }
