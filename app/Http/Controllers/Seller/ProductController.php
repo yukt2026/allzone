@@ -27,6 +27,19 @@ class ProductController extends Controller
     ) {}
 
     /**
+     * Display Image Bulk Upload screen (Screenshot 5).
+     */
+    public function bulkUploadView(Request $request): View
+    {
+        $seller = Auth::user()?->seller;
+        abort_if(!$seller, 403);
+
+        return view('seller.products.bulk-upload', [
+            'seller' => $seller,
+        ]);
+    }
+
+    /**
      * Display seller product list with search, filters, pagination, and bulk actions.
      */
     public function index(Request $request): View

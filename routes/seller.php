@@ -82,7 +82,22 @@ Route::middleware(['auth', 'seller.status'])->group(function () {
     });
 
     // Image Bulk Upload
-    Route::get('/products-bulk-upload', [\App\Http\Controllers\Seller\ProductController::class, 'index'])->name('products.bulk_upload');
+    Route::get('/products-bulk-upload', [\App\Http\Controllers\Seller\ProductController::class, 'bulkUploadView'])->name('products.bulk_upload');
+
+    // Warehouse Management
+    Route::prefix('warehouse')->name('warehouse.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Seller\WarehouseController::class, 'index'])->name('index');
+    });
+
+    // Influencer Marketing
+    Route::prefix('influencer')->name('influencer.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Seller\InfluencerController::class, 'index'])->name('index');
+    });
+
+    // Advertisements Console
+    Route::prefix('ads')->name('ads.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Seller\AdController::class, 'index'])->name('index');
+    });
 
     // My Store Settings & Public Profile Management
     Route::get('/store', [StoreController::class, 'edit'])->name('store.edit');
